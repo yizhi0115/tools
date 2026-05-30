@@ -1,0 +1,1238 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GIF 在线编辑处理平台</title>
+    <!-- 引入 Tailwind CSS 进行样式管理 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入核心依赖库 -->
+    <script src="https://unpkg.com/gif-frames@1.0.1/dist/gif-frames.min.js"></script>
+    <script src="https://unpkg.com/gif.js@0.2.0/dist/gif.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <style>
+        /* 基础样式与滚动条优化 */
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        /* 拖拽指示器样式 */
+        #drop-overlay {
+            display: none;
+            backdrop-filter: blur(4px);
+            z-index: 50;
+        }
+        body.drag-active #drop-overlay {
+            display: flex;
+        }
+
+        /* 帧缩略图透明背景（棋盘格） */
+        .checkerboard-bg {
+            background-color: #f0f0f0;
+            background-image: linear-gradient(45deg, #ccc 25%, transparent 25%), 
+                              linear-gradient(-45deg, #ccc 25%, transparent 25%), 
+                              linear-gradient(45deg, transparent 75%, #ccc 75%), 
+                              linear-gradient(-45deg, transparent 75%, #ccc 75%);
+            background-size: 16px 16px;
+            background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
+        }
+        
+        /* Sortable.js 拖拽时的占位符样式 */
+        .sortable-ghost { opacity: 0.4; border: 2px dashed #3b82f6; }
+        
+        /* 绘图光标 */
+        .crosshair-cursor { cursor: crosshair; }
+    </style>
+</head>
+<body class="bg-gray-50 h-screen flex flex-col overflow-hidden text-slate-800">
+
+    <!-- 全局拖拽遮罩层 -->
+    <div id="drop-overlay" class="fixed inset-0 bg-blue-50 bg-opacity-90 flex items-center justify-center border-4 border-blue-500 border-dashed m-4 rounded-xl transition-all">
+        <div class="text-center">
+            <i data-lucide="upload-cloud" class="w-20 h-20 text-blue-500 mx-auto mb-4"></i>
+            <h2 class="text-2xl font-semibold text-blue-700">松开鼠标，导入文件</h2>
+            <p class="text-blue-500 mt-2">支持拖入 GIF 或静态图片 (PNG/JPG)</p>
+        </div>
+    </div>
+
+    <!-- 顶部导航栏 -->
+    <header class="bg-white border-b border-gray-200 px-6 py-3 flex justify-between items-center shadow-sm shrink-0">
+        <div class="flex items-center gap-2">
+            <i data-lucide="clapperboard" class="w-6 h-6 text-indigo-600"></i>
+            <h1 class="text-lg font-bold text-slate-700 tracking-wide">GIF 序列编辑器</h1>
+        </div>
+        <div class="flex items-center gap-3">
+            <button onclick="document.getElementById('file-import-gif').click()" class="flex items-center gap-2 px-4 py-1.5 text-sm bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors">
+                <i data-lucide="folder-open" class="w-4 h-4"></i> 导入 GIF
+            </button>
+            <input type="file" id="file-import-gif" accept="image/gif" class="hidden" onchange="handleFileSelect(event, 'gif')">
+            
+            <!-- 移除 disabled 限制，并更改文案 -->
+            <button onclick="document.getElementById('file-import-img').click()" class="flex items-center gap-2 px-4 py-1.5 text-sm bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors" id="btn-insert-img">
+                <i data-lucide="image-plus" class="w-4 h-4"></i> 导入/追加静态图片
+            </button>
+            <input type="file" id="file-import-img" accept="image/png, image/jpeg, image/webp" class="hidden" onchange="handleFileSelect(event, 'image')" multiple>
+
+            <div class="w-px h-6 bg-gray-300 mx-1"></div>
+
+            <button onclick="exportGIF()" id="btn-export" class="flex items-center gap-2 px-5 py-1.5 text-sm bg-indigo-600 text-white font-medium rounded hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                <i data-lucide="download" class="w-4 h-4"></i> <span id="export-text">导出 GIF</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- 消息提示容器 -->
+    <div id="toast-container" class="fixed top-16 left-1/2 transform -translate-x-1/2 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- 主工作区 -->
+    <main class="flex-1 flex overflow-hidden">
+        
+        <!-- 左侧预览区 -->
+        <section class="w-1/3 min-w-[300px] max-w-[500px] border-r border-gray-200 bg-gray-100 flex flex-col shrink-0">
+            <div class="p-4 bg-white border-b border-gray-200 flex justify-between items-center shrink-0">
+                <h2 class="text-sm font-semibold flex items-center gap-2"><i data-lucide="monitor-play" class="w-4 h-4"></i> 实时预览</h2>
+                <span id="preview-info" class="text-xs text-gray-500 font-mono">-- x -- px</span>
+            </div>
+            
+            <div class="flex-1 p-6 flex flex-col items-center justify-center overflow-auto relative checkerboard-bg">
+                <canvas id="preview-canvas" class="max-w-full shadow bg-white rounded"></canvas>
+                <div id="preview-placeholder" class="absolute inset-0 flex flex-col items-center justify-center text-gray-400">
+                    <i data-lucide="film" class="w-12 h-12 mb-2 opacity-50"></i>
+                    <p class="text-sm">暂无数据，请先导入 GIF 或静态图片</p>
+                </div>
+            </div>
+
+            <div class="p-4 bg-white border-t border-gray-200 shrink-0">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs font-medium text-gray-600">控制面板</span>
+                    <button onclick="togglePlayback()" id="btn-playback" class="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-full hover:bg-gray-200 transition-colors disabled:opacity-50" disabled>
+                        <i data-lucide="pause" class="w-4 h-4 text-gray-700"></i>
+                    </button>
+                </div>
+                <div class="flex items-center gap-2">
+                    <input type="number" id="global-delay" placeholder="统一延迟(ms)" class="w-full text-sm border border-gray-300 rounded px-2 py-1.5 focus:outline-none focus:border-indigo-500">
+                    <button onclick="applyGlobalDelay()" class="whitespace-nowrap px-3 py-1.5 text-xs bg-gray-200 hover:bg-gray-300 rounded transition-colors text-gray-700">应用全局</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 右侧序列编辑区 -->
+        <section class="flex-1 bg-white flex flex-col min-w-0">
+            <div class="p-4 border-b border-gray-200 flex justify-between items-center shrink-0">
+                <h2 class="text-sm font-semibold flex items-center gap-2"><i data-lucide="layers" class="w-4 h-4"></i> 帧序列视图</h2>
+                <span class="text-xs text-gray-500">共 <span id="frame-count" class="font-bold text-slate-700">0</span> 帧 (拖拽卡片可调整播放顺序)</span>
+            </div>
+            
+            <div class="flex-1 overflow-y-auto p-4 bg-gray-50 relative">
+                <ul id="frame-list" class="grid grid-cols-[repeat(auto-fill,minmax(120px,1fr))] gap-4 content-start min-h-[100px]">
+                    <!-- 帧列表将动态注入此位置 -->
+                </ul>
+            </div>
+        </section>
+
+        <!-- 极右侧素材库区 -->
+        <section class="w-1/4 min-w-[250px] max-w-[350px] bg-white border-l border-gray-200 flex flex-col shrink-0" id="material-zone">
+            <div class="p-4 border-b border-gray-200 flex justify-between items-center shrink-0 bg-gray-50">
+                <h2 class="text-sm font-semibold flex items-center gap-2"><i data-lucide="library" class="w-4 h-4"></i> 素材库</h2>
+            </div>
+            <div class="p-3 text-xs text-gray-500 text-center border-b border-gray-100">
+                支持拖拽外部静态图至此，或将此处素材拖入帧序列
+            </div>
+            <div class="flex-1 overflow-y-auto p-4 bg-gray-50 relative">
+                <ul id="material-list" class="grid grid-cols-2 gap-3 content-start min-h-[100px]">
+                    <!-- 素材列表将动态注入此位置 -->
+                </ul>
+            </div>
+        </section>
+        
+    </main>
+
+    <!-- 图片编辑弹窗 -->
+    <div id="edit-modal" class="hidden fixed inset-0 z-[100] bg-slate-900 bg-opacity-70 flex items-center justify-center backdrop-blur-sm">
+        <div class="bg-white rounded-xl shadow-2xl flex flex-col w-11/12 max-w-4xl h-[85vh] overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
+                <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2"><i data-lucide="pen-tool" class="w-5 h-5"></i> 编辑帧画面</h3>
+                <button onclick="closeEditModal()" class="text-gray-500 hover:text-red-500 transition-colors"><i data-lucide="x" class="w-6 h-6"></i></button>
+            </div>
+            
+            <div class="flex-1 flex overflow-hidden">
+                <div class="w-20 bg-gray-100 border-r border-gray-200 flex flex-col items-center py-4 gap-4 shrink-0 overflow-y-auto overflow-x-hidden">
+                    
+                    <!-- 绘图工具区 -->
+                    <div class="flex flex-col items-center gap-1">
+                        <label class="text-[10px] text-gray-500 font-medium">颜色</label>
+                        <input type="color" id="brush-color" value="#ef4444" class="w-8 h-8 rounded cursor-pointer border-0 p-0">
+                        <button id="btn-eyedropper" onclick="toggleEyedropperMode()" class="mt-1 p-1 rounded text-gray-600 hover:bg-indigo-50 hover:text-indigo-600 transition-colors" title="吸管取色">
+                            <i data-lucide="pipette" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                    <div class="flex flex-col items-center gap-1 mt-2 mb-4">
+                        <label class="text-[10px] text-gray-500 font-medium">粗细</label>
+                        <input type="range" id="brush-size" min="1" max="20" value="5" class="w-16 -rotate-90 mt-6" style="transform-origin: center;">
+                    </div>
+                    
+                    <!-- 变換工具区塊 -->
+                    <div class="w-full border-t border-gray-200 mt-2 pt-4 flex flex-col items-center gap-2">
+                        <label class="text-[10px] text-gray-500 font-medium">变换</label>
+                        <div class="grid grid-cols-2 gap-1 px-1 w-full justify-items-center">
+                            <button onclick="applyTransform('rotate-left')" class="text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 p-1 rounded transition-colors" title="向左旋转">
+                                <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                            </button>
+                            <button onclick="applyTransform('rotate-right')" class="text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 p-1 rounded transition-colors" title="向右旋转">
+                                <i data-lucide="rotate-cw" class="w-4 h-4"></i>
+                            </button>
+                            <button onclick="applyTransform('flip-horizontal')" class="text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 p-1 rounded transition-colors" title="水平翻转">
+                                <i data-lucide="flip-horizontal" class="w-4 h-4"></i>
+                            </button>
+                            <button onclick="applyTransform('flip-vertical')" class="text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 p-1 rounded transition-colors" title="垂直翻转">
+                                <i data-lucide="flip-vertical" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- 新增裁切工具區塊 -->
+                    <div class="w-full border-t border-gray-200 mt-2 pt-4 flex flex-col items-center gap-2">
+                        <label class="text-[10px] text-gray-500 font-medium">裁切</label>
+                        <div class="flex flex-col gap-1 w-full px-2">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[10px] text-gray-500">宽:</span>
+                                <input type="number" id="crop-w" class="w-10 text-[10px] border border-gray-300 rounded px-1 text-center" min="10">
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-[10px] text-gray-500">高:</span>
+                                <input type="number" id="crop-h" class="w-10 text-[10px] border border-gray-300 rounded px-1 text-center" min="10">
+                            </div>
+                            <button onclick="toggleCropMode()" id="btn-toggle-crop" class="mt-1 w-full px-1 py-1 text-[10px] bg-gray-200 hover:bg-gray-300 rounded transition-colors text-gray-700">进入裁切</button>
+                            <button onclick="applyCrop()" id="btn-apply-crop" class="hidden mt-1 w-full px-1 py-1 text-[10px] bg-indigo-600 text-white hover:bg-indigo-700 rounded transition-colors flex justify-center items-center gap-1"><i data-lucide="crop" class="w-3 h-3"></i> 确认</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex-1 bg-gray-300 flex items-center justify-center p-6 overflow-auto checkerboard-bg">
+                    <div class="relative shadow-md bg-white max-w-full" style="line-height: 0;">
+                        <canvas id="edit-canvas" class="crosshair-cursor max-w-full w-full block"></canvas>
+                        <canvas id="crop-canvas" class="absolute inset-0 z-10 hidden w-full h-full touch-none"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="px-6 py-4 border-t border-gray-200 flex justify-end gap-3 bg-gray-50">
+                <button onclick="closeEditModal()" class="px-4 py-2 text-sm text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-100 transition-colors">取消</button>
+                <button onclick="saveEditAsMaterial()" class="px-4 py-2 text-sm text-indigo-600 bg-indigo-50 border border-indigo-200 rounded hover:bg-indigo-100 transition-colors flex items-center gap-2">
+                    <i data-lucide="library" class="w-4 h-4"></i> 仅存入素材库
+                </button>
+                <button onclick="saveEditAndApply()" class="px-4 py-2 text-sm text-white bg-indigo-600 rounded hover:bg-indigo-700 transition-colors flex items-center gap-2 shadow-sm">
+                    <i data-lucide="check-circle" class="w-4 h-4"></i> 应用至当前帧并存入素材
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 初始化图标
+        lucide.createIcons();
+
+        // 核心状态管理
+        const state = {
+            frames: [], // 结构: { id, canvas, delay, order }
+            materials: [], // 素材库结构: { id, canvas }
+            width: 0,
+            height: 0,
+            isPlaying: true,
+            workerBlobUrl: null
+        };
+
+        // 预览相关变量
+        let previewTimer = null;
+        let currentFrameIdx = 0;
+        const previewCanvas = document.getElementById('preview-canvas');
+        const previewCtx = previewCanvas.getContext('2d');
+
+        // 绘图相关变量
+        let editingFrameId = null;
+        let isDrawing = false;
+        let lastDrawX = 0;
+        let lastDrawY = 0;
+
+        // DOM 元素引用
+        const dom = {
+            frameList: document.getElementById('frame-list'),
+            materialList: document.getElementById('material-list'),
+            materialZone: document.getElementById('material-zone'),
+            placeholder: document.getElementById('preview-placeholder'),
+            btnInsertImg: document.getElementById('btn-insert-img'),
+            btnExport: document.getElementById('btn-export'),
+            btnPlayback: document.getElementById('btn-playback'),
+            frameCount: document.getElementById('frame-count'),
+            previewInfo: document.getElementById('preview-info'),
+            editModal: document.getElementById('edit-modal'),
+            editCanvas: document.getElementById('edit-canvas'),
+            brushColor: document.getElementById('brush-color'),
+            brushSize: document.getElementById('brush-size'),
+            // 裁切相關 DOM 節點
+            cropCanvas: document.getElementById('crop-canvas'),
+            inputCropW: document.getElementById('crop-w'),
+            inputCropH: document.getElementById('crop-h'),
+            btnToggleCrop: document.getElementById('btn-toggle-crop'),
+            btnApplyCrop: document.getElementById('btn-apply-crop')
+        };
+
+        // 裁切狀態變數
+        let isCropMode = false;
+        let cropRect = { x: 0, y: 0, w: 100, h: 100 };
+        let cropDragState = null; 
+        let cropStartX = 0;
+        let cropStartY = 0;
+        let cropStartRect = null;
+
+        // 取色器狀態變數
+        let isEyedropperMode = false;
+
+        // 1. 初始化依赖 Worker (针对 gif.js，处理跨域问题)
+        async function initWorker() {
+            try {
+                const response = await fetch('https://unpkg.com/gif.js@0.2.0/dist/gif.worker.js');
+                if (!response.ok) throw new Error('Network response was not ok');
+                const scriptText = await response.text();
+                const blob = new Blob([scriptText], { type: 'application/javascript' });
+                state.workerBlobUrl = URL.createObjectURL(blob);
+            } catch (error) {
+                showToast('无法加载导出引擎，导出功能可能受限，请检查网络环境。', 'error');
+                console.error('Worker init error:', error);
+            }
+        }
+        initWorker();
+
+        // 2. 初始化 Sortable.js (拖拽排序)
+        const sortableInstance = new Sortable(dom.frameList, {
+            group: {
+                name: 'shared-frames',
+                pull: true, 
+                put: true
+            },
+            animation: 150,
+            ghostClass: 'sortable-ghost',
+            onAdd: function(evt) {
+                // 处理从素材库拖入至序列的事件
+                const matId = evt.item.dataset.id;
+                const material = state.materials.find(m => m.id === matId);
+                
+                // 移除由 Sortable 强行插入的外部 DOM 节点
+                if (evt.item.parentNode) evt.item.parentNode.removeChild(evt.item); 
+                
+                if (material) {
+                    const newCanvas = document.createElement('canvas');
+                    newCanvas.width = material.canvas.width;
+                    newCanvas.height = material.canvas.height;
+                    newCanvas.getContext('2d').drawImage(material.canvas, 0, 0);
+                    
+                    const newFrame = {
+                        id: `frame_${Date.now()}_mat`,
+                        canvas: newCanvas,
+                        delay: 100
+                    };
+                    state.frames.splice(evt.newIndex, 0, newFrame);
+                    renderFrameList();
+                    updateUIState();
+                    showToast('素材已插入序列', 'success');
+
+                    if (state.isPlaying && !previewTimer) {
+                        startPreview();
+                    } else if (!state.isPlaying) {
+                        currentFrameIdx = evt.newIndex;
+                        drawSingleFrame(currentFrameIdx);
+                    }
+                }
+            },
+            onEnd: function (evt) {
+                if (evt.from === evt.to) {
+                    const itemEl = state.frames.splice(evt.oldIndex, 1)[0];
+                    state.frames.splice(evt.newIndex, 0, itemEl);
+                }
+                
+                renderFrameList();
+                
+                if(!state.isPlaying) {
+                    currentFrameIdx = evt.newIndex !== undefined ? evt.newIndex : 0;
+                    if (currentFrameIdx >= state.frames.length) currentFrameIdx = 0;
+                    if (state.frames.length > 0) drawSingleFrame(currentFrameIdx);
+                } else if (state.frames.length > 0 && !previewTimer) {
+                    startPreview();
+                }
+            }
+        });
+
+        // 初始化素材库 Sortable (允许双向互动)
+        const sortableMaterials = new Sortable(dom.materialList, {
+            group: {
+                name: 'shared-frames',
+                pull: true, 
+                put: true      
+            },
+            animation: 150,
+            sort: false, 
+            onAdd: function(evt) {
+                // 处理从帧序列拖入素材库的事件
+                const frameId = evt.item.dataset.id;
+                const frame = state.frames.find(f => f.id === frameId);
+                
+                // 移除移过来的 DOM 节点
+                if (evt.item.parentNode) evt.item.parentNode.removeChild(evt.item); 
+                
+                if (frame) {
+                    createMaterialFromCanvas(frame.canvas);
+                    showToast('已提取该帧至素材库', 'success');
+                }
+            },
+            onEnd: function(evt) {
+                renderMaterialList();
+            }
+        });
+
+        // 3. 消息提示组件
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const bgColor = type === 'error' ? 'bg-red-600' : (type === 'success' ? 'bg-emerald-600' : 'bg-blue-600');
+            toast.className = `px-5 py-2.5 rounded shadow-lg text-white text-sm font-medium tracking-wide transition-all duration-300 opacity-0 transform -translate-y-2 ${bgColor}`;
+            toast.textContent = message;
+            
+            container.appendChild(toast);
+            
+            requestAnimationFrame(() => {
+                toast.classList.remove('opacity-0', '-translate-y-2');
+            });
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', '-translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // 4. 文件处理逻辑 (解析 GIF & 静态图片)
+        function handleFileSelect(event, type) {
+            const files = event.target.files;
+            if (!files || files.length === 0) return;
+            
+            if (type === 'gif') {
+                processGifFile(files[0]);
+            } else {
+                processImageFiles(Array.from(files));
+            }
+            event.target.value = ''; 
+        }
+
+        async function processGifFile(file) {
+            showToast('正在解析 GIF 数据，请稍候...', 'info');
+            const objectUrl = URL.createObjectURL(file);
+            try {
+                const frameData = await gifFrames({ url: objectUrl, frames: 'all', outputType: 'canvas', cumulative: true });
+                
+                state.frames = frameData.map((f, i) => {
+                    const canvas = f.getImage();
+                    return {
+                        id: `frame_${Date.now()}_${i}`,
+                        canvas: canvas,
+                        delay: f.frameInfo.delay * 10 || 100 
+                    };
+                });
+
+                if (state.frames.length > 0) {
+                    state.width = state.frames[0].canvas.width;
+                    state.height = state.frames[0].canvas.height;
+                    updateUIState();
+                    renderFrameList();
+                    startPreview();
+                    showToast('GIF 加载成功！', 'success');
+                }
+            } catch (error) {
+                console.error(error);
+                showToast('解析失败，文件可能已损坏或格式不受支持。', 'error');
+            } finally {
+                URL.revokeObjectURL(objectUrl);
+            }
+        }
+
+        // 采用异步串行处理批量导入的静态图片，确保基准尺寸初始化可靠
+        async function processImageFiles(files) {
+            if (files.length === 0) return;
+            showToast('正在处理静态图片，请稍候...', 'info');
+
+            for (const file of files) {
+                await new Promise((resolve) => {
+                    const img = new Image();
+                    const objectUrl = URL.createObjectURL(file);
+                    
+                    img.onload = () => {
+                        // 若为全新项目，以首张图片尺寸为基准
+                        if (state.width === 0 || state.height === 0) {
+                            state.width = img.width;
+                            state.height = img.height;
+                        }
+
+                        const canvas = document.createElement('canvas');
+                        canvas.width = state.width;
+                        canvas.height = state.height;
+                        const ctx = canvas.getContext('2d');
+                        
+                        drawCoverImage(ctx, img, state.width, state.height);
+
+                        state.frames.push({
+                            id: `frame_${Date.now()}_img_${Math.random().toString(36).substr(2, 5)}`,
+                            canvas: canvas,
+                            delay: 100 
+                        });
+                        
+                        URL.revokeObjectURL(objectUrl);
+                        resolve();
+                    };
+                    img.onerror = () => {
+                        showToast(`读取图片 ${file.name} 失败。`, 'error');
+                        URL.revokeObjectURL(objectUrl);
+                        resolve();
+                    };
+                    img.src = objectUrl;
+                });
+            }
+            
+            renderFrameList();
+            updateUIState();
+            
+            // 如果原本处于播放意图但定时器停止，重新唤醒
+            if (state.frames.length > 0 && !previewTimer && state.isPlaying) {
+                startPreview();
+            }
+            
+            showToast('静态图片处理完毕。', 'success');
+        }
+
+        function drawCoverImage(ctx, img, w, h) {
+            const imgW = img.width;
+            const imgH = img.height;
+            const ratio = Math.max(w / imgW, h / imgH);
+            const newW = imgW * ratio;
+            const newH = imgH * ratio;
+            const offsetX = (w - newW) / 2;
+            const offsetY = (h - newH) / 2;
+            
+            ctx.fillStyle = "#ffffff";
+            ctx.fillRect(0, 0, w, h);
+            ctx.drawImage(img, 0, 0, imgW, imgH, offsetX, offsetY, newW, newH);
+        }
+
+        // 5. UI 渲染与更新
+        function updateUIState() {
+            const hasFrames = state.frames.length > 0;
+            dom.placeholder.style.display = hasFrames ? 'none' : 'flex';
+            // 解除禁用追加静态图片按钮的逻辑
+            // dom.btnInsertImg.disabled = !hasFrames; 
+            dom.btnExport.disabled = !hasFrames;
+            dom.btnPlayback.disabled = !hasFrames;
+            dom.frameCount.textContent = state.frames.length;
+            
+            if (hasFrames) {
+                dom.previewInfo.textContent = `${state.width} x ${state.height} px`;
+                if(previewCanvas.width !== state.width) previewCanvas.width = state.width;
+                if(previewCanvas.height !== state.height) previewCanvas.height = state.height;
+            } else {
+                dom.previewInfo.textContent = '-- x -- px';
+            }
+        }
+
+        function renderFrameList() {
+            dom.frameList.innerHTML = '';
+            
+            state.frames.forEach((frame, index) => {
+                const li = document.createElement('li');
+                li.className = 'relative group bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-grab active:cursor-grabbing flex flex-col';
+                li.dataset.id = frame.id;
+
+                const thumbContainer = document.createElement('div');
+                thumbContainer.className = 'relative h-24 w-full checkerboard-bg border-b border-gray-100 flex-shrink-0';
+                
+                const thumb = document.createElement('canvas');
+                thumb.className = 'absolute inset-0 w-full h-full object-contain p-1';
+                thumb.width = state.width;
+                thumb.height = state.height;
+                thumb.getContext('2d').drawImage(frame.canvas, 0, 0);
+                
+                const badge = document.createElement('div');
+                badge.className = 'absolute top-1 left-1 bg-black bg-opacity-60 text-white text-[10px] px-1.5 py-0.5 rounded font-mono';
+                badge.textContent = index + 1;
+
+                const btnGroup = document.createElement('div');
+                btnGroup.className = 'absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity';
+
+                const editBtn = document.createElement('button');
+                editBtn.className = 'bg-blue-500 text-white p-1 rounded hover:bg-blue-600 shadow';
+                editBtn.innerHTML = '<i data-lucide="pen-tool" class="w-3 h-3"></i>';
+                editBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    openEditModal(frame.id);
+                };
+
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'bg-red-500 text-white p-1 rounded hover:bg-red-600 shadow';
+                deleteBtn.innerHTML = '<i data-lucide="trash-2" class="w-3 h-3"></i>';
+                deleteBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    deleteFrame(index);
+                };
+
+                btnGroup.appendChild(editBtn);
+                btnGroup.appendChild(deleteBtn);
+
+                thumbContainer.appendChild(thumb);
+                thumbContainer.appendChild(badge);
+                thumbContainer.appendChild(btnGroup);
+
+                const controlArea = document.createElement('div');
+                controlArea.className = 'p-2 flex items-center justify-between bg-gray-50';
+                
+                const delayInput = document.createElement('input');
+                delayInput.type = 'number';
+                delayInput.value = frame.delay;
+                delayInput.min = 10;
+                delayInput.className = 'w-16 text-xs text-center border border-gray-300 rounded py-1 px-1 focus:outline-none focus:border-indigo-500 bg-white';
+                delayInput.onchange = (e) => {
+                    let val = parseInt(e.target.value);
+                    if (isNaN(val) || val < 10) val = 10;
+                    frame.delay = val;
+                    e.target.value = val;
+                };
+
+                const label = document.createElement('span');
+                label.className = 'text-xs text-gray-500';
+                label.textContent = 'ms';
+
+                const inputWrapper = document.createElement('div');
+                inputWrapper.className = 'flex items-center gap-1';
+                inputWrapper.appendChild(delayInput);
+                inputWrapper.appendChild(label);
+
+                controlArea.appendChild(inputWrapper);
+                
+                li.appendChild(thumbContainer);
+                li.appendChild(controlArea);
+                
+                dom.frameList.appendChild(li);
+            });
+
+            lucide.createIcons(); 
+        }
+
+        // 6. 交互功能
+        function deleteFrame(index) {
+            state.frames.splice(index, 1);
+            if(currentFrameIdx >= state.frames.length) currentFrameIdx = 0;
+            renderFrameList();
+            updateUIState();
+            
+            if (state.frames.length === 0) {
+                stopPreview();
+                previewCtx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+            } else if (!state.isPlaying) {
+                drawSingleFrame(currentFrameIdx);
+            }
+        }
+
+        function applyGlobalDelay() {
+            const input = document.getElementById('global-delay');
+            let val = parseInt(input.value);
+            if (isNaN(val) || val < 10) {
+                showToast('请输入有效的延迟时间（最小 10ms）', 'error');
+                return;
+            }
+            state.frames.forEach(f => f.delay = val);
+            renderFrameList();
+            showToast('全局延迟应用成功', 'success');
+        }
+
+        // 7. 播放预览逻辑
+        function togglePlayback() {
+            state.isPlaying = !state.isPlaying;
+            if (state.isPlaying) {
+                dom.btnPlayback.innerHTML = '<i data-lucide="pause" class="w-4 h-4 text-gray-700"></i>';
+                startPreview();
+            } else {
+                dom.btnPlayback.innerHTML = '<i data-lucide="play" class="w-4 h-4 text-gray-700"></i>';
+                stopPreview();
+            }
+            lucide.createIcons();
+        }
+
+        function drawSingleFrame(index) {
+            if (state.frames.length === 0) return;
+            const frame = state.frames[index];
+            previewCtx.clearRect(0, 0, state.width, state.height);
+            previewCtx.drawImage(frame.canvas, 0, 0);
+        }
+
+        function startPreview() {
+            stopPreview();
+            if (state.frames.length === 0 || !state.isPlaying) return;
+
+            function renderNext() {
+                if (state.frames.length === 0) return;
+                currentFrameIdx = currentFrameIdx % state.frames.length;
+                
+                drawSingleFrame(currentFrameIdx);
+                
+                const delay = state.frames[currentFrameIdx].delay;
+                previewTimer = setTimeout(() => {
+                    currentFrameIdx++;
+                    renderNext();
+                }, delay);
+            }
+            renderNext();
+        }
+
+        function stopPreview() {
+            if (previewTimer) {
+                clearTimeout(previewTimer);
+                previewTimer = null;
+            }
+        }
+
+        // ================= 素材库与图片编辑核心逻辑 =================
+        
+        function renderMaterialList() {
+            dom.materialList.innerHTML = '';
+            state.materials.forEach(mat => {
+                const li = document.createElement('li');
+                li.className = 'relative group bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-grab flex flex-col items-center';
+                li.dataset.id = mat.id;
+
+                const thumbContainer = document.createElement('div');
+                thumbContainer.className = 'relative h-20 w-full checkerboard-bg flex-shrink-0';
+                
+                const thumb = document.createElement('canvas');
+                thumb.className = 'absolute inset-0 w-full h-full object-contain p-1';
+                thumb.width = state.width || mat.canvas.width;
+                thumb.height = state.height || mat.canvas.height;
+                thumb.getContext('2d').drawImage(mat.canvas, 0, 0);
+
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'absolute top-1 right-1 bg-red-500 text-white p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 shadow z-10';
+                deleteBtn.innerHTML = '<i data-lucide="x" class="w-3 h-3"></i>';
+                deleteBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    state.materials = state.materials.filter(m => m.id !== mat.id);
+                    renderMaterialList();
+                };
+
+                thumbContainer.appendChild(thumb);
+                thumbContainer.appendChild(deleteBtn);
+                li.appendChild(thumbContainer);
+                dom.materialList.appendChild(li);
+            });
+            lucide.createIcons();
+        }
+
+        function createMaterialFromCanvas(sourceCanvas) {
+            const newCanvas = document.createElement('canvas');
+            newCanvas.width = sourceCanvas.width;
+            newCanvas.height = sourceCanvas.height;
+            newCanvas.getContext('2d').drawImage(sourceCanvas, 0, 0);
+            
+            state.materials.unshift({
+                id: `mat_${Date.now()}`,
+                canvas: newCanvas
+            });
+            renderMaterialList();
+        }
+
+        // --- 取色器邏輯 ---
+        function toggleEyedropperMode() {
+            const btn = document.getElementById('btn-eyedropper');
+            isEyedropperMode = !isEyedropperMode;
+            if (isEyedropperMode) {
+                btn.classList.add('bg-indigo-100', 'text-indigo-600');
+                dom.editCanvas.style.cursor = 'crosshair';
+            } else {
+                btn.classList.remove('bg-indigo-100', 'text-indigo-600');
+                dom.editCanvas.style.cursor = '';
+            }
+        }
+
+        // --- 画板工具方法 ---
+        function getCanvasMousePos(canvas, evt) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            return [
+                (evt.clientX - rect.left) * scaleX,
+                (evt.clientY - rect.top) * scaleY
+            ];
+        }
+
+        dom.editCanvas.addEventListener('mousedown', (e) => {
+            if (isEyedropperMode) {
+                const pos = getCanvasMousePos(dom.editCanvas, e);
+                const ctx = dom.editCanvas.getContext('2d');
+                const pixel = ctx.getImageData(pos[0], pos[1], 1, 1).data;
+                // 將 RGB 轉換為 Hex 格式
+                const hex = "#" + (1 << 24 | pixel[0] << 16 | pixel[1] << 8 | pixel[2]).toString(16).slice(1).toUpperCase();
+                dom.brushColor.value = hex;
+                
+                // 取色完成後自動關閉取色模式
+                toggleEyedropperMode();
+                return;
+            }
+
+            isDrawing = true;
+            const pos = getCanvasMousePos(dom.editCanvas, e);
+            lastDrawX = pos[0];
+            lastDrawY = pos[1];
+        });
+
+        dom.editCanvas.addEventListener('mousemove', (e) => {
+            // 添加空值保护，防止因 DOM 元素缺失报错
+            if (!isDrawing || !dom.brushColor || !dom.brushSize) return;
+            
+            const pos = getCanvasMousePos(dom.editCanvas, e);
+            const ctx = dom.editCanvas.getContext('2d');
+            
+            ctx.beginPath();
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.strokeStyle = dom.brushColor.value;
+            ctx.lineWidth = parseInt(dom.brushSize.value);
+            ctx.moveTo(lastDrawX, lastDrawY);
+            ctx.lineTo(pos[0], pos[1]);
+            ctx.stroke();
+            
+            lastDrawX = pos[0];
+            lastDrawY = pos[1];
+        });
+
+        dom.editCanvas.addEventListener('mouseup', () => isDrawing = false);
+        dom.editCanvas.addEventListener('mouseout', () => isDrawing = false);
+
+        // ================= 裁切核心邏輯 =================
+        function toggleCropMode() {
+            isCropMode = !isCropMode;
+            if (isCropMode) {
+                dom.btnToggleCrop.textContent = '取消裁切';
+                dom.btnToggleCrop.classList.replace('bg-gray-200', 'bg-red-100');
+                dom.btnToggleCrop.classList.replace('hover:bg-gray-300', 'hover:bg-red-200');
+                dom.btnToggleCrop.classList.add('text-red-600');
+                dom.btnApplyCrop.classList.remove('hidden');
+                
+                dom.cropCanvas.width = dom.editCanvas.width;
+                dom.cropCanvas.height = dom.editCanvas.height;
+                dom.cropCanvas.classList.remove('hidden');
+                
+                cropRect = {
+                    x: dom.editCanvas.width * 0.1,
+                    y: dom.editCanvas.height * 0.1,
+                    w: dom.editCanvas.width * 0.8,
+                    h: dom.editCanvas.height * 0.8
+                };
+                updateCropInputs();
+                drawCropOverlay();
+            } else {
+                dom.btnToggleCrop.textContent = '进入裁切';
+                dom.btnToggleCrop.classList.replace('bg-red-100', 'bg-gray-200');
+                dom.btnToggleCrop.classList.replace('hover:bg-red-200', 'hover:bg-gray-300');
+                dom.btnToggleCrop.classList.remove('text-red-600');
+                dom.btnApplyCrop.classList.add('hidden');
+                dom.cropCanvas.classList.add('hidden');
+            }
+        }
+
+        function updateCropInputs() {
+            dom.inputCropW.value = Math.round(cropRect.w);
+            dom.inputCropH.value = Math.round(cropRect.h);
+        }
+
+        function onCropInput() {
+            if (!isCropMode) return;
+            let w = parseInt(dom.inputCropW.value) || 10;
+            let h = parseInt(dom.inputCropH.value) || 10;
+            
+            if (w > dom.cropCanvas.width) w = dom.cropCanvas.width;
+            if (h > dom.cropCanvas.height) h = dom.cropCanvas.height;
+            if (cropRect.x + w > dom.cropCanvas.width) cropRect.x = dom.cropCanvas.width - w;
+            if (cropRect.y + h > dom.cropCanvas.height) cropRect.y = dom.cropCanvas.height - h;
+            
+            cropRect.w = w;
+            cropRect.h = h;
+            drawCropOverlay();
+        }
+
+        dom.inputCropW.addEventListener('input', onCropInput);
+        dom.inputCropH.addEventListener('input', onCropInput);
+
+        function drawCropOverlay() {
+            const ctx = dom.cropCanvas.getContext('2d');
+            ctx.clearRect(0, 0, dom.cropCanvas.width, dom.cropCanvas.height);
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+            ctx.fillRect(0, 0, dom.cropCanvas.width, dom.cropCanvas.height);
+            ctx.clearRect(cropRect.x, cropRect.y, cropRect.w, cropRect.h);
+            
+            ctx.strokeStyle = '#3b82f6';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(cropRect.x, cropRect.y, cropRect.w, cropRect.h);
+            
+            const handles = getCropHandles();
+            ctx.fillStyle = '#ffffff';
+            ctx.strokeStyle = '#3b82f6';
+            ctx.lineWidth = 1;
+            for (let k in handles) {
+                const h = handles[k];
+                ctx.fillRect(h.x - 4, h.y - 4, 8, 8);
+                ctx.strokeRect(h.x - 4, h.y - 4, 8, 8);
+            }
+        }
+
+        function getCropHandles() {
+            const { x, y, w, h } = cropRect;
+            return {
+                tl: { x: x, y: y }, tr: { x: x + w, y: y },
+                bl: { x: x, y: y + h }, br: { x: x + w, y: y + h }
+            };
+        }
+
+        dom.cropCanvas.addEventListener('mousedown', (e) => {
+            const pos = getCanvasMousePos(dom.cropCanvas, e);
+            const handles = getCropHandles();
+            cropDragState = null;
+            
+            for (let k in handles) {
+                const h = handles[k];
+                if (Math.abs(pos[0] - h.x) < 10 && Math.abs(pos[1] - h.y) < 10) {
+                    cropDragState = `resize-${k}`;
+                    break;
+                }
+            }
+            
+            if (!cropDragState) {
+                if (pos[0] >= cropRect.x && pos[0] <= cropRect.x + cropRect.w &&
+                    pos[1] >= cropRect.y && pos[1] <= cropRect.y + cropRect.h) {
+                    cropDragState = 'move';
+                }
+            }
+            
+            if (cropDragState) {
+                cropStartX = pos[0];
+                cropStartY = pos[1];
+                cropStartRect = { ...cropRect };
+            }
+        });
+
+        dom.cropCanvas.addEventListener('mousemove', (e) => {
+            if (!cropDragState) {
+                const pos = getCanvasMousePos(dom.cropCanvas, e);
+                const handles = getCropHandles();
+                let cursor = 'default';
+                for (let k in handles) {
+                    const h = handles[k];
+                    if (Math.abs(pos[0] - h.x) < 10 && Math.abs(pos[1] - h.y) < 10) {
+                        if (k === 'tl' || k === 'br') cursor = 'nwse-resize';
+                        if (k === 'tr' || k === 'bl') cursor = 'nesw-resize';
+                        break;
+                    }
+                }
+                if (cursor === 'default') {
+                    if (pos[0] >= cropRect.x && pos[0] <= cropRect.x + cropRect.w &&
+                        pos[1] >= cropRect.y && pos[1] <= cropRect.y + cropRect.h) {
+                        cursor = 'move';
+                    }
+                }
+                dom.cropCanvas.style.cursor = cursor;
+                return;
+            }
+            
+            const pos = getCanvasMousePos(dom.cropCanvas, e);
+            const dx = pos[0] - cropStartX;
+            const dy = pos[1] - cropStartY;
+            
+            if (cropDragState === 'move') {
+                cropRect.x = cropStartRect.x + dx;
+                cropRect.y = cropStartRect.y + dy;
+                
+                if (cropRect.x < 0) cropRect.x = 0;
+                if (cropRect.y < 0) cropRect.y = 0;
+                if (cropRect.x + cropRect.w > dom.cropCanvas.width) cropRect.x = dom.cropCanvas.width - cropRect.w;
+                if (cropRect.y + cropRect.h > dom.cropCanvas.height) cropRect.y = dom.cropCanvas.height - cropRect.h;
+            } else {
+                if (cropDragState.includes('l')) { cropRect.x = cropStartRect.x + dx; cropRect.w = cropStartRect.w - dx; }
+                if (cropDragState.includes('r')) { cropRect.w = cropStartRect.w + dx; }
+                if (cropDragState.includes('t')) { cropRect.y = cropStartRect.y + dy; cropRect.h = cropStartRect.h - dy; }
+                if (cropDragState.includes('b')) { cropRect.h = cropStartRect.h + dy; }
+                
+                if (cropRect.w < 10) { cropRect.w = 10; if (cropDragState.includes('l')) cropRect.x = cropStartRect.x + cropStartRect.w - 10; }
+                if (cropRect.h < 10) { cropRect.h = 10; if (cropDragState.includes('t')) cropRect.y = cropStartRect.y + cropStartRect.h - 10; }
+            }
+            
+            updateCropInputs();
+            drawCropOverlay();
+        });
+
+        dom.cropCanvas.addEventListener('mouseup', () => cropDragState = null);
+        dom.cropCanvas.addEventListener('mouseout', () => cropDragState = null);
+
+        function applyCrop() {
+            if (!isCropMode) return;
+            
+            const ctx = dom.editCanvas.getContext('2d');
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = cropRect.w;
+            tempCanvas.height = cropRect.h;
+            const tempCtx = tempCanvas.getContext('2d');
+            
+            tempCtx.drawImage(
+                dom.editCanvas,
+                cropRect.x, cropRect.y, cropRect.w, cropRect.h,
+                0, 0, cropRect.w, cropRect.h
+            );
+            
+            dom.editCanvas.width = cropRect.w;
+            dom.editCanvas.height = cropRect.h;
+            ctx.drawImage(tempCanvas, 0, 0);
+            
+            toggleCropMode();
+            showToast('裁切已应用，可继续编辑或保存', 'success');
+        }
+
+        // --- 画布变換功能 (旋转/翻转) ---
+        function applyTransform(action) {
+            const canvas = dom.editCanvas;
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width;
+            const h = canvas.height;
+
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = w;
+            tempCanvas.height = h;
+            tempCanvas.getContext('2d').drawImage(canvas, 0, 0);
+
+            ctx.clearRect(0, 0, w, h);
+            ctx.save();
+            
+            ctx.translate(w / 2, h / 2);
+
+            switch (action) {
+                case 'rotate-left':
+                    ctx.rotate(-Math.PI / 2);
+                    break;
+                case 'rotate-right':
+                    ctx.rotate(Math.PI / 2);
+                    break;
+                case 'flip-horizontal':
+                    ctx.scale(-1, 1);
+                    break;
+                case 'flip-vertical':
+                    ctx.scale(1, -1);
+                    break;
+            }
+
+            ctx.drawImage(tempCanvas, -w / 2, -h / 2);
+            ctx.restore();
+        }
+
+        function openEditModal(frameId) {
+            stopPreview();
+            editingFrameId = frameId;
+            const frame = state.frames.find(f => f.id === frameId);
+            if (!frame) return;
+
+            dom.editCanvas.width = frame.canvas.width;
+            dom.editCanvas.height = frame.canvas.height;
+            const ctx = dom.editCanvas.getContext('2d');
+            ctx.drawImage(frame.canvas, 0, 0);
+
+            // 重新绑定刚渲染好的 UI 控件
+            dom.brushColor = document.getElementById('brush-color');
+            dom.brushSize = document.getElementById('brush-size');
+
+            dom.editModal.classList.remove('hidden');
+        }
+
+        function closeEditModal() {
+            if (isCropMode) toggleCropMode(); 
+            dom.editModal.classList.add('hidden');
+            editingFrameId = null;
+            if (state.isPlaying) startPreview();
+        }
+
+        function saveEditAsMaterial() {
+            createMaterialFromCanvas(dom.editCanvas);
+            showToast('已成功保存至素材库', 'success');
+            closeEditModal();
+        }
+
+        function saveEditAndApply() {
+            const frame = state.frames.find(f => f.id === editingFrameId);
+            if (frame) {
+                if (frame.canvas.width !== dom.editCanvas.width || frame.canvas.height !== dom.editCanvas.height) {
+                    frame.canvas.width = dom.editCanvas.width;
+                    frame.canvas.height = dom.editCanvas.height;
+                }
+                const ctx = frame.canvas.getContext('2d');
+                ctx.clearRect(0, 0, frame.canvas.width, frame.canvas.height);
+                ctx.drawImage(dom.editCanvas, 0, 0);
+                
+                createMaterialFromCanvas(dom.editCanvas);
+                
+                renderFrameList();
+                if (!state.isPlaying) drawSingleFrame(currentFrameIdx);
+                showToast('已更新当前帧并保存至素材库', 'success');
+            }
+            closeEditModal();
+        }
+
+        // ================= 外部文件拖入素材库逻辑 =================
+        dom.materialZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.stopPropagation(); 
+            dom.materialZone.classList.add('bg-indigo-50');
+        });
+        
+        dom.materialZone.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dom.materialZone.classList.remove('bg-indigo-50');
+        });
+        
+        dom.materialZone.addEventListener('drop', async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dom.materialZone.classList.remove('bg-indigo-50');
+            
+            const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+            
+            for (const file of files) {
+                if (file.type === 'image/gif') {
+                    showToast('素材库暂仅支持静态图格式', 'info');
+                    continue;
+                }
+                
+                await new Promise((resolve) => {
+                    const img = new Image();
+                    const objectUrl = URL.createObjectURL(file);
+                    img.onload = () => {
+                        // 若无基准尺寸，以上传的素材作为全局尺寸基准
+                        if (state.width === 0 || state.height === 0) {
+                            state.width = img.width;
+                            state.height = img.height;
+                        }
+                        const tempCanvas = document.createElement('canvas');
+                        tempCanvas.width = state.width;
+                        tempCanvas.height = state.height;
+                        const ctx = tempCanvas.getContext('2d');
+                        drawCoverImage(ctx, img, state.width, state.height);
+                        createMaterialFromCanvas(tempCanvas);
+                        URL.revokeObjectURL(objectUrl);
+                        resolve();
+                    };
+                    img.onerror = resolve;
+                    img.src = objectUrl;
+                });
+            }
+        });
+
+        // 8. 拖拽文件全局监听
+        document.body.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            if (e.dataTransfer && e.dataTransfer.types && Array.from(e.dataTransfer.types).includes('Files')) {
+                document.body.classList.add('drag-active');
+            }
+        });
+        document.body.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            if (e.clientX === 0 && e.clientY === 0) { 
+                document.body.classList.remove('drag-active');
+            }
+        });
+        document.body.addEventListener('drop', (e) => {
+            e.preventDefault();
+            document.body.classList.remove('drag-active');
+            
+            if (!e.dataTransfer || !e.dataTransfer.types || !Array.from(e.dataTransfer.types).includes('Files')) {
+                return;
+            }
+
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                const file = files[0];
+                if (file.type === 'image/gif') {
+                    // 若拖入的首个文件是 GIF，走原有解析逻辑
+                    processGifFile(file);
+                } else if (file.type.startsWith('image/')) {
+                    // 过滤出静态图片并交由新函数批量处理
+                    const validFiles = Array.from(files).filter(f => f.type.startsWith('image/') && f.type !== 'image/gif');
+                    if (validFiles.length > 0) {
+                        processImageFiles(validFiles);
+                    } else {
+                        showToast('主序列仅支持导入 GIF 或 静态图片格式(JPG/PNG/WEBP)', 'error');
+                    }
+                } else {
+                    showToast('不支持的文件格式', 'error');
+                }
+            }
+        });
+
+        // 9. 导出生成核心逻辑
+        function exportGIF() {
+            if (state.frames.length === 0) return;
+
+            const btnText = document.getElementById('export-text');
+            const originalIcon = '<i data-lucide="download" class="w-4 h-4"></i>';
+            const loadingIcon = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i>';
+            
+            dom.btnExport.disabled = true;
+            dom.btnExport.innerHTML = `${loadingIcon} <span>编码中...</span>`;
+            lucide.createIcons();
+            showToast('开始构建 GIF，请勿关闭页面...', 'info');
+
+            const gifConfig = {
+                workers: 2,
+                quality: 10,
+                width: state.width,
+                height: state.height,
+            };
+            
+            if (state.workerBlobUrl) {
+                gifConfig.workerScript = state.workerBlobUrl;
+            } else {
+                gifConfig.workerScript = 'https://unpkg.com/gif.js@0.2.0/dist/gif.worker.js';
+            }
+
+            const gifEncoder = new GIF(gifConfig);
+
+            state.frames.forEach(frame => {
+                gifEncoder.addFrame(frame.canvas, { delay: frame.delay, copy: true });
+            });
+
+            gifEncoder.on('finished', function(blob) {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `exported_animation_${Date.now()}.gif`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                
+                dom.btnExport.disabled = false;
+                dom.btnExport.innerHTML = `${originalIcon} <span id="export-text">导出 GIF</span>`;
+                lucide.createIcons();
+                showToast('处理完成，已触发下载。', 'success');
+            });
+
+            gifEncoder.on('progress', function(p) {
+               dom.btnExport.innerHTML = `${loadingIcon} <span>${Math.round(p * 100)}%</span>`;
+               lucide.createIcons();
+            });
+
+            gifEncoder.render();
+        }
+
+    </script>
+</body>
+</html>
