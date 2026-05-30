@@ -46,34 +46,31 @@
             <span id="current-tool-title" class="text-sm font-semibold text-gray-700 tracking-wide">首页指南</span>
         </header>
 
-        <!-- 工具挂载容器区 (更新：引入滚动保护与最小宽度约束) -->
-        <div class="flex-1 overflow-auto bg-gray-50">
-            <!-- 设定物理最小宽度底线 (1024px)，防止外部容器压缩导致内部工具布局崩溃 -->
-            <div class="w-full h-full min-w-[1024px] relative">
-                
-                <!-- ================= 首页指南 (原生内容) ================= -->
-                <section id="welcome" class="absolute inset-0 overflow-y-auto block p-8">
-                    <div class="bg-white p-8 rounded-lg shadow-sm border border-gray-200">
-                        <h2 class="text-2xl font-bold mb-4">欢迎使用个人工具库 (动态沙箱版)</h2>
-                        <p class="mb-4 text-gray-700">为避免代码冲突（如 CSS 样式污染、全局 JS 变量覆盖），本框架已采用 <strong>Iframe 隔离架构</strong>与<strong>动态配置驱动</strong>模式。</p>
-                        
-                        <h3 class="text-lg font-semibold mt-6 mb-2">标准接入流程：</h3>
-                        <ol class="list-decimal pl-6 space-y-3 text-gray-700">
-                            <li>将您以前保存的独立网页程序（例如 <code>regex_tool.html</code>）直接放入与本 <code>index.html</code> 同级的目录，或新建一个 <code>tools</code> 文件夹进行集中管理。<strong>无需对旧文件进行任何代码修改。</strong></li>
-                            <li>使用文本编辑器打开本 <code>index.html</code>，滚动到底部的 <code>&lt;script&gt;</code> 区域，找到 <code>TOOL_CONFIG</code> 数组。</li>
-                            <li>在数组中新增一条对象配置，映射您的本地文件路径。示例：<br>
-                                <code class="bg-gray-100 p-1.5 rounded text-sm text-blue-700 font-mono block mt-2">{ id: 'regex-tool', title: '正则测试器', type: 'iframe', url: './regex_tool.html' }</code>
-                            </li>
-                            <li>保存文件并刷新页面，左侧导航栏将自动渲染新注册的工具。点击即可在右侧无缝加载并运行。</li>
-                        </ol>
-                    </div>
-                </section>
+        <!-- 工具挂载容器区 -->
+        <div class="flex-1 relative overflow-hidden">
+            
+            <!-- ================= 首页指南 (原生内容) ================= -->
+            <section id="welcome" class="absolute inset-0 overflow-y-auto block p-8">
+                <div class="bg-white p-8 rounded-lg shadow-sm border border-gray-200">
+                    <h2 class="text-2xl font-bold mb-4">欢迎使用个人工具库 (动态沙箱版)</h2>
+                    <p class="mb-4 text-gray-700">为避免代码冲突（如 CSS 样式污染、全局 JS 变量覆盖），本框架已采用 <strong>Iframe 隔离架构</strong>与<strong>动态配置驱动</strong>模式。</p>
+                    
+                    <h3 class="text-lg font-semibold mt-6 mb-2">标准接入流程：</h3>
+                    <ol class="list-decimal pl-6 space-y-3 text-gray-700">
+                        <li>将您以前保存的独立网页程序（例如 <code>regex_tool.html</code>）直接放入与本 <code>index.html</code> 同级的目录，或新建一个 <code>tools</code> 文件夹进行集中管理。<strong>无需对旧文件进行任何代码修改。</strong></li>
+                        <li>使用文本编辑器打开本 <code>index.html</code>，滚动到底部的 <code>&lt;script&gt;</code> 区域，找到 <code>TOOL_CONFIG</code> 数组。</li>
+                        <li>在数组中新增一条对象配置，映射您的本地文件路径。示例：<br>
+                            <code class="bg-gray-100 p-1.5 rounded text-sm text-blue-700 font-mono block mt-2">{ id: 'regex-tool', title: '正则测试器', type: 'iframe', url: './regex_tool.html' }</code>
+                        </li>
+                        <li>保存文件并刷新页面，左侧导航栏将自动渲染新注册的工具。点击即可在右侧无缝加载并运行。</li>
+                    </ol>
+                </div>
+            </section>
 
-                <!-- ================= Iframe 沙箱容器 ================= -->
-                <!-- 更新：补充 allow-downloads 以确保类似 GIF 编辑器等工具的文件导出功能可用 -->
-                <iframe id="tool-frame" class="absolute inset-0 w-full h-full border-0 hidden" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-downloads"></iframe>
-                
-            </div>
+            <!-- ================= Iframe 沙箱容器 ================= -->
+            <!-- 恢复流式布局 (w-full h-full)，移除硬性宽度限制，保留 allow-downloads 权限 -->
+            <iframe id="tool-frame" class="absolute inset-0 w-full h-full border-0 hidden" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-downloads"></iframe>
+            
         </div>
 
     </main>
@@ -81,10 +78,12 @@
     <!-- 全局框架控制逻辑 -->
     <script>
         // ================= 1. 工具库注册配置 (唯一需要您修改的地方) =================
-        const TOOL_CONFIG = [            { id: 'welcome', title: '首页指南', type: 'native' },
+        const TOOL_CONFIG = [
+            { id: 'welcome', title: '首页指南', type: 'native' },
+            // 取消下方注释并修改 URL 即可接入您的现有程序：
             // { id: 'tool-timestamp', title: '时间戳转换', type: 'iframe', url: './tools/timestamp.html' },
-            { id: 'tool-custom', title: 'gif编辑器', type: 'iframe', url: './gif.html' },
-            { id: 'tool-crypto', title: '抽奖系统', type: 'iframe', url: './抽奖.html' },
+             { id: 'tool-crypto', title: '抽奖系统', type: 'iframe', url: './抽奖.html' },
+             { id: 'tool-custom', title: 'gif编辑器', type: 'iframe', url: './gif.html' }
         ];
 
         // ================= 2. 核心调度引擎 =================
@@ -151,7 +150,5 @@
             sidebar.classList.toggle('-ml-48');
         }
     </script>
-</body>
-</html>
 </body>
 </html>
