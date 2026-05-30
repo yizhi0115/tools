@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>动态工具工作台 (Web IDE 架构)</title>
+    <!-- 引入 Tailwind CSS 进行现代样式构建 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- 引入 CodeMirror 核心及主题，用于实现代码编辑器功能 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/monokai.min.css">
+    
+    <style>
+        /* 界面滚动条统一样式规范 */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        /* 修正 CodeMirror 默认高度限制，使其自适应弹性容器 */
+        .CodeMirror {
+            height: 100%;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 h-screen flex overflow-hidden font-sans text-gray-800">
+
+    <!-- 侧边导航控制台 -->
+    <aside class="w-72 bg-slate-900 text-slate-300 flex flex-col h-full shadow-xl z-20 flex-shrink-0 transition-all">
+        <div class="p-6 border-b border-slate-800">
+            <h1 class="text-lg font-bold text-white tracking-wide flex items-center justify-between">
+                <span>工具工作台</span>
+                <button onclick="createNewTool()" class="bg-blue-600 hover:bg-blue-500 text-white text-xs px-3 py-1.5 rounded shadow-sm transition-colors">
+                    + 新建工具
+                </button>
+            </h1>
+            <p class="text-xs text-slate-500 mt-2 font-mono">Dynamic Sandbox IDE v2.0</p>
+        </div>
+        
+        <nav class="flex-1 overflow-y-auto py-3" id="nav-menu">
+            <!-- 动态生成的工具列表节点将挂载于此 -->
+        </nav>
+        
+        <div class="p-4 border-t border-slate-800 text-xs text-slate-400 flex justify-between items-center bg-slate-950">
+            <span title="数据保存在当前浏览器的 LocalStorage 中">存储状态: 本地</span>
+            <div class="flex gap-3">
+                <label class="hover:text-white cursor-pointer transition-colors" title="导入备份数据">
+                    导入
+                    <input type="file" id="file-import" accept=".json" class="hidden" onchange="importData(event)">
+                </label>
+                <button onclick="exportData()" class="hover:text-white transition-colors" title="导出当前所有工具源码为 JSON">导出</button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- 核心工作区域 -->
+    <main class="flex-1 flex flex-col relative bg-white h-full overflow-hidden">
+        
+        <!-- 视图层 1: 系统欢迎与指引界面 -->
+        <div id="view-welcome" class="absolute inset-0 p-10 flex flex-col items-center justify-center bg-slate-50 z-10">
+            <div class="max-w-2xl text-center">
+                <div class="mb-6 flex justify-center">
+                    <svg class="w-16 h-16 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>
+                </div>
+                <h2 class="text-3xl font-bold text-slate-800 mb-4">沙箱环境已就绪</h2>
+                <p class="text-slate-600 mb-8 leading-relaxed text-sm">
+                    系统已切换至 <strong>Web IDE 架构</strong>。您无需再手动管理本地 HTML 文件。点击左侧的新建按钮打开编辑器，直接编写或粘贴您的 HTML/CSS/JS 代码。系统将在安全的内存沙箱中即时编译并运行您的程序。
+                </p>
+                <button onclick="createNewTool()" class="bg-blue-600 text-white px-6 py-2.5 rounded hover:bg-blue-700 transition-colors font-medium shadow-md">
+                    启动编辑器
+                </button>
+            </div>
+        </div>
+
+        <!-- 视图层 2: CodeMirror 代码编辑器 -->
+        <div id="view-editor" class="absolute inset-0 flex flex-col bg-white hidden z-20">
+            <!-- 编辑器控制栏 -->
+            <div class="h-14 border-b border-slate-200 flex items-center justify-between px-6 bg-slate-50 flex-shrink-0 shadow-sm">
+                <div class="flex items-center gap-4 flex-1">
+                    <label class="text-sm font-semibold text-slate-700">配置名称:</label>
+                    <input type="text" id="editor-title" class="w-72 px-3 py-1.5 border border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-medium text-slate-800 bg-white" placeholder="请输入工具名称 (如: JSON 格式化)">
+                </div>
+                <div class="flex gap-3">
+                    <button id="btn-delete" onclick="deleteCurrentTool()" class="px-4 py-1.5 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded border border-red-200 transition-colors hidden">删除此工具</button>
+                    <button onclick="closeEditor()" class="px-4 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-200 rounded transition-colors">取消</button>
+                    <button onclick="saveTool()" class="px-4 py-1.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded shadow-sm transition-colors">保存并部署</button>
+                </div>
+            </div>
+            <!-- 代码输入区挂载点 -->
+            <div class="flex-1 relative">
+                <textarea id="code-editor"></textarea>
+            </div>
+        </div>
+
+        <!-- 视图层 3: Iframe 动态运行沙箱 -->
+        <div id="view-runtime" class="absolute inset-0 flex flex-col bg-white hidden z-30">
+            <!-- 运行态状态栏 -->
+            <div class="h-12 border-b border-slate-200 flex items-center justify-between px-6 bg-slate-50 flex-shrink-0 shadow-sm">
+                <div class="flex items-center gap-3">
+                    <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                    <h3 id="runtime-title" class="font-semibold text-slate-800 text-sm">运行中...</h3>
+                </div>
+                <button onclick="editCurrentTool()" class="px-4 py-1.5 text-xs font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded transition-colors">
+                    修改源代码
+                </button>
+            </div>
+            <!-- 执行容器：配置 sandbox 确保基础安全性 -->
+            <iframe id="runtime-frame" class="w-full flex-1 border-0 bg-white" sandbox="allow-scripts allow-forms allow-same-origin allow-modals allow-popups"></iframe>
+        </div>
+
+    </main>
+
+    <!-- 核心依赖注入：CodeMirror 编辑器库及其语法模式 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/xml/xml.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/javascript/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/css/css.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/htmlmixed/htmlmixed.min.js"></script>
+
+    <!-- 系统逻辑控制器 -->
+    <script>
+        /**
+         * 全局状态管理
+         */
+        const STORAGE_KEY = 'sys_dynamic_tools_data_v2';
+        let toolsData = [];
+        let currentEditingId = null;
+        let currentRunningId = null;
+        let editorInstance = null;
+
+        // 标准化 HTML 模板，预置 Tailwind CSS 以提升开发效率
+        const defaultTemplate = `<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>新建工具应用</title>
+    <!-- 系统已默认注入 Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"><\/script>
+    <style>
+        /* 在此处编写自定义 CSS */
+        body { padding: 2rem; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <div class="max-w-3xl mx-auto bg-white p-8 rounded-lg shadow-sm border border-gray-200">
+        <h1 class="text-2xl font-bold mb-4">欢迎开发新工具</h1>
+        <p class="text-gray-600 mb-6">您可以在上方编辑器中直接粘贴既有的 HTML 代码，或在此处从零开始编写。</p>
+        
+        <button id="testBtn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+            测试按钮
+        </button>
+    </div>
+    
+    <script>
+        // 在此处编写 JavaScript 逻辑
+        document.getElementById('testBtn').addEventListener('click', () => {
+            alert('环境运行正常！');
+        });
+    <\/script>
+</body>
+</html>`;
+
+        // ================= 核心生命周期 =================
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initEditor();
+            loadToolsFromStorage();
+            renderNavigation();
+        });
+
+        function initEditor() {
+            const textarea = document.getElementById('code-editor');
+            editorInstance = CodeMirror.fromTextArea(textarea, {
+                mode: 'htmlmixed',
+                theme: 'monokai',
+                lineNumbers: true,
+                autoCloseTags: true,
+                matchBrackets: true,
+                indentUnit: 4,
+                tabSize: 4,
+                lineWrapping: true
+            });
+        }
+
+        // ================= 数据持久化与备份层 =================
+        
+        function loadToolsFromStorage() {
+            try {
+                const stored = localStorage.getItem(STORAGE_KEY);
+                if (stored) {
+                    toolsData = JSON.parse(stored);
+                }
+            } catch (e) {
+                console.error("存储读取存在异常，初始化为空数据阵列", e);
+                toolsData = [];
+            }
+        }
+
+        function saveToolsToStorage() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(toolsData));
+            } catch (e) {
+                alert("保存失败：可能由于本地存储空间不足。请尝试导出备份或清理其他数据。");
+            }
+        }
+
+        function exportData() {
+            if (toolsData.length === 0) {
+                alert("当前系统无可用数据进行导出。");
+                return;
+            }
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(toolsData, null, 2));
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            const dateStr = new Date().toISOString().split('T')[0];
+            downloadAnchorNode.setAttribute("download", `tools_backup_${dateStr}.json`);
+            document.body.appendChild(downloadAnchorNode);
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const importedData = JSON.parse(e.target.result);
+                    if (!Array.isArray(importedData)) throw new Error("无效的数据格式");
+                    
+                    const confirmMerge = confirm(`检测到 ${importedData.length} 个工具数据。\n点击“确定”将合并到当前系统（同名 ID 将被覆盖）。`);
+                    if (confirmMerge) {
+                        importedData.forEach(importedItem => {
+                            const existingIndex = toolsData.findIndex(t => t.id === importedItem.id);
+                            if (existingIndex >= 0) {
+                                toolsData[existingIndex] = importedItem;
+                            } else {
+                                toolsData.push(importedItem);
+                            }
+                        });
+                        saveToolsToStorage();
+                        renderNavigation();
+                        switchView('welcome');
+                    }
+                } catch (error) {
+                    alert("导入失败：文件损坏或格式不合法。");
+                }
+                // 重置 input 以允许重复导入同一文件
+                event.target.value = '';
+            };
+            reader.readAsText(file);
+        }
+
+        // ================= 视图路由调度 =================
+        
+        function switchView(viewName) {
+            document.getElementById('view-welcome').classList.add('hidden');
+            document.getElementById('view-editor').classList.add('hidden');
+            document.getElementById('view-runtime').classList.add('hidden');
+            
+            // 安全机制：退出运行态时，清空沙箱内容，阻断后台脚本驻留运行
+            if (viewName !== 'runtime') {
+                document.getElementById('runtime-frame').srcdoc = '';
+            }
+            
+            document.getElementById(`view-${viewName}`).classList.remove('hidden');
+            
+            // 修复 CodeMirror 在 hidden 状态下渲染导致排版错乱的问题
+            if (viewName === 'editor' && editorInstance) {
+                setTimeout(() => editorInstance.refresh(), 50);
+            }
+        }
+
+        function updateNavHighlight(activeId) {
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                if (btn.dataset.id === activeId) {
+                    btn.classList.add('bg-slate-800', 'border-blue-500', 'text-white');
+                    btn.classList.remove('border-transparent', 'text-slate-300');
+                } else {
+                    btn.classList.remove('bg-slate-800', 'border-blue-500', 'text-white');
+                    btn.classList.add('border-transparent', 'text-slate-300');
+                }
+            });
+        }
+
+        // ================= 业务操作控制器 =================
+
+        function renderNavigation() {
+            const navMenu = document.getElementById('nav-menu');
+            navMenu.innerHTML = '';
+            
+            if (toolsData.length === 0) {
+                navMenu.innerHTML = '<div class="px-6 py-8 text-sm text-slate-500 text-center flex flex-col items-center"><span class="text-2xl mb-2">📭</span>暂无记录</div>';
+                return;
+            }
+
+            toolsData.forEach(tool => {
+                const btn = document.createElement('button');
+                btn.className = 'nav-btn w-full text-left px-6 py-3 hover:bg-slate-800 transition-colors border-l-4 border-transparent text-sm overflow-hidden text-ellipsis whitespace-nowrap text-slate-300';
+                btn.textContent = tool.title || '未命名配置';
+                btn.dataset.id = tool.id;
+                btn.onclick = () => runTool(tool.id);
+                navMenu.appendChild(btn);
+            });
+            
+            if (currentRunningId) updateNavHighlight(currentRunningId);
+        }
+
+        function createNewTool() {
+            currentEditingId = null;
+            document.getElementById('editor-title').value = '';
+            editorInstance.setValue(defaultTemplate);
+            document.getElementById('btn-delete').classList.add('hidden');
+            
+            updateNavHighlight(null);
+            switchView('editor');
+        }
+
+        function saveTool() {
+            const titleInput = document.getElementById('editor-title').value.trim();
+            const title = titleInput || '未命名配置';
+            const code = editorInstance.getValue();
+            
+            if (!currentEditingId) {
+                // 执行创建逻辑：使用高精度时间戳防止 ID 碰撞
+                const newId = 'module_' + Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
+                toolsData.push({ id: newId, title, code });
+                currentEditingId = newId;
+            } else {
+                // 执行更新逻辑
+                const idx = toolsData.findIndex(t => t.id === currentEditingId);
+                if (idx > -1) {
+                    toolsData[idx].title = title;
+                    toolsData[idx].code = code;
+                }
+            }
+            
+            saveToolsToStorage();
+            renderNavigation();
+            runTool(currentEditingId); // 保存完成后自动转入执行态
+        }
+
+        function runTool(id) {
+            const tool = toolsData.find(t => t.id === id);
+            if (!tool) return;
+            
+            currentRunningId = id;
+            updateNavHighlight(id);
+            
+            document.getElementById('runtime-title').textContent = tool.title;
+            // 核心执行逻辑：利用 srcdoc 属性在内存级别对 HTML 字符串进行沙箱隔离解析
+            document.getElementById('runtime-frame').srcdoc = tool.code;
+            
+            switchView('runtime');
+        }
+
+        function editCurrentTool() {
+            if (!currentRunningId) return;
+            const tool = toolsData.find(t => t.id === currentRunningId);
+            if (!tool) return;
+            
+            currentEditingId = tool.id;
+            document.getElementById('editor-title').value = tool.title;
+            editorInstance.setValue(tool.code);
+            document.getElementById('btn-delete').classList.remove('hidden');
+            
+            switchView('editor');
+        }
+
+        function deleteCurrentTool() {
+            if (!currentEditingId) return;
+            const confirmDelete = confirm("警告：删除操作属于破坏性修改且不可撤销。\n请确认是否移除此工具模块？");
+            if (!confirmDelete) return;
+            
+            toolsData = toolsData.filter(t => t.id !== currentEditingId);
+            saveToolsToStorage();
+            
+            currentEditingId = null;
+            currentRunningId = null;
+            
+            renderNavigation();
+            switchView('welcome');
+        }
+
+        function closeEditor() {
+            if (currentRunningId) {
+                // 若是从运行态进入编辑，则返回运行态
+                switchView('runtime');
+            } else {
+                // 若是新建中止，则返回欢迎页
+                switchView('welcome');
+            }
+        }
+    </script>
+</body>
+</html>
