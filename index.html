@@ -16,10 +16,13 @@
         }
     </style>
 </head>
-<body class="bg-gray-100 h-screen flex overflow-hidden font-sans text-gray-800">
+<body class="bg-gray-100 h-screen flex overflow-hidden font-sans text-gray-800 relative">
 
-    <!-- 左侧导航栏 (移除内部关闭按钮，统一由外部控制) -->
-    <aside id="sidebar" class="w-48 bg-gray-900 text-white flex flex-col h-full shadow-lg transition-all duration-300 ease-in-out flex-shrink-0 z-40 relative">
+    <!-- 移动端遮罩层 -->
+    <div id="mobile-overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/50 z-30 hidden md:hidden transition-opacity"></div>
+
+    <!-- 左侧导航栏 (增加移动端响应式绝对定位与抽屉效果) -->
+    <aside id="sidebar" class="absolute md:relative z-40 w-48 bg-gray-900 text-white flex flex-col h-full shadow-lg transition-all duration-300 ease-in-out flex-shrink-0 transform -translate-x-full md:translate-x-0 md:ml-0">
         <div class="p-4 border-b border-gray-700">
             <h1 class="text-lg font-bold tracking-wider truncate">个人工具库</h1>
             <p class="text-xs text-gray-400 mt-1 truncate">本地及 GitHub</p>
@@ -78,10 +81,12 @@
     <!-- 全局框架控制逻辑 -->
     <script>
         // ================= 1. 工具库注册配置 (唯一需要您修改的地方) =================
-        const TOOL_CONFIG = [            { id: 'welcome', title: '首页指南', type: 'native' },
-             { id: 'tool-crypto', title: '抽奖系统', type: 'iframe', url: './抽奖.html' },
-             { id: 'tool-custom', title: 'gif编辑器', type: 'iframe', url: './gif.html' },
+        const TOOL_CONFIG = [
+            { id: 'welcome', title: '首页指南', type: 'native' },
+            // 取消下方注释并修改 URL 即可接入您的现有程序：
             // { id: 'tool-timestamp', title: '时间戳转换', type: 'iframe', url: './tools/timestamp.html' },
+            // { id: 'tool-crypto', title: '编码转换', type: 'iframe', url: './tools/crypto.html' },
+            // { id: 'tool-custom', title: '我的定制工具', type: 'iframe', url: './my_custom_tool.html' }
         ];
 
         // ================= 2. 核心调度引擎 =================
@@ -139,13 +144,27 @@
                     iframeEl.src = tool.url; // 仅当 URL 变更时执行加载
                 }
             }
+
+            // 移动端：点击菜单后自动收起侧边栏
+            if (window.innerWidth < 768) {
+                document.getElementById('sidebar').classList.add('-translate-x-full');
+                document.getElementById('mobile-overlay').classList.add('hidden');
+            }
         }
 
         // ================= 3. 侧边栏折叠控制逻辑 =================
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
-            // 使用 classList.toggle 实现状态的二元切换
-            sidebar.classList.toggle('-ml-48');
+            const overlay = document.getElementById('mobile-overlay');
+            
+            if (window.innerWidth < 768) {
+                // 移动端：使用 translate 控制抽屉滑动，并切换遮罩层
+                sidebar.classList.toggle('-translate-x-full');
+                overlay.classList.toggle('hidden');
+            } else {
+                // 桌面端：使用负边距挤压主视图空间
+                sidebar.classList.toggle('-ml-48');
+            }
         }
     </script>
 </body>
