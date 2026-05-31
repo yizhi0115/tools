@@ -1,448 +1,171 @@
-import tkinter as tk
-from tkinter import filedialog, messagebox, ttk
-import requests
-import base64
-import json
-import os
-import re
-
-# 配置文件路径，用于记忆 Token、仓库名和侧边栏名
-CONFIG_FILE = "deploy_config.json"
-
-class GitHubDeployTool:
-    def __init__(self, root):
-        self.root = root
-        self.root.title("GitHub全栈管理系统 v4.0")
-        self.root.geometry("860x650")
-        self.root.resizable(False, False)
-        
-        self.config = self.load_config()
-        self.current_remote_sha = None
-        self.sort_index_sha = None
-        self.sort_index_content = None
-        
-        # 内存数据结构：将工具分为活动集与隐藏集
-        self.active_tools = []
-        self.hidden_tools = []
-        
-        self.setup_ui()
-
-    def load_config(self):
-        if os.path.exists(CONFIG_FILE):
-            try:
-                with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
-                    return json.load(f)
-            except Exception:
-                pass
-        return {"token": "", "repo": "", "title": ""}
-
-    def save_config(self):
-        config = {
-            "token": self.token_var.get().strip(),
-            "repo": self.repo_var.get().strip(),
-            "title": self.title_var.get().strip()
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>个人工具库</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* 隐藏滚动条但保留滚动功能，提升视觉整洁度 */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
         }
-        with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
-            json.dump(config, f)
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 h-screen flex overflow-hidden font-sans text-gray-800 relative">
 
-    def setup_ui(self):
-        # [全局配置区]
-        global_frame = tk.Frame(self.root)
-        global_frame.pack(fill="x", padx=20, pady=10)
+    <!-- 移动端遮罩层 -->
+    <div id="mobile-overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/50 z-30 hidden md:hidden transition-opacity"></div>
 
-        tk.Label(global_frame, text="GitHub Token:").grid(row=0, column=0, sticky="e", pady=5)
-        self.token_var = tk.StringVar(value=self.config.get("token", ""))
-        tk.Entry(global_frame, textvariable=self.token_var, width=65, show="*").grid(row=0, column=1, padx=10)
-
-        tk.Label(global_frame, text="仓库名(user/repo):").grid(row=1, column=0, sticky="e", pady=5)
-        self.repo_var = tk.StringVar(value=self.config.get("repo", ""))
-        tk.Entry(global_frame, textvariable=self.repo_var, width=65).grid(row=1, column=1, padx=10)
-
-        self.notebook = ttk.Notebook(self.root)
-        self.notebook.pack(fill="both", expand=True, padx=20, pady=5)
-
-        # ================= Tab 1: 自动化接入 =================
-        tab_deploy = tk.Frame(self.notebook)
-        self.notebook.add(tab_deploy, text=" 自动化工具接入 ")
-
-        tk.Label(tab_deploy, text="侧边栏展示名称:").place(x=20, y=30)
-        self.title_var = tk.StringVar(value=self.config.get("title", ""))
-        tk.Entry(tab_deploy, textvariable=self.title_var, width=45).place(x=130, y=30)
-
-        tk.Label(tab_deploy, text="本地 HTML 文件:").place(x=20, y=80)
-        self.filepath_var = tk.StringVar()
-        tk.Entry(tab_deploy, textvariable=self.filepath_var, width=33, state="readonly").place(x=130, y=80)
-        tk.Button(tab_deploy, text="选择文件...", command=self.browse_file).place(x=380, y=76)
-
-        self.deploy_btn = tk.Button(tab_deploy, text="一键上传并注入配置", bg="#4CAF50", fg="white", font=("Arial", 11, "bold"), command=self.execute_deployment)
-        self.deploy_btn.place(x=130, y=140, width=220, height=45)
-
-        # ================= Tab 2: 云端读写 =================
-        tab_editor = tk.Frame(self.notebook)
-        self.notebook.add(tab_editor, text=" 任意文件管理与覆盖 ")
-
-        tk.Label(tab_editor, text="远端文件路径:").place(x=10, y=15)
-        self.remote_file_var = tk.StringVar(value="index.html")
-        tk.Entry(tab_editor, textvariable=self.remote_file_var, width=25).place(x=100, y=15)
+    <!-- 左侧导航栏 (增加移动端响应式绝对定位与抽屉效果) -->
+    <aside id="sidebar" class="absolute md:relative z-40 w-48 bg-gray-900 text-white flex flex-col h-full shadow-lg transition-all duration-300 ease-in-out flex-shrink-0 transform -translate-x-full md:translate-x-0 md:ml-0">
+        <div class="p-4 border-b border-gray-700">
+            <h1 class="text-lg font-bold tracking-wider truncate">个人工具库</h1>
+            <p class="text-xs text-gray-400 mt-1 truncate">本地及 GitHub</p>
+        </div>
         
-        tk.Button(tab_editor, text="⬇️ 读取源码", command=self.fetch_remote_file).place(x=300, y=10)
-        tk.Button(tab_editor, text="⬆️ 提交文本修改", bg="#2196F3", fg="white", command=self.push_remote_file).place(x=390, y=10)
+        <nav class="flex-1 overflow-y-auto no-scrollbar py-4" id="nav-menu">
+            <!-- 导航菜单将由 JavaScript 动态生成 -->
+        </nav>
         
-        tk.Frame(tab_editor, width=2, height=30, bg="gray").place(x=510, y=10)
-        tk.Button(tab_editor, text="📂 本地直传覆盖", bg="#FF9800", fg="white", command=self.overwrite_with_local_file).place(x=530, y=10)
+        <div class="p-4 border-t border-gray-700 text-xs text-gray-500 text-center">
+            &copy; 2026 个人专属工具
+        </div>
+    </aside>
 
-        self.editor_text = tk.Text(tab_editor, wrap="none", font=("Consolas", 10))
-        self.editor_text.place(x=10, y=55, width=780, height=360)
+    <!-- 右侧主内容区 (引入顶部控制栏与 Flex 纵向布局) -->
+    <main class="flex-1 bg-gray-50 flex flex-col relative min-w-0" id="main-content">
         
-        scrollbar = tk.Scrollbar(tab_editor, command=self.editor_text.yview)
-        scrollbar.place(x=790, y=55, height=360)
-        self.editor_text.config(yscrollcommand=scrollbar.set)
+        <!-- 极简顶部控制栏 -->
+        <header class="h-12 bg-white border-b border-gray-200 flex items-center px-4 flex-shrink-0 z-10 shadow-sm">
+            <button onclick="toggleSidebar()" class="p-1.5 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded transition-colors focus:outline-none" title="折叠/展开侧边栏">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+            </button>
+            <div class="h-4 w-px bg-gray-300 mx-4"></div>
+            <span id="current-tool-title" class="text-sm font-semibold text-gray-700 tracking-wide">首页指南</span>
+        </header>
 
-        # ================= Tab 3: 双轨工作台 =================
-        tab_sort = tk.Frame(self.notebook)
-        self.notebook.add(tab_sort, text=" 模块部署沙盘 (呈现与重命名) ")
-
-        # 顶部工具栏
-        tk.Button(tab_sort, text="🔄 1. 拉取远端配置架构", bg="#607D8B", fg="white", font=("Arial", 10, "bold"), command=self.fetch_index_for_sorting).place(x=20, y=15, width=220, height=35)
-        
-        # 左侧：生效区
-        tk.Label(tab_sort, text="🟢 网页侧边栏展示区 (可排序)", font=("Arial", 10, "bold"), fg="#2E7D32").place(x=20, y=65)
-        # 增加 exportselection=False 避免失去焦点
-        self.lb_active = tk.Listbox(tab_sort, font=("Arial", 11), selectbackground="#4CAF50", exportselection=False)
-        self.lb_active.place(x=20, y=90, width=320, height=240)
-        
-        # 中间：调拨按钮
-        tk.Button(tab_sort, text="停用 ⏭️", font=("Arial", 9), command=self.move_to_hidden).place(x=360, y=150, width=65, height=30)
-        tk.Button(tab_sort, text="⏮️ 启用", font=("Arial", 9), command=self.move_to_active).place(x=360, y=200, width=65, height=30)
-        
-        # 右侧：隐藏/仓库区
-        tk.Label(tab_sort, text="🔴 停用仓库区 (源码保留)", font=("Arial", 10, "bold"), fg="#D32F2F").place(x=445, y=65)
-        self.lb_hidden = tk.Listbox(tab_sort, font=("Arial", 11), selectbackground="#F44336", fg="gray", exportselection=False)
-        self.lb_hidden.place(x=445, y=90, width=320, height=240)
-        
-        # 左侧控制：排序
-        tk.Button(tab_sort, text="▲ 选定项上移", command=self.move_item_up).place(x=20, y=340, width=120, height=30)
-        tk.Button(tab_sort, text="▼ 选定项下移", command=self.move_item_down).place(x=150, y=340, width=120, height=30)
-        
-        # 底部控制：重命名模块
-        rename_frame = tk.LabelFrame(tab_sort, text="工具重命名控制台", font=("Arial", 9))
-        rename_frame.place(x=380, y=340, width=385, height=80)
-        
-        tk.Label(rename_frame, text="新名称:").place(x=10, y=20)
-        self.rename_var = tk.StringVar()
-        tk.Entry(rename_frame, textvariable=self.rename_var, width=30).place(x=60, y=20)
-        tk.Button(rename_frame, text="确认改名", bg="#FFC107", command=self.rename_tool).place(x=290, y=15, width=80, height=30)
-
-        # 全局保存按钮
-        tk.Button(tab_sort, text="💾 2. 保存配置并重构远端环境", bg="#E91E63", fg="white", font=("Arial", 11, "bold"), command=self.push_sorted_config).place(x=20, y=390, width=280, height=45)
-
-        self.status_label = tk.Label(self.root, text="系统就绪", fg="gray")
-        self.status_label.pack(side="bottom", anchor="w", padx=20, pady=5)
-
-    # ================= 核心网络与通信 =================
-    def browse_file(self):
-        filepath = filedialog.askopenfilename(filetypes=[("HTML Files", "*.html"), ("All Files", "*.*")])
-        if filepath:
-            self.filepath_var.set(filepath)
-            if not self.title_var.get():
-                filename = os.path.basename(filepath)
-                self.title_var.set(os.path.splitext(filename)[0])
-
-    def check_auth_params(self):
-        token = self.token_var.get().strip()
-        repo = self.repo_var.get().strip()
-        if not token or not repo:
-            messagebox.showwarning("校验拦截", "鉴权信息缺失，请检查 Token 与仓库名。")
-            return None, None
-        self.save_config()
-        return token, repo
-
-    def get_api_headers(self, token):
-        return {"Authorization": f"token {token}", "Accept": "application/vnd.github.v3+json"}
-
-    # ================= Tab 1/2 业务逻辑 =================
-    def execute_deployment(self):
-        token, repo = self.check_auth_params()
-        if not token: return
-        tool_title = self.title_var.get().strip()
-        filepath = self.filepath_var.get()
-        if not tool_title or not filepath:
-            messagebox.showwarning("校验拦截", "侧边栏名称或文件路径不可为空。")
-            return
-
-        self.deploy_btn.config(state="disabled", text="执行中...")
-        self.root.update()
-        try:
-            filename = os.path.basename(filepath)
-            with open(filepath, 'rb') as f:
-                content_b64 = base64.b64encode(f.read()).decode('utf-8')
-            base_url = f"https://api.github.com/repos/{repo}/contents/"
-            headers = self.get_api_headers(token)
-
-            file_url = base_url + filename
-            r_check = requests.get(file_url, headers=headers)
-            put_data = {"message": f"Auto deploy tool: {tool_title}", "content": content_b64}
-            if r_check.status_code == 200:
-                put_data["sha"] = r_check.json()["sha"]
-            requests.put(file_url, headers=headers, json=put_data).raise_for_status()
-
-            idx_url = base_url + "index.html"
-            r_idx = requests.get(idx_url, headers=headers)
-            r_idx.raise_for_status()
+        <!-- 工具挂载容器区 -->
+        <div class="flex-1 relative overflow-hidden">
             
-            idx_data = r_idx.json()
-            idx_sha = idx_data["sha"]
-            idx_content = base64.b64decode(idx_data["content"]).decode('utf-8')
-
-            tool_id = os.path.splitext(filename)[0].replace(" ", "-").lower()
-            config_entry = f"\n            {{ id: '{tool_id}', title: '{tool_title}', type: 'iframe', url: './{filename}' }},"
-            
-            target_str = "const TOOL_CONFIG = ["
-            if target_str in idx_content and f"url: './{filename}'" not in idx_content:
-                idx_content = idx_content.replace(target_str, target_str + config_entry)
-                idx_b64 = base64.b64encode(idx_content.encode('utf-8')).decode('utf-8')
-                requests.put(idx_url, headers=headers, json={"message": "Auto update index.html", "content": idx_b64, "sha": idx_sha}).raise_for_status()
-                
-            self.status_label.config(text="自动化部署成功！", fg="green")
-            messagebox.showinfo("事务完成", "代码资产已部署完成！")
-        except Exception as e:
-            self.status_label.config(text="部署中断", fg="red")
-            messagebox.showerror("运行异常", str(e))
-        finally:
-            self.deploy_btn.config(state="normal", text="一键上传并注入配置")
-
-    def fetch_remote_file(self):
-        token, repo = self.check_auth_params()
-        if not token: return
-        filename = self.remote_file_var.get().strip()
-        try:
-            url = f"https://api.github.com/repos/{repo}/contents/{filename}"
-            response = requests.get(url, headers=self.get_api_headers(token))
-            response.raise_for_status()
-            data = response.json()
-            self.current_remote_sha = data["sha"]
-            content = base64.b64decode(data["content"]).decode('utf-8')
-            self.editor_text.delete(1.0, tk.END)
-            self.editor_text.insert(tk.END, content)
-            self.status_label.config(text=f"{filename} 读取成功！", fg="green")
-        except Exception as e:
-            messagebox.showerror("IO 异常", str(e))
-
-    def push_remote_file(self):
-        token, repo = self.check_auth_params()
-        filename = self.remote_file_var.get().strip()
-        try:
-            url = f"https://api.github.com/repos/{repo}/contents/{filename}"
-            content_b64 = base64.b64encode(self.editor_text.get(1.0, tk.END).strip().encode('utf-8')).decode('utf-8')
-            put_data = {"message": f"Update {filename} via Editor", "content": content_b64}
-            if self.current_remote_sha: put_data["sha"] = self.current_remote_sha
-            response = requests.put(url, headers=self.get_api_headers(token), json=put_data)
-            response.raise_for_status()
-            self.current_remote_sha = response.json()["content"]["sha"]
-            messagebox.showinfo("成功", f"{filename} 覆盖成功！")
-        except Exception as e:
-            messagebox.showerror("异常", str(e))
-
-    def overwrite_with_local_file(self):
-        token, repo = self.check_auth_params()
-        if not token: return
-        filename = self.remote_file_var.get().strip()
-        filepath = filedialog.askopenfilename()
-        if not filepath: return
-        try:
-            url = f"https://api.github.com/repos/{repo}/contents/{filename}"
-            r_check = requests.get(url, headers=self.get_api_headers(token))
-            self.current_remote_sha = r_check.json()["sha"] if r_check.status_code == 200 else None
-            with open(filepath, 'rb') as f:
-                content_b64 = base64.b64encode(f.read()).decode('utf-8')
-                put_data = {"message": f"Direct overwrite {filename}", "content": content_b64}
-                if self.current_remote_sha: put_data["sha"] = self.current_remote_sha
-                requests.put(url, headers=self.get_api_headers(token), json=put_data).raise_for_status()
-                messagebox.showinfo("成功", "本地文件直传覆盖成功！")
-        except Exception as e:
-            messagebox.showerror("异常", str(e))
-
-    # ================= Tab 3 双轨沙盘核心引擎 =================
-    def fetch_index_for_sorting(self):
-        token, repo = self.check_auth_params()
-        if not token: return
-        try:
-            url = f"https://api.github.com/repos/{repo}/contents/index.html"
-            r = requests.get(url, headers=self.get_api_headers(token))
-            r.raise_for_status()
-            data = r.json()
-            self.sort_index_sha = data["sha"]
-            content = base64.b64decode(data["content"]).decode('utf-8')
-            self.sort_index_content = content
-            
-            start_str, end_str = "const TOOL_CONFIG = [", "];"
-            start_idx = content.find(start_str)
-            end_idx = content.find(end_str, start_idx)
-            block = content[start_idx + len(start_str):end_idx]
-            
-            self.active_tools = []
-            self.hidden_tools = []
-            self.lb_active.delete(0, tk.END)
-            self.lb_hidden.delete(0, tk.END)
-            
-            # 分流器：识别并归类
-            for line in block.split('\n'):
-                if "{ id:" in line:
-                    is_hidden = line.strip().startswith("//")
-                    match = re.search(r"title:\s*'([^']+)'", line)
-                    title = match.group(1) if match else "未命名工具"
+            <!-- ================= 首页指南 (原生内容) ================= -->
+            <section id="welcome" class="absolute inset-0 overflow-y-auto block p-8">
+                <div class="bg-white p-8 rounded-lg shadow-sm border border-gray-200">
+                    <h2 class="text-2xl font-bold mb-4">欢迎使用个人工具库 (动态沙箱版)</h2>
+                    <p class="mb-4 text-gray-700">为避免代码冲突（如 CSS 样式污染、全局 JS 变量覆盖），本框架已采用 <strong>Iframe 隔离架构</strong>与<strong>动态配置驱动</strong>模式。</p>
                     
-                    tool_obj = {"raw": line, "title": title}
-                    if is_hidden:
-                        self.hidden_tools.append(tool_obj)
-                        self.lb_hidden.insert(tk.END, title)
-                    else:
-                        self.active_tools.append(tool_obj)
-                        self.lb_active.insert(tk.END, title)
-                        
-            self.status_label.config(text="架构装载完毕，已分发至双轨沙盘。", fg="green")
-        except Exception as e:
-            messagebox.showerror("解析异常", str(e))
+                    <h3 class="text-lg font-semibold mt-6 mb-2">标准接入流程：</h3>
+                    <ol class="list-decimal pl-6 space-y-3 text-gray-700">
+                        <li>将您以前保存的独立网页程序（例如 <code>regex_tool.html</code>）直接放入与本 <code>index.html</code> 同级的目录，或新建一个 <code>tools</code> 文件夹进行集中管理。<strong>无需对旧文件进行任何代码修改。</strong></li>
+                        <li>使用文本编辑器打开本 <code>index.html</code>，滚动到底部的 <code>&lt;script&gt;</code> 区域，找到 <code>TOOL_CONFIG</code> 数组。</li>
+                        <li>在数组中新增一条对象配置，映射您的本地文件路径。示例：<br>
+                            <code class="bg-gray-100 p-1.5 rounded text-sm text-blue-700 font-mono block mt-2">{ id: 'regex-tool', title: '正则测试器', type: 'iframe', url: './regex_tool.html' }</code>
+                        </li>
+                        <li>保存文件并刷新页面，左侧导航栏将自动渲染新注册的工具。点击即可在右侧无缝加载并运行。</li>
+                    </ol>
+                </div>
+            </section>
 
-    def move_item_up(self):
-        idx = self.lb_active.curselection()
-        if not idx or idx[0] == 0: return
-        i = idx[0]
-        item = self.lb_active.get(i)
-        self.lb_active.delete(i)
-        self.lb_active.insert(i-1, item)
-        self.lb_active.selection_set(i-1)
-        self.active_tools[i], self.active_tools[i-1] = self.active_tools[i-1], self.active_tools[i]
-
-    def move_item_down(self):
-        idx = self.lb_active.curselection()
-        if not idx or idx[0] == self.lb_active.size() - 1: return
-        i = idx[0]
-        item = self.lb_active.get(i)
-        self.lb_active.delete(i)
-        self.lb_active.insert(i+1, item)
-        self.lb_active.selection_set(i+1)
-        self.active_tools[i], self.active_tools[i+1] = self.active_tools[i+1], self.active_tools[i]
-
-    def move_to_hidden(self):
-        """将工具移入停用仓库"""
-        idx = self.lb_active.curselection()
-        if not idx: return
-        i = idx[0]
-        
-        # 数据移交
-        tool = self.active_tools.pop(i)
-        self.hidden_tools.append(tool)
-        
-        # 视图更新
-        self.lb_active.delete(i)
-        self.lb_hidden.insert(tk.END, tool["title"])
-        
-        # 若需要，保持下方的焦点
-        if self.lb_active.size() > 0:
-            new_idx = i if i < self.lb_active.size() else i - 1
-            self.lb_active.selection_set(new_idx)
-
-    def move_to_active(self):
-        """将工具激活至生效区"""
-        idx = self.lb_hidden.curselection()
-        if not idx: return
-        i = idx[0]
-        
-        # 数据移交
-        tool = self.hidden_tools.pop(i)
-        self.active_tools.append(tool)
-        
-        # 视图更新
-        self.lb_hidden.delete(i)
-        self.lb_active.insert(tk.END, tool["title"])
-        
-        if self.lb_hidden.size() > 0:
-            new_idx = i if i < self.lb_hidden.size() else i - 1
-            self.lb_hidden.selection_set(new_idx)
-
-    def rename_tool(self):
-        """基于正则提取的 AST 重命名模块"""
-        new_name = self.rename_var.get().strip()
-        if not new_name:
-            messagebox.showwarning("拦截", "请输入新名称。")
-            return
+            <!-- ================= Iframe 沙箱容器 ================= -->
+            <!-- 恢复流式布局 (w-full h-full)，移除硬性宽度限制，保留 allow-downloads 权限 -->
+            <iframe id="tool-frame" class="absolute inset-0 w-full h-full border-0 hidden" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-downloads"></iframe>
             
-        # 判断当前哪个列表处于选中状态
-        active_idx = self.lb_active.curselection()
-        hidden_idx = self.lb_hidden.curselection()
-        
-        if not active_idx and not hidden_idx:
-            messagebox.showinfo("提示", "请先在任意列表中选中一个要重命名的工具。")
-            return
-            
-        is_active = bool(active_idx)
-        idx = active_idx[0] if is_active else hidden_idx[0]
-        tool_list = self.active_tools if is_active else self.hidden_tools
-        listbox = self.lb_active if is_active else self.lb_hidden
-        
-        tool = tool_list[idx]
-        old_name = tool["title"]
-        
-        # 正则替换：利用 Group \g<1> 保护原有的结构，仅替换中间的字符
-        new_raw = re.sub(r"(title:\s*')[^']+'", rf"\g<1>{new_name}'", tool["raw"])
-        tool["raw"] = new_raw
-        tool["title"] = new_name
-        
-        # 更新视图
-        listbox.delete(idx)
-        listbox.insert(idx, new_name)
-        listbox.selection_set(idx)
-        
-        self.rename_var.set("") # 清空输入框
-        self.status_label.config(text=f"[{old_name}] 已重命名为 [{new_name}]，请记得保存。", fg="#FF9800")
+        </div>
 
-    def push_sorted_config(self):
-        """AST 序列化引擎：将双轨内存数据转译回 JS 代码结构"""
-        if not self.sort_index_sha: return
-        token, repo = self.check_auth_params()
-        
-        cleaned_lines = []
-        
-        # 1. 编译活动代码块 (去除注释)
-        for tool in self.active_tools:
-            raw = tool["raw"].replace("// ", "", 1).replace("//", "", 1)
-            clean_line = raw.rstrip(', \r\n') + ','
-            cleaned_lines.append(clean_line)
-            
-        # 2. 编译隐藏代码块 (强制注入注释)
-        for tool in self.hidden_tools:
-            raw = tool["raw"]
-            stripped = raw.lstrip()
-            # 如果尚未被注释，则补齐双斜杠
-            if not stripped.startswith("//"):
-                indent = raw[:len(raw) - len(stripped)]
-                raw = indent + "// " + stripped
-            clean_line = raw.rstrip(', \r\n') + ','
-            cleaned_lines.append(clean_line)
-            
-        reconstructed_block = "\n".join(cleaned_lines) + "\n        "
-        
-        start_str, end_str = "const TOOL_CONFIG = [", "];"
-        start_idx = self.sort_index_content.find(start_str)
-        end_idx = self.sort_index_content.find(end_str, start_idx)
-        
-        new_content = self.sort_index_content[:start_idx + len(start_str)] + reconstructed_block + self.sort_index_content[end_idx:]
-        
-        try:
-            url = f"https://api.github.com/repos/{repo}/contents/index.html"
-            content_b64 = base64.b64encode(new_content.encode('utf-8')).decode('utf-8')
-            put_data = {"message": "Rebuild TOOL_CONFIG architecture", "content": content_b64, "sha": self.sort_index_sha}
-            response = requests.put(url, headers=self.get_api_headers(token), json=put_data)
-            response.raise_for_status()
-            
-            self.sort_index_sha = response.json()["content"]["sha"]
-            self.sort_index_content = new_content
-            messagebox.showinfo("事务完成", "全局配置环境已成功重构至线上！")
-        except Exception as e:
-            messagebox.showerror("网络异常", str(e))
+    </main>
 
-if __name__ == "__main__":
-    root = tk.Tk()
-    app = GitHubDeployTool(root)
-    root.mainloop()
+    <!-- 全局框架控制逻辑 -->
+    <script>
+        // ================= 1. 工具库注册配置 (唯一需要您修改的地方) =================
+        const TOOL_CONFIG = [
+            { id: 'welcome', title: '首页指南', type: 'native' },
+            // 取消下方注释并修改 URL 即可接入您的现有程序：
+            // { id: 'tool-timestamp', title: '时间戳转换', type: 'iframe', url: './tools/timestamp.html' },
+             { id: 'tool-crypto', title: 'gif编辑器', type: 'iframe', url: './gif.html' },
+             { id: 'tool-custom', title: '抽奖', type: 'iframe', url: './抽奖.html' }
+        ];
+
+        // ================= 2. 核心调度引擎 =================
+        document.addEventListener('DOMContentLoaded', () => {
+            renderNavigation();
+        });
+
+        function renderNavigation() {
+            const navMenu = document.getElementById('nav-menu');
+            navMenu.innerHTML = ''; // 清理挂载点
+
+            TOOL_CONFIG.forEach(tool => {
+                const btn = document.createElement('button');
+                // 动态构建 Tailwind 类名
+                btn.className = `nav-btn w-full text-left px-6 py-3 hover:bg-gray-800 transition-colors border-l-4 ${tool.id === 'welcome' ? 'bg-gray-800 border-blue-500' : 'border-transparent'}`;
+                btn.textContent = tool.title;
+                btn.dataset.id = tool.id;
+                btn.onclick = () => dispatchRoute(tool);
+                navMenu.appendChild(btn);
+            });
+        }
+
+        function dispatchRoute(tool) {
+            // 1. 更新视图层导航高亮状态
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                if (btn.dataset.id === tool.id) {
+                    btn.classList.add('bg-gray-800', 'border-blue-500');
+                    btn.classList.remove('border-transparent');
+                } else {
+                    btn.classList.remove('bg-gray-800', 'border-blue-500');
+                    btn.classList.add('border-transparent');
+                }
+            });
+
+            // 2. 更新顶部栏工具标题
+            const titleEl = document.getElementById('current-tool-title');
+            if (titleEl) {
+                titleEl.textContent = tool.title;
+            }
+
+            // 3. 执行 DOM 挂载与卸载策略
+            const welcomeSection = document.getElementById('welcome');
+            const iframeEl = document.getElementById('tool-frame');
+
+            if (tool.type === 'native') {
+                iframeEl.classList.add('hidden');
+                iframeEl.src = ''; // 卸载 Iframe 释放内存与网络连接
+                welcomeSection.classList.remove('hidden');
+                welcomeSection.classList.add('block');
+            } else if (tool.type === 'iframe') {
+                welcomeSection.classList.remove('block');
+                welcomeSection.classList.add('hidden');
+                iframeEl.classList.remove('hidden');
+                if (iframeEl.src !== tool.url) {
+                    iframeEl.src = tool.url; // 仅当 URL 变更时执行加载
+                }
+            }
+
+            // 移动端：点击菜单后自动收起侧边栏
+            if (window.innerWidth < 768) {
+                document.getElementById('sidebar').classList.add('-translate-x-full');
+                document.getElementById('mobile-overlay').classList.add('hidden');
+            }
+        }
+
+        // ================= 3. 侧边栏折叠控制逻辑 =================
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('mobile-overlay');
+            
+            if (window.innerWidth < 768) {
+                // 移动端：使用 translate 控制抽屉滑动，并切换遮罩层
+                sidebar.classList.toggle('-translate-x-full');
+                overlay.classList.toggle('hidden');
+            } else {
+                // 桌面端：使用负边距挤压主视图空间
+                sidebar.classList.toggle('-ml-48');
+            }
+        }
+    </script>
+</body>
+</html>
