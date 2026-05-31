@@ -1,1238 +1,448 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GIF 在线编辑处理平台</title>
-    <!-- 引入 Tailwind CSS 进行样式管理 -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- 引入核心依赖库 -->
-    <script src="https://unpkg.com/gif-frames@1.0.1/dist/gif-frames.min.js"></script>
-    <script src="https://unpkg.com/gif.js@0.2.0/dist/gif.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
-    
-    <style>
-        /* 基础样式与滚动条优化 */
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: #f1f5f9; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
-        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+import tkinter as tk
+from tkinter import filedialog, messagebox, ttk
+import requests
+import base64
+import json
+import os
+import re
+
+# 配置文件路径，用于记忆 Token、仓库名和侧边栏名
+CONFIG_FILE = "deploy_config.json"
+
+class GitHubDeployTool:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("GitHub全栈管理系统 v4.0")
+        self.root.geometry("860x650")
+        self.root.resizable(False, False)
         
-        /* 拖拽指示器样式 */
-        #drop-overlay {
-            display: none;
-            backdrop-filter: blur(4px);
-            z-index: 50;
-        }
-        body.drag-active #drop-overlay {
-            display: flex;
-        }
-
-        /* 帧缩略图透明背景（棋盘格） */
-        .checkerboard-bg {
-            background-color: #f0f0f0;
-            background-image: linear-gradient(45deg, #ccc 25%, transparent 25%), 
-                              linear-gradient(-45deg, #ccc 25%, transparent 25%), 
-                              linear-gradient(45deg, transparent 75%, #ccc 75%), 
-                              linear-gradient(-45deg, transparent 75%, #ccc 75%);
-            background-size: 16px 16px;
-            background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
-        }
+        self.config = self.load_config()
+        self.current_remote_sha = None
+        self.sort_index_sha = None
+        self.sort_index_content = None
         
-        /* Sortable.js 拖拽时的占位符样式 */
-        .sortable-ghost { opacity: 0.4; border: 2px dashed #3b82f6; }
+        # 内存数据结构：将工具分为活动集与隐藏集
+        self.active_tools = []
+        self.hidden_tools = []
         
-        /* 绘图光标 */
-        .crosshair-cursor { cursor: crosshair; }
-    </style>
-</head>
-<body class="bg-gray-50 h-screen flex flex-col overflow-hidden text-slate-800">
+        self.setup_ui()
 
-    <!-- 全局拖拽遮罩层 -->
-    <div id="drop-overlay" class="fixed inset-0 bg-blue-50 bg-opacity-90 flex items-center justify-center border-4 border-blue-500 border-dashed m-4 rounded-xl transition-all">
-        <div class="text-center">
-            <i data-lucide="upload-cloud" class="w-20 h-20 text-blue-500 mx-auto mb-4"></i>
-            <h2 class="text-2xl font-semibold text-blue-700">松开鼠标，导入文件</h2>
-            <p class="text-blue-500 mt-2">支持拖入 GIF 或静态图片 (PNG/JPG)</p>
-        </div>
-    </div>
+    def load_config(self):
+        if os.path.exists(CONFIG_FILE):
+            try:
+                with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
+                    return json.load(f)
+            except Exception:
+                pass
+        return {"token": "", "repo": "", "title": ""}
 
-    <!-- 顶部导航栏 -->
-    <header class="bg-white border-b border-gray-200 px-6 py-3 flex justify-between items-center shadow-sm shrink-0">
-        <div class="flex items-center gap-2">
-            <i data-lucide="clapperboard" class="w-6 h-6 text-indigo-600"></i>
-            <h1 class="text-lg font-bold text-slate-700 tracking-wide">GIF 序列编辑器</h1>
-        </div>
-        <div class="flex items-center gap-3">
-            <button onclick="document.getElementById('file-import-gif').click()" class="flex items-center gap-2 px-4 py-1.5 text-sm bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors">
-                <i data-lucide="folder-open" class="w-4 h-4"></i> 导入 GIF
-            </button>
-            <input type="file" id="file-import-gif" accept="image/gif" class="hidden" onchange="handleFileSelect(event, 'gif')">
-            
-            <!-- 移除 disabled 限制，并更改文案 -->
-            <button onclick="document.getElementById('file-import-img').click()" class="flex items-center gap-2 px-4 py-1.5 text-sm bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors" id="btn-insert-img">
-                <i data-lucide="image-plus" class="w-4 h-4"></i> 导入/追加静态图片
-            </button>
-            <input type="file" id="file-import-img" accept="image/png, image/jpeg, image/webp" class="hidden" onchange="handleFileSelect(event, 'image')" multiple>
+    def save_config(self):
+        config = {
+            "token": self.token_var.get().strip(),
+            "repo": self.repo_var.get().strip(),
+            "title": self.title_var.get().strip()
+        }
+        with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
+            json.dump(config, f)
 
-            <div class="w-px h-6 bg-gray-300 mx-1"></div>
+    def setup_ui(self):
+        # [全局配置区]
+        global_frame = tk.Frame(self.root)
+        global_frame.pack(fill="x", padx=20, pady=10)
 
-            <button onclick="exportGIF()" id="btn-export" class="flex items-center gap-2 px-5 py-1.5 text-sm bg-indigo-600 text-white font-medium rounded hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" disabled>
-                <i data-lucide="download" class="w-4 h-4"></i> <span id="export-text">导出 GIF</span>
-            </button>
-        </div>
-    </header>
+        tk.Label(global_frame, text="GitHub Token:").grid(row=0, column=0, sticky="e", pady=5)
+        self.token_var = tk.StringVar(value=self.config.get("token", ""))
+        tk.Entry(global_frame, textvariable=self.token_var, width=65, show="*").grid(row=0, column=1, padx=10)
 
-    <!-- 消息提示容器 -->
-    <div id="toast-container" class="fixed top-16 left-1/2 transform -translate-x-1/2 z-50 flex flex-col gap-2 pointer-events-none"></div>
+        tk.Label(global_frame, text="仓库名(user/repo):").grid(row=1, column=0, sticky="e", pady=5)
+        self.repo_var = tk.StringVar(value=self.config.get("repo", ""))
+        tk.Entry(global_frame, textvariable=self.repo_var, width=65).grid(row=1, column=1, padx=10)
 
-    <!-- 主工作区 -->
-    <main class="flex-1 flex overflow-hidden">
+        self.notebook = ttk.Notebook(self.root)
+        self.notebook.pack(fill="both", expand=True, padx=20, pady=5)
+
+        # ================= Tab 1: 自动化接入 =================
+        tab_deploy = tk.Frame(self.notebook)
+        self.notebook.add(tab_deploy, text=" 自动化工具接入 ")
+
+        tk.Label(tab_deploy, text="侧边栏展示名称:").place(x=20, y=30)
+        self.title_var = tk.StringVar(value=self.config.get("title", ""))
+        tk.Entry(tab_deploy, textvariable=self.title_var, width=45).place(x=130, y=30)
+
+        tk.Label(tab_deploy, text="本地 HTML 文件:").place(x=20, y=80)
+        self.filepath_var = tk.StringVar()
+        tk.Entry(tab_deploy, textvariable=self.filepath_var, width=33, state="readonly").place(x=130, y=80)
+        tk.Button(tab_deploy, text="选择文件...", command=self.browse_file).place(x=380, y=76)
+
+        self.deploy_btn = tk.Button(tab_deploy, text="一键上传并注入配置", bg="#4CAF50", fg="white", font=("Arial", 11, "bold"), command=self.execute_deployment)
+        self.deploy_btn.place(x=130, y=140, width=220, height=45)
+
+        # ================= Tab 2: 云端读写 =================
+        tab_editor = tk.Frame(self.notebook)
+        self.notebook.add(tab_editor, text=" 任意文件管理与覆盖 ")
+
+        tk.Label(tab_editor, text="远端文件路径:").place(x=10, y=15)
+        self.remote_file_var = tk.StringVar(value="index.html")
+        tk.Entry(tab_editor, textvariable=self.remote_file_var, width=25).place(x=100, y=15)
         
-        <!-- 左侧预览区 -->
-        <section class="w-1/3 min-w-[300px] max-w-[500px] border-r border-gray-200 bg-gray-100 flex flex-col shrink-0">
-            <div class="p-4 bg-white border-b border-gray-200 flex justify-between items-center shrink-0">
-                <h2 class="text-sm font-semibold flex items-center gap-2"><i data-lucide="monitor-play" class="w-4 h-4"></i> 实时预览</h2>
-                <span id="preview-info" class="text-xs text-gray-500 font-mono">-- x -- px</span>
-            </div>
-            
-            <div class="flex-1 p-6 flex flex-col items-center justify-center overflow-auto relative checkerboard-bg">
-                <canvas id="preview-canvas" class="max-w-full shadow bg-white rounded"></canvas>
-                <div id="preview-placeholder" class="absolute inset-0 flex flex-col items-center justify-center text-gray-400">
-                    <i data-lucide="film" class="w-12 h-12 mb-2 opacity-50"></i>
-                    <p class="text-sm">暂无数据，请先导入 GIF 或静态图片</p>
-                </div>
-            </div>
-
-            <div class="p-4 bg-white border-t border-gray-200 shrink-0">
-                <div class="flex items-center justify-between mb-2">
-                    <span class="text-xs font-medium text-gray-600">控制面板</span>
-                    <button onclick="togglePlayback()" id="btn-playback" class="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-full hover:bg-gray-200 transition-colors disabled:opacity-50" disabled>
-                        <i data-lucide="pause" class="w-4 h-4 text-gray-700"></i>
-                    </button>
-                </div>
-                <div class="flex items-center gap-2">
-                    <input type="number" id="global-delay" placeholder="统一延迟(ms)" class="w-full text-sm border border-gray-300 rounded px-2 py-1.5 focus:outline-none focus:border-indigo-500">
-                    <button onclick="applyGlobalDelay()" class="whitespace-nowrap px-3 py-1.5 text-xs bg-gray-200 hover:bg-gray-300 rounded transition-colors text-gray-700">应用全局</button>
-                </div>
-            </div>
-        </section>
-
-        <!-- 右侧序列编辑区 -->
-        <section class="flex-1 bg-white flex flex-col min-w-0">
-            <div class="p-4 border-b border-gray-200 flex justify-between items-center shrink-0">
-                <h2 class="text-sm font-semibold flex items-center gap-2"><i data-lucide="layers" class="w-4 h-4"></i> 帧序列视图</h2>
-                <span class="text-xs text-gray-500">共 <span id="frame-count" class="font-bold text-slate-700">0</span> 帧 (拖拽卡片可调整播放顺序)</span>
-            </div>
-            
-            <div class="flex-1 overflow-y-auto p-4 bg-gray-50 relative">
-                <ul id="frame-list" class="grid grid-cols-[repeat(auto-fill,minmax(120px,1fr))] gap-4 content-start min-h-[100px]">
-                    <!-- 帧列表将动态注入此位置 -->
-                </ul>
-            </div>
-        </section>
-
-        <!-- 极右侧素材库区 -->
-        <section class="w-1/4 min-w-[250px] max-w-[350px] bg-white border-l border-gray-200 flex flex-col shrink-0" id="material-zone">
-            <div class="p-4 border-b border-gray-200 flex justify-between items-center shrink-0 bg-gray-50">
-                <h2 class="text-sm font-semibold flex items-center gap-2"><i data-lucide="library" class="w-4 h-4"></i> 素材库</h2>
-            </div>
-            <div class="p-3 text-xs text-gray-500 text-center border-b border-gray-100">
-                支持拖拽外部静态图至此，或将此处素材拖入帧序列
-            </div>
-            <div class="flex-1 overflow-y-auto p-4 bg-gray-50 relative">
-                <ul id="material-list" class="grid grid-cols-2 gap-3 content-start min-h-[100px]">
-                    <!-- 素材列表将动态注入此位置 -->
-                </ul>
-            </div>
-        </section>
+        tk.Button(tab_editor, text="⬇️ 读取源码", command=self.fetch_remote_file).place(x=300, y=10)
+        tk.Button(tab_editor, text="⬆️ 提交文本修改", bg="#2196F3", fg="white", command=self.push_remote_file).place(x=390, y=10)
         
-    </main>
+        tk.Frame(tab_editor, width=2, height=30, bg="gray").place(x=510, y=10)
+        tk.Button(tab_editor, text="📂 本地直传覆盖", bg="#FF9800", fg="white", command=self.overwrite_with_local_file).place(x=530, y=10)
 
-    <!-- 图片编辑弹窗 -->
-    <div id="edit-modal" class="hidden fixed inset-0 z-[100] bg-slate-900 bg-opacity-70 flex items-center justify-center backdrop-blur-sm">
-        <div class="bg-white rounded-xl shadow-2xl flex flex-col w-11/12 max-w-4xl h-[85vh] overflow-hidden">
-            <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
-                <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2"><i data-lucide="pen-tool" class="w-5 h-5"></i> 编辑帧画面</h3>
-                <button onclick="closeEditModal()" class="text-gray-500 hover:text-red-500 transition-colors"><i data-lucide="x" class="w-6 h-6"></i></button>
-            </div>
+        self.editor_text = tk.Text(tab_editor, wrap="none", font=("Consolas", 10))
+        self.editor_text.place(x=10, y=55, width=780, height=360)
+        
+        scrollbar = tk.Scrollbar(tab_editor, command=self.editor_text.yview)
+        scrollbar.place(x=790, y=55, height=360)
+        self.editor_text.config(yscrollcommand=scrollbar.set)
+
+        # ================= Tab 3: 双轨工作台 =================
+        tab_sort = tk.Frame(self.notebook)
+        self.notebook.add(tab_sort, text=" 模块部署沙盘 (呈现与重命名) ")
+
+        # 顶部工具栏
+        tk.Button(tab_sort, text="🔄 1. 拉取远端配置架构", bg="#607D8B", fg="white", font=("Arial", 10, "bold"), command=self.fetch_index_for_sorting).place(x=20, y=15, width=220, height=35)
+        
+        # 左侧：生效区
+        tk.Label(tab_sort, text="🟢 网页侧边栏展示区 (可排序)", font=("Arial", 10, "bold"), fg="#2E7D32").place(x=20, y=65)
+        # 增加 exportselection=False 避免失去焦点
+        self.lb_active = tk.Listbox(tab_sort, font=("Arial", 11), selectbackground="#4CAF50", exportselection=False)
+        self.lb_active.place(x=20, y=90, width=320, height=240)
+        
+        # 中间：调拨按钮
+        tk.Button(tab_sort, text="停用 ⏭️", font=("Arial", 9), command=self.move_to_hidden).place(x=360, y=150, width=65, height=30)
+        tk.Button(tab_sort, text="⏮️ 启用", font=("Arial", 9), command=self.move_to_active).place(x=360, y=200, width=65, height=30)
+        
+        # 右侧：隐藏/仓库区
+        tk.Label(tab_sort, text="🔴 停用仓库区 (源码保留)", font=("Arial", 10, "bold"), fg="#D32F2F").place(x=445, y=65)
+        self.lb_hidden = tk.Listbox(tab_sort, font=("Arial", 11), selectbackground="#F44336", fg="gray", exportselection=False)
+        self.lb_hidden.place(x=445, y=90, width=320, height=240)
+        
+        # 左侧控制：排序
+        tk.Button(tab_sort, text="▲ 选定项上移", command=self.move_item_up).place(x=20, y=340, width=120, height=30)
+        tk.Button(tab_sort, text="▼ 选定项下移", command=self.move_item_down).place(x=150, y=340, width=120, height=30)
+        
+        # 底部控制：重命名模块
+        rename_frame = tk.LabelFrame(tab_sort, text="工具重命名控制台", font=("Arial", 9))
+        rename_frame.place(x=380, y=340, width=385, height=80)
+        
+        tk.Label(rename_frame, text="新名称:").place(x=10, y=20)
+        self.rename_var = tk.StringVar()
+        tk.Entry(rename_frame, textvariable=self.rename_var, width=30).place(x=60, y=20)
+        tk.Button(rename_frame, text="确认改名", bg="#FFC107", command=self.rename_tool).place(x=290, y=15, width=80, height=30)
+
+        # 全局保存按钮
+        tk.Button(tab_sort, text="💾 2. 保存配置并重构远端环境", bg="#E91E63", fg="white", font=("Arial", 11, "bold"), command=self.push_sorted_config).place(x=20, y=390, width=280, height=45)
+
+        self.status_label = tk.Label(self.root, text="系统就绪", fg="gray")
+        self.status_label.pack(side="bottom", anchor="w", padx=20, pady=5)
+
+    # ================= 核心网络与通信 =================
+    def browse_file(self):
+        filepath = filedialog.askopenfilename(filetypes=[("HTML Files", "*.html"), ("All Files", "*.*")])
+        if filepath:
+            self.filepath_var.set(filepath)
+            if not self.title_var.get():
+                filename = os.path.basename(filepath)
+                self.title_var.set(os.path.splitext(filename)[0])
+
+    def check_auth_params(self):
+        token = self.token_var.get().strip()
+        repo = self.repo_var.get().strip()
+        if not token or not repo:
+            messagebox.showwarning("校验拦截", "鉴权信息缺失，请检查 Token 与仓库名。")
+            return None, None
+        self.save_config()
+        return token, repo
+
+    def get_api_headers(self, token):
+        return {"Authorization": f"token {token}", "Accept": "application/vnd.github.v3+json"}
+
+    # ================= Tab 1/2 业务逻辑 =================
+    def execute_deployment(self):
+        token, repo = self.check_auth_params()
+        if not token: return
+        tool_title = self.title_var.get().strip()
+        filepath = self.filepath_var.get()
+        if not tool_title or not filepath:
+            messagebox.showwarning("校验拦截", "侧边栏名称或文件路径不可为空。")
+            return
+
+        self.deploy_btn.config(state="disabled", text="执行中...")
+        self.root.update()
+        try:
+            filename = os.path.basename(filepath)
+            with open(filepath, 'rb') as f:
+                content_b64 = base64.b64encode(f.read()).decode('utf-8')
+            base_url = f"https://api.github.com/repos/{repo}/contents/"
+            headers = self.get_api_headers(token)
+
+            file_url = base_url + filename
+            r_check = requests.get(file_url, headers=headers)
+            put_data = {"message": f"Auto deploy tool: {tool_title}", "content": content_b64}
+            if r_check.status_code == 200:
+                put_data["sha"] = r_check.json()["sha"]
+            requests.put(file_url, headers=headers, json=put_data).raise_for_status()
+
+            idx_url = base_url + "index.html"
+            r_idx = requests.get(idx_url, headers=headers)
+            r_idx.raise_for_status()
             
-            <div class="flex-1 flex overflow-hidden">
-                <div class="w-20 bg-gray-100 border-r border-gray-200 flex flex-col items-center py-4 gap-4 shrink-0 overflow-y-auto overflow-x-hidden">
-                    
-                    <!-- 绘图工具区 -->
-                    <div class="flex flex-col items-center gap-1">
-                        <label class="text-[10px] text-gray-500 font-medium">颜色</label>
-                        <input type="color" id="brush-color" value="#ef4444" class="w-8 h-8 rounded cursor-pointer border-0 p-0">
-                        <button id="btn-eyedropper" onclick="toggleEyedropperMode()" class="mt-1 p-1 rounded text-gray-600 hover:bg-indigo-50 hover:text-indigo-600 transition-colors" title="吸管取色">
-                            <i data-lucide="pipette" class="w-4 h-4"></i>
-                        </button>
-                    </div>
-                    <div class="flex flex-col items-center gap-1 mt-2 mb-4">
-                        <label class="text-[10px] text-gray-500 font-medium">粗细</label>
-                        <input type="range" id="brush-size" min="1" max="20" value="5" class="w-16 -rotate-90 mt-6" style="transform-origin: center;">
-                    </div>
-                    
-                    <!-- 变換工具区塊 -->
-                    <div class="w-full border-t border-gray-200 mt-2 pt-4 flex flex-col items-center gap-2">
-                        <label class="text-[10px] text-gray-500 font-medium">变换</label>
-                        <div class="grid grid-cols-2 gap-1 px-1 w-full justify-items-center">
-                            <button onclick="applyTransform('rotate-left')" class="text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 p-1 rounded transition-colors" title="向左旋转">
-                                <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
-                            </button>
-                            <button onclick="applyTransform('rotate-right')" class="text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 p-1 rounded transition-colors" title="向右旋转">
-                                <i data-lucide="rotate-cw" class="w-4 h-4"></i>
-                            </button>
-                            <button onclick="applyTransform('flip-horizontal')" class="text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 p-1 rounded transition-colors" title="水平翻转">
-                                <i data-lucide="flip-horizontal" class="w-4 h-4"></i>
-                            </button>
-                            <button onclick="applyTransform('flip-vertical')" class="text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 p-1 rounded transition-colors" title="垂直翻转">
-                                <i data-lucide="flip-vertical" class="w-4 h-4"></i>
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <!-- 新增裁切工具區塊 -->
-                    <div class="w-full border-t border-gray-200 mt-2 pt-4 flex flex-col items-center gap-2">
-                        <label class="text-[10px] text-gray-500 font-medium">裁切</label>
-                        <div class="flex flex-col gap-1 w-full px-2">
-                            <div class="flex items-center justify-between">
-                                <span class="text-[10px] text-gray-500">宽:</span>
-                                <input type="number" id="crop-w" class="w-10 text-[10px] border border-gray-300 rounded px-1 text-center" min="10">
-                            </div>
-                            <div class="flex items-center justify-between">
-                                <span class="text-[10px] text-gray-500">高:</span>
-                                <input type="number" id="crop-h" class="w-10 text-[10px] border border-gray-300 rounded px-1 text-center" min="10">
-                            </div>
-                            <button onclick="toggleCropMode()" id="btn-toggle-crop" class="mt-1 w-full px-1 py-1 text-[10px] bg-gray-200 hover:bg-gray-300 rounded transition-colors text-gray-700">进入裁切</button>
-                            <button onclick="applyCrop()" id="btn-apply-crop" class="hidden mt-1 w-full px-1 py-1 text-[10px] bg-indigo-600 text-white hover:bg-indigo-700 rounded transition-colors flex justify-center items-center gap-1"><i data-lucide="crop" class="w-3 h-3"></i> 确认</button>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="flex-1 bg-gray-300 flex items-center justify-center p-6 overflow-auto checkerboard-bg">
-                    <div class="relative shadow-md bg-white max-w-full" style="line-height: 0;">
-                        <canvas id="edit-canvas" class="crosshair-cursor max-w-full w-full block"></canvas>
-                        <canvas id="crop-canvas" class="absolute inset-0 z-10 hidden w-full h-full touch-none"></canvas>
-                    </div>
-                </div>
-            </div>
+            idx_data = r_idx.json()
+            idx_sha = idx_data["sha"]
+            idx_content = base64.b64decode(idx_data["content"]).decode('utf-8')
 
-            <div class="px-6 py-4 border-t border-gray-200 flex justify-end gap-3 bg-gray-50">
-                <button onclick="closeEditModal()" class="px-4 py-2 text-sm text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-100 transition-colors">取消</button>
-                <button onclick="saveEditAsMaterial()" class="px-4 py-2 text-sm text-indigo-600 bg-indigo-50 border border-indigo-200 rounded hover:bg-indigo-100 transition-colors flex items-center gap-2">
-                    <i data-lucide="library" class="w-4 h-4"></i> 仅存入素材库
-                </button>
-                <button onclick="saveEditAndApply()" class="px-4 py-2 text-sm text-white bg-indigo-600 rounded hover:bg-indigo-700 transition-colors flex items-center gap-2 shadow-sm">
-                    <i data-lucide="check-circle" class="w-4 h-4"></i> 应用至当前帧并存入素材
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        // 初始化图标
-        lucide.createIcons();
-
-        // 核心状态管理
-        const state = {
-            frames: [], // 结构: { id, canvas, delay, order }
-            materials: [], // 素材库结构: { id, canvas }
-            width: 0,
-            height: 0,
-            isPlaying: true,
-            workerBlobUrl: null
-        };
-
-        // 预览相关变量
-        let previewTimer = null;
-        let currentFrameIdx = 0;
-        const previewCanvas = document.getElementById('preview-canvas');
-        const previewCtx = previewCanvas.getContext('2d');
-
-        // 绘图相关变量
-        let editingFrameId = null;
-        let isDrawing = false;
-        let lastDrawX = 0;
-        let lastDrawY = 0;
-
-        // DOM 元素引用
-        const dom = {
-            frameList: document.getElementById('frame-list'),
-            materialList: document.getElementById('material-list'),
-            materialZone: document.getElementById('material-zone'),
-            placeholder: document.getElementById('preview-placeholder'),
-            btnInsertImg: document.getElementById('btn-insert-img'),
-            btnExport: document.getElementById('btn-export'),
-            btnPlayback: document.getElementById('btn-playback'),
-            frameCount: document.getElementById('frame-count'),
-            previewInfo: document.getElementById('preview-info'),
-            editModal: document.getElementById('edit-modal'),
-            editCanvas: document.getElementById('edit-canvas'),
-            brushColor: document.getElementById('brush-color'),
-            brushSize: document.getElementById('brush-size'),
-            // 裁切相關 DOM 節點
-            cropCanvas: document.getElementById('crop-canvas'),
-            inputCropW: document.getElementById('crop-w'),
-            inputCropH: document.getElementById('crop-h'),
-            btnToggleCrop: document.getElementById('btn-toggle-crop'),
-            btnApplyCrop: document.getElementById('btn-apply-crop')
-        };
-
-        // 裁切狀態變數
-        let isCropMode = false;
-        let cropRect = { x: 0, y: 0, w: 100, h: 100 };
-        let cropDragState = null; 
-        let cropStartX = 0;
-        let cropStartY = 0;
-        let cropStartRect = null;
-
-        // 取色器狀態變數
-        let isEyedropperMode = false;
-
-        // 1. 初始化依赖 Worker (针对 gif.js，处理跨域问题)
-        async function initWorker() {
-            try {
-                const response = await fetch('https://unpkg.com/gif.js@0.2.0/dist/gif.worker.js');
-                if (!response.ok) throw new Error('Network response was not ok');
-                const scriptText = await response.text();
-                const blob = new Blob([scriptText], { type: 'application/javascript' });
-                state.workerBlobUrl = URL.createObjectURL(blob);
-            } catch (error) {
-                showToast('无法加载导出引擎，导出功能可能受限，请检查网络环境。', 'error');
-                console.error('Worker init error:', error);
-            }
-        }
-        initWorker();
-
-        // 2. 初始化 Sortable.js (拖拽排序)
-        const sortableInstance = new Sortable(dom.frameList, {
-            group: {
-                name: 'shared-frames',
-                pull: true, 
-                put: true
-            },
-            animation: 150,
-            ghostClass: 'sortable-ghost',
-            onAdd: function(evt) {
-                // 处理从素材库拖入至序列的事件
-                const matId = evt.item.dataset.id;
-                const material = state.materials.find(m => m.id === matId);
-                
-                // 移除由 Sortable 强行插入的外部 DOM 节点
-                if (evt.item.parentNode) evt.item.parentNode.removeChild(evt.item); 
-                
-                if (material) {
-                    const newCanvas = document.createElement('canvas');
-                    newCanvas.width = material.canvas.width;
-                    newCanvas.height = material.canvas.height;
-                    newCanvas.getContext('2d').drawImage(material.canvas, 0, 0);
-                    
-                    const newFrame = {
-                        id: `frame_${Date.now()}_mat`,
-                        canvas: newCanvas,
-                        delay: 100
-                    };
-                    state.frames.splice(evt.newIndex, 0, newFrame);
-                    renderFrameList();
-                    updateUIState();
-                    showToast('素材已插入序列', 'success');
-
-                    if (state.isPlaying && !previewTimer) {
-                        startPreview();
-                    } else if (!state.isPlaying) {
-                        currentFrameIdx = evt.newIndex;
-                        drawSingleFrame(currentFrameIdx);
-                    }
-                }
-            },
-            onEnd: function (evt) {
-                if (evt.from === evt.to) {
-                    const itemEl = state.frames.splice(evt.oldIndex, 1)[0];
-                    state.frames.splice(evt.newIndex, 0, itemEl);
-                }
-                
-                renderFrameList();
-                
-                if(!state.isPlaying) {
-                    currentFrameIdx = evt.newIndex !== undefined ? evt.newIndex : 0;
-                    if (currentFrameIdx >= state.frames.length) currentFrameIdx = 0;
-                    if (state.frames.length > 0) drawSingleFrame(currentFrameIdx);
-                } else if (state.frames.length > 0 && !previewTimer) {
-                    startPreview();
-                }
-            }
-        });
-
-        // 初始化素材库 Sortable (允许双向互动)
-        const sortableMaterials = new Sortable(dom.materialList, {
-            group: {
-                name: 'shared-frames',
-                pull: true, 
-                put: true      
-            },
-            animation: 150,
-            sort: false, 
-            onAdd: function(evt) {
-                // 处理从帧序列拖入素材库的事件
-                const frameId = evt.item.dataset.id;
-                const frame = state.frames.find(f => f.id === frameId);
-                
-                // 移除移过来的 DOM 节点
-                if (evt.item.parentNode) evt.item.parentNode.removeChild(evt.item); 
-                
-                if (frame) {
-                    createMaterialFromCanvas(frame.canvas);
-                    showToast('已提取该帧至素材库', 'success');
-                }
-            },
-            onEnd: function(evt) {
-                renderMaterialList();
-            }
-        });
-
-        // 3. 消息提示组件
-        function showToast(message, type = 'info') {
-            const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-            const bgColor = type === 'error' ? 'bg-red-600' : (type === 'success' ? 'bg-emerald-600' : 'bg-blue-600');
-            toast.className = `px-5 py-2.5 rounded shadow-lg text-white text-sm font-medium tracking-wide transition-all duration-300 opacity-0 transform -translate-y-2 ${bgColor}`;
-            toast.textContent = message;
+            tool_id = os.path.splitext(filename)[0].replace(" ", "-").lower()
+            config_entry = f"\n            {{ id: '{tool_id}', title: '{tool_title}', type: 'iframe', url: './{filename}' }},"
             
-            container.appendChild(toast);
-            
-            requestAnimationFrame(() => {
-                toast.classList.remove('opacity-0', '-translate-y-2');
-            });
-
-            setTimeout(() => {
-                toast.classList.add('opacity-0', '-translate-y-2');
-                setTimeout(() => toast.remove(), 300);
-            }, 3000);
-        }
-
-        // 4. 文件处理逻辑 (解析 GIF & 静态图片)
-        function handleFileSelect(event, type) {
-            const files = event.target.files;
-            if (!files || files.length === 0) return;
-            
-            if (type === 'gif') {
-                processGifFile(files[0]);
-            } else {
-                processImageFiles(Array.from(files));
-            }
-            event.target.value = ''; 
-        }
-
-        async function processGifFile(file) {
-            showToast('正在解析 GIF 数据，请稍候...', 'info');
-            const objectUrl = URL.createObjectURL(file);
-            try {
-                const frameData = await gifFrames({ url: objectUrl, frames: 'all', outputType: 'canvas', cumulative: true });
+            target_str = "const TOOL_CONFIG = ["
+            if target_str in idx_content and f"url: './{filename}'" not in idx_content:
+                idx_content = idx_content.replace(target_str, target_str + config_entry)
+                idx_b64 = base64.b64encode(idx_content.encode('utf-8')).decode('utf-8')
+                requests.put(idx_url, headers=headers, json={"message": "Auto update index.html", "content": idx_b64, "sha": idx_sha}).raise_for_status()
                 
-                state.frames = frameData.map((f, i) => {
-                    const canvas = f.getImage();
-                    return {
-                        id: `frame_${Date.now()}_${i}`,
-                        canvas: canvas,
-                        delay: f.frameInfo.delay * 10 || 100 
-                    };
-                });
+            self.status_label.config(text="自动化部署成功！", fg="green")
+            messagebox.showinfo("事务完成", "代码资产已部署完成！")
+        except Exception as e:
+            self.status_label.config(text="部署中断", fg="red")
+            messagebox.showerror("运行异常", str(e))
+        finally:
+            self.deploy_btn.config(state="normal", text="一键上传并注入配置")
 
-                if (state.frames.length > 0) {
-                    state.width = state.frames[0].canvas.width;
-                    state.height = state.frames[0].canvas.height;
-                    updateUIState();
-                    renderFrameList();
-                    startPreview();
-                    showToast('GIF 加载成功！', 'success');
-                }
-            } catch (error) {
-                console.error(error);
-                showToast('解析失败，文件可能已损坏或格式不受支持。', 'error');
-            } finally {
-                URL.revokeObjectURL(objectUrl);
-            }
-        }
+    def fetch_remote_file(self):
+        token, repo = self.check_auth_params()
+        if not token: return
+        filename = self.remote_file_var.get().strip()
+        try:
+            url = f"https://api.github.com/repos/{repo}/contents/{filename}"
+            response = requests.get(url, headers=self.get_api_headers(token))
+            response.raise_for_status()
+            data = response.json()
+            self.current_remote_sha = data["sha"]
+            content = base64.b64decode(data["content"]).decode('utf-8')
+            self.editor_text.delete(1.0, tk.END)
+            self.editor_text.insert(tk.END, content)
+            self.status_label.config(text=f"{filename} 读取成功！", fg="green")
+        except Exception as e:
+            messagebox.showerror("IO 异常", str(e))
 
-        // 采用异步串行处理批量导入的静态图片，确保基准尺寸初始化可靠
-        async function processImageFiles(files) {
-            if (files.length === 0) return;
-            showToast('正在处理静态图片，请稍候...', 'info');
+    def push_remote_file(self):
+        token, repo = self.check_auth_params()
+        filename = self.remote_file_var.get().strip()
+        try:
+            url = f"https://api.github.com/repos/{repo}/contents/{filename}"
+            content_b64 = base64.b64encode(self.editor_text.get(1.0, tk.END).strip().encode('utf-8')).decode('utf-8')
+            put_data = {"message": f"Update {filename} via Editor", "content": content_b64}
+            if self.current_remote_sha: put_data["sha"] = self.current_remote_sha
+            response = requests.put(url, headers=self.get_api_headers(token), json=put_data)
+            response.raise_for_status()
+            self.current_remote_sha = response.json()["content"]["sha"]
+            messagebox.showinfo("成功", f"{filename} 覆盖成功！")
+        except Exception as e:
+            messagebox.showerror("异常", str(e))
 
-            for (const file of files) {
-                await new Promise((resolve) => {
-                    const img = new Image();
-                    const objectUrl = URL.createObjectURL(file);
+    def overwrite_with_local_file(self):
+        token, repo = self.check_auth_params()
+        if not token: return
+        filename = self.remote_file_var.get().strip()
+        filepath = filedialog.askopenfilename()
+        if not filepath: return
+        try:
+            url = f"https://api.github.com/repos/{repo}/contents/{filename}"
+            r_check = requests.get(url, headers=self.get_api_headers(token))
+            self.current_remote_sha = r_check.json()["sha"] if r_check.status_code == 200 else None
+            with open(filepath, 'rb') as f:
+                content_b64 = base64.b64encode(f.read()).decode('utf-8')
+                put_data = {"message": f"Direct overwrite {filename}", "content": content_b64}
+                if self.current_remote_sha: put_data["sha"] = self.current_remote_sha
+                requests.put(url, headers=self.get_api_headers(token), json=put_data).raise_for_status()
+                messagebox.showinfo("成功", "本地文件直传覆盖成功！")
+        except Exception as e:
+            messagebox.showerror("异常", str(e))
+
+    # ================= Tab 3 双轨沙盘核心引擎 =================
+    def fetch_index_for_sorting(self):
+        token, repo = self.check_auth_params()
+        if not token: return
+        try:
+            url = f"https://api.github.com/repos/{repo}/contents/index.html"
+            r = requests.get(url, headers=self.get_api_headers(token))
+            r.raise_for_status()
+            data = r.json()
+            self.sort_index_sha = data["sha"]
+            content = base64.b64decode(data["content"]).decode('utf-8')
+            self.sort_index_content = content
+            
+            start_str, end_str = "const TOOL_CONFIG = [", "];"
+            start_idx = content.find(start_str)
+            end_idx = content.find(end_str, start_idx)
+            block = content[start_idx + len(start_str):end_idx]
+            
+            self.active_tools = []
+            self.hidden_tools = []
+            self.lb_active.delete(0, tk.END)
+            self.lb_hidden.delete(0, tk.END)
+            
+            # 分流器：识别并归类
+            for line in block.split('\n'):
+                if "{ id:" in line:
+                    is_hidden = line.strip().startswith("//")
+                    match = re.search(r"title:\s*'([^']+)'", line)
+                    title = match.group(1) if match else "未命名工具"
                     
-                    img.onload = () => {
-                        // 若为全新项目，以首张图片尺寸为基准
-                        if (state.width === 0 || state.height === 0) {
-                            state.width = img.width;
-                            state.height = img.height;
-                        }
-
-                        const canvas = document.createElement('canvas');
-                        canvas.width = state.width;
-                        canvas.height = state.height;
-                        const ctx = canvas.getContext('2d');
+                    tool_obj = {"raw": line, "title": title}
+                    if is_hidden:
+                        self.hidden_tools.append(tool_obj)
+                        self.lb_hidden.insert(tk.END, title)
+                    else:
+                        self.active_tools.append(tool_obj)
+                        self.lb_active.insert(tk.END, title)
                         
-                        drawCoverImage(ctx, img, state.width, state.height);
+            self.status_label.config(text="架构装载完毕，已分发至双轨沙盘。", fg="green")
+        except Exception as e:
+            messagebox.showerror("解析异常", str(e))
 
-                        state.frames.push({
-                            id: `frame_${Date.now()}_img_${Math.random().toString(36).substr(2, 5)}`,
-                            canvas: canvas,
-                            delay: 100 
-                        });
-                        
-                        URL.revokeObjectURL(objectUrl);
-                        resolve();
-                    };
-                    img.onerror = () => {
-                        showToast(`读取图片 ${file.name} 失败。`, 'error');
-                        URL.revokeObjectURL(objectUrl);
-                        resolve();
-                    };
-                    img.src = objectUrl;
-                });
-            }
-            
-            renderFrameList();
-            updateUIState();
-            
-            // 如果原本处于播放意图但定时器停止，重新唤醒
-            if (state.frames.length > 0 && !previewTimer && state.isPlaying) {
-                startPreview();
-            }
-            
-            showToast('静态图片处理完毕。', 'success');
-        }
+    def move_item_up(self):
+        idx = self.lb_active.curselection()
+        if not idx or idx[0] == 0: return
+        i = idx[0]
+        item = self.lb_active.get(i)
+        self.lb_active.delete(i)
+        self.lb_active.insert(i-1, item)
+        self.lb_active.selection_set(i-1)
+        self.active_tools[i], self.active_tools[i-1] = self.active_tools[i-1], self.active_tools[i]
 
-        function drawCoverImage(ctx, img, w, h) {
-            const imgW = img.width;
-            const imgH = img.height;
-            const ratio = Math.max(w / imgW, h / imgH);
-            const newW = imgW * ratio;
-            const newH = imgH * ratio;
-            const offsetX = (w - newW) / 2;
-            const offsetY = (h - newH) / 2;
-            
-            ctx.fillStyle = "#ffffff";
-            ctx.fillRect(0, 0, w, h);
-            ctx.drawImage(img, 0, 0, imgW, imgH, offsetX, offsetY, newW, newH);
-        }
+    def move_item_down(self):
+        idx = self.lb_active.curselection()
+        if not idx or idx[0] == self.lb_active.size() - 1: return
+        i = idx[0]
+        item = self.lb_active.get(i)
+        self.lb_active.delete(i)
+        self.lb_active.insert(i+1, item)
+        self.lb_active.selection_set(i+1)
+        self.active_tools[i], self.active_tools[i+1] = self.active_tools[i+1], self.active_tools[i]
 
-        // 5. UI 渲染与更新
-        function updateUIState() {
-            const hasFrames = state.frames.length > 0;
-            dom.placeholder.style.display = hasFrames ? 'none' : 'flex';
-            // 解除禁用追加静态图片按钮的逻辑
-            // dom.btnInsertImg.disabled = !hasFrames; 
-            dom.btnExport.disabled = !hasFrames;
-            dom.btnPlayback.disabled = !hasFrames;
-            dom.frameCount.textContent = state.frames.length;
-            
-            if (hasFrames) {
-                dom.previewInfo.textContent = `${state.width} x ${state.height} px`;
-                if(previewCanvas.width !== state.width) previewCanvas.width = state.width;
-                if(previewCanvas.height !== state.height) previewCanvas.height = state.height;
-            } else {
-                dom.previewInfo.textContent = '-- x -- px';
-            }
-        }
-
-        function renderFrameList() {
-            dom.frameList.innerHTML = '';
-            
-            state.frames.forEach((frame, index) => {
-                const li = document.createElement('li');
-                li.className = 'relative group bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-grab active:cursor-grabbing flex flex-col';
-                li.dataset.id = frame.id;
-
-                const thumbContainer = document.createElement('div');
-                thumbContainer.className = 'relative h-24 w-full checkerboard-bg border-b border-gray-100 flex-shrink-0';
-                
-                const thumb = document.createElement('canvas');
-                thumb.className = 'absolute inset-0 w-full h-full object-contain p-1';
-                thumb.width = state.width;
-                thumb.height = state.height;
-                thumb.getContext('2d').drawImage(frame.canvas, 0, 0);
-                
-                const badge = document.createElement('div');
-                badge.className = 'absolute top-1 left-1 bg-black bg-opacity-60 text-white text-[10px] px-1.5 py-0.5 rounded font-mono';
-                badge.textContent = index + 1;
-
-                const btnGroup = document.createElement('div');
-                btnGroup.className = 'absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity';
-
-                const editBtn = document.createElement('button');
-                editBtn.className = 'bg-blue-500 text-white p-1 rounded hover:bg-blue-600 shadow';
-                editBtn.innerHTML = '<i data-lucide="pen-tool" class="w-3 h-3"></i>';
-                editBtn.onclick = (e) => {
-                    e.stopPropagation();
-                    openEditModal(frame.id);
-                };
-
-                const deleteBtn = document.createElement('button');
-                deleteBtn.className = 'bg-red-500 text-white p-1 rounded hover:bg-red-600 shadow';
-                deleteBtn.innerHTML = '<i data-lucide="trash-2" class="w-3 h-3"></i>';
-                deleteBtn.onclick = (e) => {
-                    e.stopPropagation();
-                    deleteFrame(index);
-                };
-
-                btnGroup.appendChild(editBtn);
-                btnGroup.appendChild(deleteBtn);
-
-                thumbContainer.appendChild(thumb);
-                thumbContainer.appendChild(badge);
-                thumbContainer.appendChild(btnGroup);
-
-                const controlArea = document.createElement('div');
-                controlArea.className = 'p-2 flex items-center justify-between bg-gray-50';
-                
-                const delayInput = document.createElement('input');
-                delayInput.type = 'number';
-                delayInput.value = frame.delay;
-                delayInput.min = 10;
-                delayInput.className = 'w-16 text-xs text-center border border-gray-300 rounded py-1 px-1 focus:outline-none focus:border-indigo-500 bg-white';
-                delayInput.onchange = (e) => {
-                    let val = parseInt(e.target.value);
-                    if (isNaN(val) || val < 10) val = 10;
-                    frame.delay = val;
-                    e.target.value = val;
-                };
-
-                const label = document.createElement('span');
-                label.className = 'text-xs text-gray-500';
-                label.textContent = 'ms';
-
-                const inputWrapper = document.createElement('div');
-                inputWrapper.className = 'flex items-center gap-1';
-                inputWrapper.appendChild(delayInput);
-                inputWrapper.appendChild(label);
-
-                controlArea.appendChild(inputWrapper);
-                
-                li.appendChild(thumbContainer);
-                li.appendChild(controlArea);
-                
-                dom.frameList.appendChild(li);
-            });
-
-            lucide.createIcons(); 
-        }
-
-        // 6. 交互功能
-        function deleteFrame(index) {
-            state.frames.splice(index, 1);
-            if(currentFrameIdx >= state.frames.length) currentFrameIdx = 0;
-            renderFrameList();
-            updateUIState();
-            
-            if (state.frames.length === 0) {
-                stopPreview();
-                previewCtx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
-            } else if (!state.isPlaying) {
-                drawSingleFrame(currentFrameIdx);
-            }
-        }
-
-        function applyGlobalDelay() {
-            const input = document.getElementById('global-delay');
-            let val = parseInt(input.value);
-            if (isNaN(val) || val < 10) {
-                showToast('请输入有效的延迟时间（最小 10ms）', 'error');
-                return;
-            }
-            state.frames.forEach(f => f.delay = val);
-            renderFrameList();
-            showToast('全局延迟应用成功', 'success');
-        }
-
-        // 7. 播放预览逻辑
-        function togglePlayback() {
-            state.isPlaying = !state.isPlaying;
-            if (state.isPlaying) {
-                dom.btnPlayback.innerHTML = '<i data-lucide="pause" class="w-4 h-4 text-gray-700"></i>';
-                startPreview();
-            } else {
-                dom.btnPlayback.innerHTML = '<i data-lucide="play" class="w-4 h-4 text-gray-700"></i>';
-                stopPreview();
-            }
-            lucide.createIcons();
-        }
-
-        function drawSingleFrame(index) {
-            if (state.frames.length === 0) return;
-            const frame = state.frames[index];
-            previewCtx.clearRect(0, 0, state.width, state.height);
-            previewCtx.drawImage(frame.canvas, 0, 0);
-        }
-
-        function startPreview() {
-            stopPreview();
-            if (state.frames.length === 0 || !state.isPlaying) return;
-
-            function renderNext() {
-                if (state.frames.length === 0) return;
-                currentFrameIdx = currentFrameIdx % state.frames.length;
-                
-                drawSingleFrame(currentFrameIdx);
-                
-                const delay = state.frames[currentFrameIdx].delay;
-                previewTimer = setTimeout(() => {
-                    currentFrameIdx++;
-                    renderNext();
-                }, delay);
-            }
-            renderNext();
-        }
-
-        function stopPreview() {
-            if (previewTimer) {
-                clearTimeout(previewTimer);
-                previewTimer = null;
-            }
-        }
-
-        // ================= 素材库与图片编辑核心逻辑 =================
+    def move_to_hidden(self):
+        """将工具移入停用仓库"""
+        idx = self.lb_active.curselection()
+        if not idx: return
+        i = idx[0]
         
-        function renderMaterialList() {
-            dom.materialList.innerHTML = '';
-            state.materials.forEach(mat => {
-                const li = document.createElement('li');
-                li.className = 'relative group bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-grab flex flex-col items-center';
-                li.dataset.id = mat.id;
-
-                const thumbContainer = document.createElement('div');
-                thumbContainer.className = 'relative h-20 w-full checkerboard-bg flex-shrink-0';
-                
-                const thumb = document.createElement('canvas');
-                thumb.className = 'absolute inset-0 w-full h-full object-contain p-1';
-                thumb.width = state.width || mat.canvas.width;
-                thumb.height = state.height || mat.canvas.height;
-                thumb.getContext('2d').drawImage(mat.canvas, 0, 0);
-
-                const deleteBtn = document.createElement('button');
-                deleteBtn.className = 'absolute top-1 right-1 bg-red-500 text-white p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 shadow z-10';
-                deleteBtn.innerHTML = '<i data-lucide="x" class="w-3 h-3"></i>';
-                deleteBtn.onclick = (e) => {
-                    e.stopPropagation();
-                    state.materials = state.materials.filter(m => m.id !== mat.id);
-                    renderMaterialList();
-                };
-
-                thumbContainer.appendChild(thumb);
-                thumbContainer.appendChild(deleteBtn);
-                li.appendChild(thumbContainer);
-                dom.materialList.appendChild(li);
-            });
-            lucide.createIcons();
-        }
-
-        function createMaterialFromCanvas(sourceCanvas) {
-            const newCanvas = document.createElement('canvas');
-            newCanvas.width = sourceCanvas.width;
-            newCanvas.height = sourceCanvas.height;
-            newCanvas.getContext('2d').drawImage(sourceCanvas, 0, 0);
-            
-            state.materials.unshift({
-                id: `mat_${Date.now()}`,
-                canvas: newCanvas
-            });
-            renderMaterialList();
-        }
-
-        // --- 取色器邏輯 ---
-        function toggleEyedropperMode() {
-            const btn = document.getElementById('btn-eyedropper');
-            isEyedropperMode = !isEyedropperMode;
-            if (isEyedropperMode) {
-                btn.classList.add('bg-indigo-100', 'text-indigo-600');
-                dom.editCanvas.style.cursor = 'crosshair';
-            } else {
-                btn.classList.remove('bg-indigo-100', 'text-indigo-600');
-                dom.editCanvas.style.cursor = '';
-            }
-        }
-
-        // --- 画板工具方法 ---
-        function getCanvasMousePos(canvas, evt) {
-            const rect = canvas.getBoundingClientRect();
-            const scaleX = canvas.width / rect.width;
-            const scaleY = canvas.height / rect.height;
-            return [
-                (evt.clientX - rect.left) * scaleX,
-                (evt.clientY - rect.top) * scaleY
-            ];
-        }
-
-        dom.editCanvas.addEventListener('mousedown', (e) => {
-            if (isEyedropperMode) {
-                const pos = getCanvasMousePos(dom.editCanvas, e);
-                const ctx = dom.editCanvas.getContext('2d');
-                const pixel = ctx.getImageData(pos[0], pos[1], 1, 1).data;
-                // 將 RGB 轉換為 Hex 格式
-                const hex = "#" + (1 << 24 | pixel[0] << 16 | pixel[1] << 8 | pixel[2]).toString(16).slice(1).toUpperCase();
-                dom.brushColor.value = hex;
-                
-                // 取色完成後自動關閉取色模式
-                toggleEyedropperMode();
-                return;
-            }
-
-            isDrawing = true;
-            const pos = getCanvasMousePos(dom.editCanvas, e);
-            lastDrawX = pos[0];
-            lastDrawY = pos[1];
-        });
-
-        dom.editCanvas.addEventListener('mousemove', (e) => {
-            // 添加空值保护，防止因 DOM 元素缺失报错
-            if (!isDrawing || !dom.brushColor || !dom.brushSize) return;
-            
-            const pos = getCanvasMousePos(dom.editCanvas, e);
-            const ctx = dom.editCanvas.getContext('2d');
-            
-            ctx.beginPath();
-            ctx.lineCap = 'round';
-            ctx.lineJoin = 'round';
-            ctx.strokeStyle = dom.brushColor.value;
-            ctx.lineWidth = parseInt(dom.brushSize.value);
-            ctx.moveTo(lastDrawX, lastDrawY);
-            ctx.lineTo(pos[0], pos[1]);
-            ctx.stroke();
-            
-            lastDrawX = pos[0];
-            lastDrawY = pos[1];
-        });
-
-        dom.editCanvas.addEventListener('mouseup', () => isDrawing = false);
-        dom.editCanvas.addEventListener('mouseout', () => isDrawing = false);
-
-        // ================= 裁切核心邏輯 =================
-        function toggleCropMode() {
-            isCropMode = !isCropMode;
-            if (isCropMode) {
-                dom.btnToggleCrop.textContent = '取消裁切';
-                dom.btnToggleCrop.classList.replace('bg-gray-200', 'bg-red-100');
-                dom.btnToggleCrop.classList.replace('hover:bg-gray-300', 'hover:bg-red-200');
-                dom.btnToggleCrop.classList.add('text-red-600');
-                dom.btnApplyCrop.classList.remove('hidden');
-                
-                dom.cropCanvas.width = dom.editCanvas.width;
-                dom.cropCanvas.height = dom.editCanvas.height;
-                dom.cropCanvas.classList.remove('hidden');
-                
-                cropRect = {
-                    x: dom.editCanvas.width * 0.1,
-                    y: dom.editCanvas.height * 0.1,
-                    w: dom.editCanvas.width * 0.8,
-                    h: dom.editCanvas.height * 0.8
-                };
-                updateCropInputs();
-                drawCropOverlay();
-            } else {
-                dom.btnToggleCrop.textContent = '进入裁切';
-                dom.btnToggleCrop.classList.replace('bg-red-100', 'bg-gray-200');
-                dom.btnToggleCrop.classList.replace('hover:bg-red-200', 'hover:bg-gray-300');
-                dom.btnToggleCrop.classList.remove('text-red-600');
-                dom.btnApplyCrop.classList.add('hidden');
-                dom.cropCanvas.classList.add('hidden');
-            }
-        }
-
-        function updateCropInputs() {
-            dom.inputCropW.value = Math.round(cropRect.w);
-            dom.inputCropH.value = Math.round(cropRect.h);
-        }
-
-        function onCropInput() {
-            if (!isCropMode) return;
-            let w = parseInt(dom.inputCropW.value) || 10;
-            let h = parseInt(dom.inputCropH.value) || 10;
-            
-            if (w > dom.cropCanvas.width) w = dom.cropCanvas.width;
-            if (h > dom.cropCanvas.height) h = dom.cropCanvas.height;
-            if (cropRect.x + w > dom.cropCanvas.width) cropRect.x = dom.cropCanvas.width - w;
-            if (cropRect.y + h > dom.cropCanvas.height) cropRect.y = dom.cropCanvas.height - h;
-            
-            cropRect.w = w;
-            cropRect.h = h;
-            drawCropOverlay();
-        }
-
-        dom.inputCropW.addEventListener('input', onCropInput);
-        dom.inputCropH.addEventListener('input', onCropInput);
-
-        function drawCropOverlay() {
-            const ctx = dom.cropCanvas.getContext('2d');
-            ctx.clearRect(0, 0, dom.cropCanvas.width, dom.cropCanvas.height);
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-            ctx.fillRect(0, 0, dom.cropCanvas.width, dom.cropCanvas.height);
-            ctx.clearRect(cropRect.x, cropRect.y, cropRect.w, cropRect.h);
-            
-            ctx.strokeStyle = '#3b82f6';
-            ctx.lineWidth = 2;
-            ctx.strokeRect(cropRect.x, cropRect.y, cropRect.w, cropRect.h);
-            
-            const handles = getCropHandles();
-            ctx.fillStyle = '#ffffff';
-            ctx.strokeStyle = '#3b82f6';
-            ctx.lineWidth = 1;
-            for (let k in handles) {
-                const h = handles[k];
-                ctx.fillRect(h.x - 4, h.y - 4, 8, 8);
-                ctx.strokeRect(h.x - 4, h.y - 4, 8, 8);
-            }
-        }
-
-        function getCropHandles() {
-            const { x, y, w, h } = cropRect;
-            return {
-                tl: { x: x, y: y }, tr: { x: x + w, y: y },
-                bl: { x: x, y: y + h }, br: { x: x + w, y: y + h }
-            };
-        }
-
-        dom.cropCanvas.addEventListener('mousedown', (e) => {
-            const pos = getCanvasMousePos(dom.cropCanvas, e);
-            const handles = getCropHandles();
-            cropDragState = null;
-            
-            for (let k in handles) {
-                const h = handles[k];
-                if (Math.abs(pos[0] - h.x) < 10 && Math.abs(pos[1] - h.y) < 10) {
-                    cropDragState = `resize-${k}`;
-                    break;
-                }
-            }
-            
-            if (!cropDragState) {
-                if (pos[0] >= cropRect.x && pos[0] <= cropRect.x + cropRect.w &&
-                    pos[1] >= cropRect.y && pos[1] <= cropRect.y + cropRect.h) {
-                    cropDragState = 'move';
-                }
-            }
-            
-            if (cropDragState) {
-                cropStartX = pos[0];
-                cropStartY = pos[1];
-                cropStartRect = { ...cropRect };
-            }
-        });
-
-        dom.cropCanvas.addEventListener('mousemove', (e) => {
-            if (!cropDragState) {
-                const pos = getCanvasMousePos(dom.cropCanvas, e);
-                const handles = getCropHandles();
-                let cursor = 'default';
-                for (let k in handles) {
-                    const h = handles[k];
-                    if (Math.abs(pos[0] - h.x) < 10 && Math.abs(pos[1] - h.y) < 10) {
-                        if (k === 'tl' || k === 'br') cursor = 'nwse-resize';
-                        if (k === 'tr' || k === 'bl') cursor = 'nesw-resize';
-                        break;
-                    }
-                }
-                if (cursor === 'default') {
-                    if (pos[0] >= cropRect.x && pos[0] <= cropRect.x + cropRect.w &&
-                        pos[1] >= cropRect.y && pos[1] <= cropRect.y + cropRect.h) {
-                        cursor = 'move';
-                    }
-                }
-                dom.cropCanvas.style.cursor = cursor;
-                return;
-            }
-            
-            const pos = getCanvasMousePos(dom.cropCanvas, e);
-            const dx = pos[0] - cropStartX;
-            const dy = pos[1] - cropStartY;
-            
-            if (cropDragState === 'move') {
-                cropRect.x = cropStartRect.x + dx;
-                cropRect.y = cropStartRect.y + dy;
-                
-                if (cropRect.x < 0) cropRect.x = 0;
-                if (cropRect.y < 0) cropRect.y = 0;
-                if (cropRect.x + cropRect.w > dom.cropCanvas.width) cropRect.x = dom.cropCanvas.width - cropRect.w;
-                if (cropRect.y + cropRect.h > dom.cropCanvas.height) cropRect.y = dom.cropCanvas.height - cropRect.h;
-            } else {
-                if (cropDragState.includes('l')) { cropRect.x = cropStartRect.x + dx; cropRect.w = cropStartRect.w - dx; }
-                if (cropDragState.includes('r')) { cropRect.w = cropStartRect.w + dx; }
-                if (cropDragState.includes('t')) { cropRect.y = cropStartRect.y + dy; cropRect.h = cropStartRect.h - dy; }
-                if (cropDragState.includes('b')) { cropRect.h = cropStartRect.h + dy; }
-                
-                if (cropRect.w < 10) { cropRect.w = 10; if (cropDragState.includes('l')) cropRect.x = cropStartRect.x + cropStartRect.w - 10; }
-                if (cropRect.h < 10) { cropRect.h = 10; if (cropDragState.includes('t')) cropRect.y = cropStartRect.y + cropStartRect.h - 10; }
-            }
-            
-            updateCropInputs();
-            drawCropOverlay();
-        });
-
-        dom.cropCanvas.addEventListener('mouseup', () => cropDragState = null);
-        dom.cropCanvas.addEventListener('mouseout', () => cropDragState = null);
-
-        function applyCrop() {
-            if (!isCropMode) return;
-            
-            const ctx = dom.editCanvas.getContext('2d');
-            const tempCanvas = document.createElement('canvas');
-            tempCanvas.width = cropRect.w;
-            tempCanvas.height = cropRect.h;
-            const tempCtx = tempCanvas.getContext('2d');
-            
-            tempCtx.drawImage(
-                dom.editCanvas,
-                cropRect.x, cropRect.y, cropRect.w, cropRect.h,
-                0, 0, cropRect.w, cropRect.h
-            );
-            
-            dom.editCanvas.width = cropRect.w;
-            dom.editCanvas.height = cropRect.h;
-            ctx.drawImage(tempCanvas, 0, 0);
-            
-            toggleCropMode();
-            showToast('裁切已应用，可继续编辑或保存', 'success');
-        }
-
-        // --- 画布变換功能 (旋转/翻转) ---
-        function applyTransform(action) {
-            const canvas = dom.editCanvas;
-            const ctx = canvas.getContext('2d');
-            const w = canvas.width;
-            const h = canvas.height;
-
-            const tempCanvas = document.createElement('canvas');
-            tempCanvas.width = w;
-            tempCanvas.height = h;
-            tempCanvas.getContext('2d').drawImage(canvas, 0, 0);
-
-            ctx.clearRect(0, 0, w, h);
-            ctx.save();
-            
-            ctx.translate(w / 2, h / 2);
-
-            switch (action) {
-                case 'rotate-left':
-                    ctx.rotate(-Math.PI / 2);
-                    break;
-                case 'rotate-right':
-                    ctx.rotate(Math.PI / 2);
-                    break;
-                case 'flip-horizontal':
-                    ctx.scale(-1, 1);
-                    break;
-                case 'flip-vertical':
-                    ctx.scale(1, -1);
-                    break;
-            }
-
-            ctx.drawImage(tempCanvas, -w / 2, -h / 2);
-            ctx.restore();
-        }
-
-        function openEditModal(frameId) {
-            stopPreview();
-            editingFrameId = frameId;
-            const frame = state.frames.find(f => f.id === frameId);
-            if (!frame) return;
-
-            dom.editCanvas.width = frame.canvas.width;
-            dom.editCanvas.height = frame.canvas.height;
-            const ctx = dom.editCanvas.getContext('2d');
-            ctx.drawImage(frame.canvas, 0, 0);
-
-            // 重新绑定刚渲染好的 UI 控件
-            dom.brushColor = document.getElementById('brush-color');
-            dom.brushSize = document.getElementById('brush-size');
-
-            dom.editModal.classList.remove('hidden');
-        }
-
-        function closeEditModal() {
-            if (isCropMode) toggleCropMode(); 
-            dom.editModal.classList.add('hidden');
-            editingFrameId = null;
-            if (state.isPlaying) startPreview();
-        }
-
-        function saveEditAsMaterial() {
-            createMaterialFromCanvas(dom.editCanvas);
-            showToast('已成功保存至素材库', 'success');
-            closeEditModal();
-        }
-
-        function saveEditAndApply() {
-            const frame = state.frames.find(f => f.id === editingFrameId);
-            if (frame) {
-                if (frame.canvas.width !== dom.editCanvas.width || frame.canvas.height !== dom.editCanvas.height) {
-                    frame.canvas.width = dom.editCanvas.width;
-                    frame.canvas.height = dom.editCanvas.height;
-                }
-                const ctx = frame.canvas.getContext('2d');
-                ctx.clearRect(0, 0, frame.canvas.width, frame.canvas.height);
-                ctx.drawImage(dom.editCanvas, 0, 0);
-                
-                createMaterialFromCanvas(dom.editCanvas);
-                
-                renderFrameList();
-                if (!state.isPlaying) drawSingleFrame(currentFrameIdx);
-                showToast('已更新当前帧并保存至素材库', 'success');
-            }
-            closeEditModal();
-        }
-
-        // ================= 外部文件拖入素材库逻辑 =================
-        dom.materialZone.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            e.stopPropagation(); 
-            dom.materialZone.classList.add('bg-indigo-50');
-        });
+        # 数据移交
+        tool = self.active_tools.pop(i)
+        self.hidden_tools.append(tool)
         
-        dom.materialZone.addEventListener('dragleave', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            dom.materialZone.classList.remove('bg-indigo-50');
-        });
+        # 视图更新
+        self.lb_active.delete(i)
+        self.lb_hidden.insert(tk.END, tool["title"])
         
-        dom.materialZone.addEventListener('drop', async (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            dom.materialZone.classList.remove('bg-indigo-50');
+        # 若需要，保持下方的焦点
+        if self.lb_active.size() > 0:
+            new_idx = i if i < self.lb_active.size() else i - 1
+            self.lb_active.selection_set(new_idx)
+
+    def move_to_active(self):
+        """将工具激活至生效区"""
+        idx = self.lb_hidden.curselection()
+        if not idx: return
+        i = idx[0]
+        
+        # 数据移交
+        tool = self.hidden_tools.pop(i)
+        self.active_tools.append(tool)
+        
+        # 视图更新
+        self.lb_hidden.delete(i)
+        self.lb_active.insert(tk.END, tool["title"])
+        
+        if self.lb_hidden.size() > 0:
+            new_idx = i if i < self.lb_hidden.size() else i - 1
+            self.lb_hidden.selection_set(new_idx)
+
+    def rename_tool(self):
+        """基于正则提取的 AST 重命名模块"""
+        new_name = self.rename_var.get().strip()
+        if not new_name:
+            messagebox.showwarning("拦截", "请输入新名称。")
+            return
             
-            const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+        # 判断当前哪个列表处于选中状态
+        active_idx = self.lb_active.curselection()
+        hidden_idx = self.lb_hidden.curselection()
+        
+        if not active_idx and not hidden_idx:
+            messagebox.showinfo("提示", "请先在任意列表中选中一个要重命名的工具。")
+            return
             
-            for (const file of files) {
-                if (file.type === 'image/gif') {
-                    showToast('素材库暂仅支持静态图格式', 'info');
-                    continue;
-                }
-                
-                await new Promise((resolve) => {
-                    const img = new Image();
-                    const objectUrl = URL.createObjectURL(file);
-                    img.onload = () => {
-                        // 若无基准尺寸，以上传的素材作为全局尺寸基准
-                        if (state.width === 0 || state.height === 0) {
-                            state.width = img.width;
-                            state.height = img.height;
-                        }
-                        const tempCanvas = document.createElement('canvas');
-                        tempCanvas.width = state.width;
-                        tempCanvas.height = state.height;
-                        const ctx = tempCanvas.getContext('2d');
-                        drawCoverImage(ctx, img, state.width, state.height);
-                        createMaterialFromCanvas(tempCanvas);
-                        URL.revokeObjectURL(objectUrl);
-                        resolve();
-                    };
-                    img.onerror = resolve;
-                    img.src = objectUrl;
-                });
-            }
-        });
+        is_active = bool(active_idx)
+        idx = active_idx[0] if is_active else hidden_idx[0]
+        tool_list = self.active_tools if is_active else self.hidden_tools
+        listbox = self.lb_active if is_active else self.lb_hidden
+        
+        tool = tool_list[idx]
+        old_name = tool["title"]
+        
+        # 正则替换：利用 Group \g<1> 保护原有的结构，仅替换中间的字符
+        new_raw = re.sub(r"(title:\s*')[^']+'", rf"\g<1>{new_name}'", tool["raw"])
+        tool["raw"] = new_raw
+        tool["title"] = new_name
+        
+        # 更新视图
+        listbox.delete(idx)
+        listbox.insert(idx, new_name)
+        listbox.selection_set(idx)
+        
+        self.rename_var.set("") # 清空输入框
+        self.status_label.config(text=f"[{old_name}] 已重命名为 [{new_name}]，请记得保存。", fg="#FF9800")
 
-        // 8. 拖拽文件全局监听
-        document.body.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            if (e.dataTransfer && e.dataTransfer.types && Array.from(e.dataTransfer.types).includes('Files')) {
-                document.body.classList.add('drag-active');
-            }
-        });
-        document.body.addEventListener('dragleave', (e) => {
-            e.preventDefault();
-            if (e.clientX === 0 && e.clientY === 0) { 
-                document.body.classList.remove('drag-active');
-            }
-        });
-        document.body.addEventListener('drop', (e) => {
-            e.preventDefault();
-            document.body.classList.remove('drag-active');
+    def push_sorted_config(self):
+        """AST 序列化引擎：将双轨内存数据转译回 JS 代码结构"""
+        if not self.sort_index_sha: return
+        token, repo = self.check_auth_params()
+        
+        cleaned_lines = []
+        
+        # 1. 编译活动代码块 (去除注释)
+        for tool in self.active_tools:
+            raw = tool["raw"].replace("// ", "", 1).replace("//", "", 1)
+            clean_line = raw.rstrip(', \r\n') + ','
+            cleaned_lines.append(clean_line)
             
-            if (!e.dataTransfer || !e.dataTransfer.types || !Array.from(e.dataTransfer.types).includes('Files')) {
-                return;
-            }
-
-            const files = e.dataTransfer.files;
-            if (files.length > 0) {
-                const file = files[0];
-                if (file.type === 'image/gif') {
-                    // 若拖入的首个文件是 GIF，走原有解析逻辑
-                    processGifFile(file);
-                } else if (file.type.startsWith('image/')) {
-                    // 过滤出静态图片并交由新函数批量处理
-                    const validFiles = Array.from(files).filter(f => f.type.startsWith('image/') && f.type !== 'image/gif');
-                    if (validFiles.length > 0) {
-                        processImageFiles(validFiles);
-                    } else {
-                        showToast('主序列仅支持导入 GIF 或 静态图片格式(JPG/PNG/WEBP)', 'error');
-                    }
-                } else {
-                    showToast('不支持的文件格式', 'error');
-                }
-            }
-        });
-
-        // 9. 导出生成核心逻辑
-        function exportGIF() {
-            if (state.frames.length === 0) return;
-
-            const btnText = document.getElementById('export-text');
-            const originalIcon = '<i data-lucide="download" class="w-4 h-4"></i>';
-            const loadingIcon = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i>';
+        # 2. 编译隐藏代码块 (强制注入注释)
+        for tool in self.hidden_tools:
+            raw = tool["raw"]
+            stripped = raw.lstrip()
+            # 如果尚未被注释，则补齐双斜杠
+            if not stripped.startswith("//"):
+                indent = raw[:len(raw) - len(stripped)]
+                raw = indent + "// " + stripped
+            clean_line = raw.rstrip(', \r\n') + ','
+            cleaned_lines.append(clean_line)
             
-            dom.btnExport.disabled = true;
-            dom.btnExport.innerHTML = `${loadingIcon} <span>编码中...</span>`;
-            lucide.createIcons();
-            showToast('开始构建 GIF，请勿关闭页面...', 'info');
-
-            const gifConfig = {
-                workers: 2,
-                quality: 10,
-                width: state.width,
-                height: state.height,
-            };
+        reconstructed_block = "\n".join(cleaned_lines) + "\n        "
+        
+        start_str, end_str = "const TOOL_CONFIG = [", "];"
+        start_idx = self.sort_index_content.find(start_str)
+        end_idx = self.sort_index_content.find(end_str, start_idx)
+        
+        new_content = self.sort_index_content[:start_idx + len(start_str)] + reconstructed_block + self.sort_index_content[end_idx:]
+        
+        try:
+            url = f"https://api.github.com/repos/{repo}/contents/index.html"
+            content_b64 = base64.b64encode(new_content.encode('utf-8')).decode('utf-8')
+            put_data = {"message": "Rebuild TOOL_CONFIG architecture", "content": content_b64, "sha": self.sort_index_sha}
+            response = requests.put(url, headers=self.get_api_headers(token), json=put_data)
+            response.raise_for_status()
             
-            if (state.workerBlobUrl) {
-                gifConfig.workerScript = state.workerBlobUrl;
-            } else {
-                gifConfig.workerScript = 'https://unpkg.com/gif.js@0.2.0/dist/gif.worker.js';
-            }
+            self.sort_index_sha = response.json()["content"]["sha"]
+            self.sort_index_content = new_content
+            messagebox.showinfo("事务完成", "全局配置环境已成功重构至线上！")
+        except Exception as e:
+            messagebox.showerror("网络异常", str(e))
 
-            const gifEncoder = new GIF(gifConfig);
-
-            state.frames.forEach(frame => {
-                gifEncoder.addFrame(frame.canvas, { delay: frame.delay, copy: true });
-            });
-
-            gifEncoder.on('finished', function(blob) {
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `exported_animation_${Date.now()}.gif`;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                
-                dom.btnExport.disabled = false;
-                dom.btnExport.innerHTML = `${originalIcon} <span id="export-text">导出 GIF</span>`;
-                lucide.createIcons();
-                showToast('处理完成，已触发下载。', 'success');
-            });
-
-            gifEncoder.on('progress', function(p) {
-               dom.btnExport.innerHTML = `${loadingIcon} <span>${Math.round(p * 100)}%</span>`;
-               lucide.createIcons();
-            });
-
-            gifEncoder.render();
-        }
-
-    </script>
-</body>
-</html>
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = GitHubDeployTool(root)
+    root.mainloop()
