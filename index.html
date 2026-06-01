@@ -45,29 +45,15 @@
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
             </button>
             <div class="h-4 w-px bg-gray-300 mx-4"></div>
-            <span id="current-tool-title" class="text-sm font-semibold text-gray-700 tracking-wide">首页指南</span>
+            <span id="current-tool-title" class="text-sm font-semibold text-gray-700 tracking-wide">全景工作台</span>
         </header>
 
         <!-- 工具挂载容器区 -->
         <div class="flex-1 overflow-auto bg-gray-50">
             <div class="w-full h-full relative">
                 
-                <!-- ================= 首页指南 (原生内容) ================= -->
-                <section id="welcome" class="absolute inset-0 overflow-y-auto block p-8">
-                    <div class="bg-white p-8 rounded-lg shadow-sm border border-gray-200">
-                        <h2 class="text-2xl font-bold mb-4">欢迎使用个人工具库 (动态沙箱版)</h2>
-                        <p class="mb-4 text-gray-700">为避免代码冲突（如 CSS 样式污染、全局 JS 变量覆盖），本框架已采用 <strong>Iframe 隔离架构</strong>与<strong>动态配置驱动</strong>模式。</p>
-                        
-                        <h3 class="text-lg font-semibold mt-6 mb-2">标准接入流程：</h3>
-                        <ol class="list-decimal pl-6 space-y-3 text-gray-700">
-                            <li>将您以前保存的独立网页程序（例如 <code>regex_tool.html</code>）直接放入与本 <code>index.html</code> 同级的目录，或新建一个 <code>tools</code> 文件夹进行集中管理。</li>
-                            <li>使用配套的 <strong>GitHub全栈管理系统</strong>，在【自动化工具接入】页面一键上传文件。</li>
-                            <li>使用管理系统的【模块部署沙盘】进行排序或隐藏操作。</li>
-                        </ol>
-                    </div>
-                </section>
-
-                <!-- ================= Iframe 沙箱容器 ================= -->
+                <!-- ================= Iframe 沙箱容器 (废除原生 DOM，全量采用 Iframe) ================= -->
+                <!-- 注意：移除了原有的 <section id="welcome"> -->
                 <iframe id="tool-frame" class="absolute inset-0 w-full h-full border-0 hidden" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-downloads"></iframe>
                 
             </div>
@@ -78,24 +64,29 @@
     <!-- 全局框架控制逻辑 -->
     <script>
         // ================= 1. 工具库注册配置 =================
-        const TOOL_CONFIG = [
-            { id: 'welcome', title: '首页指南', type: 'native' },
+        // 工程改造：将局部常量升级为挂载到 window 的全局变量，授权内部 Iframe 跨域读取
+        window.TOOL_CONFIG = [
+            { id: 'welcome', title: '全景工作台', type: 'iframe', url: './dashboard.html' },
             // 取消下方注释并修改 URL 即可手动接入您的现有程序：
             // { id: 'tool-timestamp', title: '时间戳转换', type: 'iframe', url: './tools/timestamp.html' },
-             { id: 'tool-crypto', title: '抽奖', type: 'iframe', url: './抽奖.html' },
-             { id: 'tool-custom', title: 'gif编辑器', type: 'iframe', url: './gif.html' }
+             { id: 'tool-crypto', title: '抽奖系统', type: 'iframe', url: './抽奖.html' },
+             { id: 'tool-custom', title: 'gif转换', type: 'iframe', url: './gif.html' }
         ];
 
         // ================= 2. 核心调度引擎 =================
         document.addEventListener('DOMContentLoaded', () => {
             renderNavigation();
+            // 框架初始化时，强制默认挂载并渲染工作台 (索引 0)
+            if (window.TOOL_CONFIG.length > 0) {
+                dispatchRoute(window.TOOL_CONFIG[0]);
+            }
         });
 
         function renderNavigation() {
             const navMenu = document.getElementById('nav-menu');
             navMenu.innerHTML = '';
 
-            TOOL_CONFIG.forEach(tool => {
+            window.TOOL_CONFIG.forEach(tool => {
                 const btn = document.createElement('button');
                 btn.className = `nav-btn w-full text-left px-6 py-3 hover:bg-gray-800 transition-colors border-l-4 ${tool.id === 'welcome' ? 'bg-gray-800 border-blue-500' : 'border-transparent'}`;
                 btn.textContent = tool.title;
@@ -121,21 +112,14 @@
                 titleEl.textContent = tool.title;
             }
 
-            const welcomeSection = document.getElementById('welcome');
+            // 架构统一：所有工具（包括首页）均通过唯一的 tool-frame 承载
             const iframeEl = document.getElementById('tool-frame');
-
-            if (tool.type === 'native') {
-                iframeEl.classList.add('hidden');
-                iframeEl.src = ''; 
-                welcomeSection.classList.remove('hidden');
-                welcomeSection.classList.add('block');
-            } else if (tool.type === 'iframe') {
-                welcomeSection.classList.remove('block');
-                welcomeSection.classList.add('hidden');
-                iframeEl.classList.remove('hidden');
-                if (iframeEl.src !== tool.url) {
-                    iframeEl.src = tool.url; 
-                }
+            iframeEl.classList.remove('hidden');
+            
+            // 为了防止同路径重复渲染导致的闪烁，增加 URL 后缀比对
+            let targetUrl = tool.url;
+            if (iframeEl.src !== targetUrl && !iframeEl.src.endsWith(targetUrl.replace('./', ''))) {
+                iframeEl.src = targetUrl; 
             }
 
             // 移动端：点击菜单后自动收起
