@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能考试与错题评估系统</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="bg-gray-50/50 min-h-screen p-4 md:p-8 text-gray-800">
+
+    <div class="max-w-5xl mx-auto">
+        <header class="mb-8 border-b border-gray-200 pb-4">
+            <h1 class="text-2xl font-bold text-gray-900 tracking-tight">智能考试与错题评估系统 (极速专版)</h1>
+            <p class="text-sm text-gray-500 mt-2" id="header-subtitle">数据安全：全程本地运算，不消耗网络流量</p>
+        </header>
+
+        <main id="app-container">
+            <!-- 视图动态渲染容器 -->
+        </main>
+    </div>
+
+<script>
+// ==========================================
+// 1. 题库数据硬编码区
+// ==========================================
+const RAW_DAN = `
+B  1. “十五五” 规划建议中，我国经济社会发展的主题是___。  
+  A、高速增长B、高质量发展C、规模扩张D、速度优先
+A  2. “十五五”时期提高公共安全治理水平的关键转型方向是___。   
+  A、从事后处置向事前预防转型B、从事前预防向事后处置转型
+  C、从分散治理向集中治理转型D、从政府主导向市场主导转型
+C  3. “十五五”时期深入推进数字中国建设，针对数智技术创新提出的专项行动是___。   
+  A、“互联网+”行动     B、“大数据+”行动
+C、“人工智能+”行动   D、“云计算+”行动
+B   4. “十五五”时期加快建设的新型能源体系核心特征是___。   
+  A、高碳高效、规模优先       B、清洁低碳、安全高效
+  C、传统能源主导、新能源补充D、区域分割、自给自足
+B  5. 党的二十届四中全会指出，加快高水平科技自立自强，要抢占___制高点。   
+  A、经济发展B、科技发展C、文化发展 D、国防发展
+B  6. 党的二十届四中全会提出，坚持把发展经济的着力点放在___上。   
+  A、虚拟经济  B、实体经济C、数字经济D、服务经济
+A  7. 党的二十届四中全会提出“如期实现建军一百年奋斗目标”，建军一百年的时间节点是___。 
+  A、2027年B、2030年 C、2035年D、2049年
+B  8. “十五五”时期经济社会发展的根本目的是___。  
+  A、推动高质量发展   B、满足人民日益增长的美好生活需要
+  C、实现科技自立自强 D、构建新发展格局
+B  9. “十五五”时期在基本实现社会主义现代化进程中的地位是___。 
+   A、起步探索、奠定基础的关键时期
+B、夯实基础、全面发力的关键时期
+  C、深化推进、攻坚突破的关键时期
+  D、收尾完善、目标达成的关键时期
+C  10. 党的二十届四中全会审议通过的关于国民经济和社会发展的规划建议是___。   
+A、《中共中央关于制定国民经济和社会发展第十三个五年规划的建议》
+B、《中共中央关于制定国民经济和社会发展第十四个五年规划的建议》
+C、《中共中央关于制定国民经济和社会发展第十五个五年规划的建议》
+D、《中共中央关于制定国民经济和社会发展第十六个五年规划的建议》
+B  11. 中国共产党第二十届中央委员会第四次全体会议召开的时间是___。 
+  A、2025年10月18日至21日
+  B、2025年10月20日至23日
+  C、2025年10月21日至24日
+  D、2025年10月22日至25日
+D  12. ___是党组织讨论预备党员是否认真履行党员义务，是否具备党条件的依据之一，也是预备党员转为正式党员的必备手续之一。   
+  A、入党志愿书
+  B、入党自传
+  C、思想汇报
+  D、转正申请书
+B  13. ___是党组织全面、系统、历史、深入地了解入党申请人的重要材料，是党组织审查吸收新党员必须具备的材料之一。
+  A、入党志愿书
+  B、入党自传
+  C、思想汇报
+  D、转正申请书
+B  14. 转正申请书或入党转正申请报告，一般是指预备党员在经过___的预备期后，由本人主动向所在党组织提出的转为正式党员的书面材料。   
+  A、半年
+  B、一年
+  C、一年半
+  D、两年
+D  15. ___是党的肌体的细胞和党的活动的主体，发展党员是党的建设的一项经常性重要工作。
+  A、积极分子
+  B、发展对象
+  C、预备党员
+  D、党员
+A  16. ___是统一全党思想和行动的最高准则，它包括党的性质、党的指导思想、党的最终目标、党在当前历史阶段的总任务和基本政策，以及党的建设的基本要求等。   
+  A、党的纲领
+  B、党的章程
+  C、党的纪律
+  D、党的组织
+C  17. ___是人类历史上最美好、最进步、最合理的社会制度。   
+  A、社会主义
+  B、资本主义
+  C、共产主义
+  D、民主主义
+A  18. 党员的权利是党章赋予的，是健全党内政治生活的基本条件，是贯彻执行党的路线、方针、政策，维护党的团结和统一的___。   
+  A、有力保证
+  B、必要保障
+  C、必然要求
+  D、基本前提
+A  19. 党员履行义务是提高党的___的需要。
+  A、战斗力
+  B、凝聚力
+  C、向心力
+  D、执行力
+B  20. 党员履行义务是保持党的___的需要。
+  A、科学性
+  B、先进性
+  C、纯洁性
+  D、实践性
+A  21. 全面提升物质文明水平，必须坚持以___为方向，加快形成高质量发展模式和现代化经济体系。   
+  A、实现高质量发展      B、发展全过程人民民主
+  C、实现全体人民共同富裕D、促进人与自然和谐共生
+B  22全面提升政治文明水平，必须坚持以_为方向，健全人民当家作主制度体系。   
+ A、实现高质量发展      B、发展全过程人民民主
+ C、实现全体人民共同富裕D、促进人与自然和谐共生
+D  23. 全面提升生态文明水平，必须坚持以___为方向，牢固树立和践行绿水青山就是金山银山的理念。  
+  A、实现高质量发展       B、发展全过程人民民主
+  C、实现全体人民共同富裕  D、促进人与自然和谐共生
+C  24. 全面提升社会文明水平，必须坚持以___为方向，坚持把实现人民对美好生活的向往作为现代化建设的出	   发点和落脚点，着力维护和促进社会公平正义，保证社会既充满活力又和谐有序。   
+  A、实现高质量发展       B、发展全过程人民民主
+  C、实现全体人民共同富裕 D、促进人与自然和谐共生
+B  25. ___报告首次提出“社会主义现代化强国”概念，战略目标上增加了“美丽”这一代表生态文明的内容。   
+  A、党的十八大B、党的十九大C、党的二十大D、党的二十一大
+B  26. ___报告对实现第二个百年奋斗目标作出分两个阶段推进的战略安排。   
+  A、党的十八大
+  B、党的十九大
+  C、党的二十大
+  D、党的二十一大
+D  27. 坚持发扬斗争精神，强调的是___问题。   
+  A、发展目的 B、前进方向C、发展动力 D、方式手段
+C  28. 坚持深化改革开放，强调的是___问题。   
+  A、发展目的 B、前进方向 C、发展动力 D、方式手段
+A  29. 坚持以人民为中心的发展思想，强调的是___问题
+  A、发展目的B、前进方向C、发展动力D、方式手段
+B  30. 坚持中国特色社会主义道路，强调的是___问题。
+  A、发展目的B、前进方向C、发展动力 D、方式手段
+D  31. 坚持和加强党的全面领导，强调的是___问题
+  A、发展目的 B、前进方向C、发展动力D、领导力量
+C  32 __是中国特色社会主义的本质要求,也是一个长期的历史过程程。 
+  A、物质富足B、精神富有C、共同富裕 D、和平发展
+A  33. ___是我们立党立国的重要原则。   
+  A、自立B、自信C、守正D、创新
+B  34. ___是我们党在长期斗争中炼就的精神气质。
+  A、自立B、自信C、守正D、创新
+A  35. ___是对坚持和发展马克思主义作出的重大理论贡献。   
+ A、“两个结合”B、“两个确立”C、“四个自信”D、“三个务必”
+C  36. ___是辩证唯物主义的重要认识论和方法论，是具有基础性的思想和工作方法。   
+  A、人民至上B、守正创新C、系统观念 D、问题导向
+D  37. “美丽”是社会主义___建设的目标。
+  A、经济B、政治 C、文化D、生态文明
+C  38. “文明”是社会主义___建设的目标。  
+  A、经济B、政治C、文化  D、生态文明
+B  39. “民主”是社会主义___建设的目标。
+  A、经济B、政治C、文化D、生态文明
+A  40. “富强”是社会主义___建设的目标。
+  A、经济B、政治C、文化 D、生态文明
+A  41. ___属于社会主义核心价值观中个人层面的价值准则之一。   
+  A、爱国 B、公正 C、文明  D、法治
+B  42. 社会主义核心价值观社会层面的价值取向包括___。   
+  A、富强、民主、文明、和谐B、自由、平等、公正、法治
+  C、爱国、敬业、诚信、友善 D、奉献、友爱、互助、进步
+C  43. ___是社会主义社会建设的目标，是中国特色社会主义的本质属性。
+  A、民主B、文明C、和谐 D、美丽
+D  44. 社会主义初级阶段党的基本路线的奋斗目标是建设___。  
+  A、小康社会 B、社会主义市场经济体制
+  C、社会主义现代化国家D、富强民主文明和谐美丽的社会主义现代化强国
+C  45. 社会主义初级阶段党的基本路线的核心内容是___。   
+  A、以经济建设为     B、坚持独立自主
+  C、“一个中心，两个基本点”D、建设富强民主文明和谐美丽的社会主义现代化强国
+C  46. 坚持改革开放，是我们的___。   
+  A、兴国之要 B、立国之本 C、强国之路  D、执政之基
+B  47. 坚持四项基本原则，是我们的___。   
+  A、兴国之要B、立国之本 C、强国之路  D、执政之基
+D  48. 以经济建设为中心是兴国之要，___仍是解决我国所有问题的关键。   
+  A、经济 B、政治  C、文化D、发展
+B  49. ___是马克思主义中国化时代化的重要里程碑。   
+  A、毛泽东思想  B、邓小平理论C、“三个代表”重要思想  D、科学发展观
+C  50. ___领导伟大的十月革命取得胜利，创立了世界上第一个无产阶级专政的社会主义国家。   
+  A、马克思 B、恩格斯 C、列宁 D、斯大林
+A  51. ___通过的宪法修正案郑重地把习近平新时代中国特色社会主义思想载入宪法。   
+  A、十三届全国人大一次会议 B、十三届全国人大二次会议
+  C、十三届全国人大三次会议  D、十三届全国人大四次会议
+C  52. ___概括和提出了习近平新时代中国特色社会主义思想，将其确立为党必须长期坚持的指导思想并写进		党章，实现了党的指导思想的与时俱进。   
+  A、党的十七大  B、党的十八大
+  C、党的十九大  D、党的二十大
+D  53. 科学发展观的第一要义是___。   
+  A、以人为本  B、全面协调可持续 C、统筹兼顾  D、发展
+A  54. 马克思主义政治经济学阐明___，揭开了资本主义剥削的秘密，揭示了资本主义生产方式的本质及其产		生、发展、灭亡的客观规律，阐述了无产阶级在资本主义社会中的地位和历史使命，为无产阶级革命		提供了理论依据。   
+  A、剩余价值学说 B、劳动价值论C、古典哲学 D、空想社会主义
+A  55马克思主义哲学是_的科学世界观和方法论,是无产阶级及其政党认识世界和改造世界的锐利思想武器
+  A、无产阶级  B、资产阶级 C、工人阶级  D、农民阶级
+A  56. “两个确立” 是指确立习近平同志党中央的核心、全党的核心地位，确立___。   
+  A、习近平新时代中国特色社会主义思想的指导地位
+  B、马克思主义中国化时代化最新成果的指导地位
+  C、中国特色社会主义理论体系的指导地位  D、科学发展观的指导地位
+D  57. 中国共产党的精神之源是___。   
+  A、红船精神 B、长征精神  C、延安精神D、伟大建党精神
+C  58. 2012年，党的十八大把___正式确立为党的指导思想。   
+  A、邓小平理论 B、“三个代表”重要思想
+  C、科学发展观  D、习近平新时代中国特色社会主义思想
+D  59. ___是党在新世纪召开的第一次全国代表大会，明确回答了新世纪新阶段中国共产党举什么旗、走什么		路、实现什么样的发展目标等重大问题。   
+  A、党的十三大 B、党的十四大 C、党的十五大D、党的十六大
+A  60. 香港回归祖国的时间是___。   
+  A、1997年7月1日 B、1998年7月1日  C、1999年12月20日 D、2000 年12月20日
+C  61. ___是为香港、澳门回归祖国开辟途径的伟大构想。   
+  A、民族区域自治制度 B、和平共处五项原则  C、“一国两制”D、求同存异方针
+C  62. ___把邓小平理论同马克思列宁主义、毛泽东思想一起作为党的指导思想写入党章。   
+  A、党的十三大  B、党的十四大  C、党的十五大 D、党的十六大
+D  63. 1978年5月10日，中央党校内部刊物《理论动态》刊登___一文。   
+  A、《关于建国以来党的若干历史问题的决议》 B、《南方谈话》
+  C、《论持久战》 D、《实践是检验真理的唯一标准》
+D  64. “两弹一星” 精神的核心是___。   
+  A、热爱祖国、无私奉献  B、自力更生、艰苦奋斗
+  C、大力协同、勇于登攀  D、以上都是
+B  65. 参与 “两弹一星” 研制的科学家代表人物是___。   
+  A、袁隆平 B、邓稼先  C、屠呦呦 D、钟南山
+B  66. 中国发射的第一颗人造地球卫星是___。   
+  A、风云一号 B、东方红一号  C、实践一号 D、神舟一号
+A  67. ___，中国第一颗原子弹爆炸成功。   
+  A、1964年10月16日 B、1967年6月17日
+  C、1970年4月24日 D、1971年3月3日
+B  68. ___是党的历史上一个生死攸关的转折点。   
+  A、古田会议 B、遵义会议 C、八七会议 D、洛川会议
+A  69. 1929年12月，___确立思想建党、政治建军原则。   
+  A、古田会议  B、遵义会议  C、洛川会议  D、瓦窑堡会议
+C  70. ___被誉为 “中国革命的摇篮”。   
+  A、沂蒙山  B、太行山 C、井冈山 D、宝塔山
+C  71. ___，毛泽东领导军民在井冈山建立第一个农村革命根据地。   
+  A、1927年8月 B、1927年9月 C、1927年10月  D、1928年4月
+B  72. 八七会议上毛泽东提出了___的著名论断。  
+  A、一切反动派都是纸老虎 B、枪杆子里出政权C、星星之火，可以燎原 D、没有调查，没有发言权
+C  73. 八七会议召开的地点是___。 
+  A、上海B、广州C、汉口D、南昌
+B  74. 著名的历史事件“南昌起义”,发生在___。   
+  A、福建省 B、江西省 C、广东省 D、湖南省
+C  75. 南昌起义打响了武装反抗国民党反动派的第一枪，其发生的时间是___。 
+  A、1921年7月B、1924年1月C、1927年8月1日D、1935年1月
+B  76. 在中国人民和中华民族的伟大觉醒中，在马克思列宁主义同中国工人运动的紧密结合中，___年7月中国		共产党应运而生。   
+  A、1920  B、1921 C、1922 D、1923
+A  77. 中国逐步成为半殖民地半封建社会的标志性事件是___。   
+  A、鸦片战争 B、第二次鸦片战争 C、甲午中日战争D、八国联军侵华战争
+A  78. ___是党内监督专责机关。   
+  A、党的各级纪律检查委员会B、党的基层委员会 C、总支部委员会 D、支部委员会
+C  79. ___是党纪处分中仅次于开除党籍的一种重处分。
+  A、严重警告B、撤销党内职务C、留党察看D、开除党籍
+D  80. 执政党的___，关系着党是否会变质。  
+  A、思想B、组织C、纪律 D、党风
+C  81. ___适用于严重违犯党的纪律，但尚未完全丧失共产党员条件的党员。   
+  A、严重警告
+  B、撤销党内职务C、留党察看D、开除党籍
+D  82. 党员受到___处分，五年内不得重新入党。   
+  A、严重警告B、撤销党内职务C、留党察看D、开除党籍
+C  83. 新修订的《中国共产党纪律处分条例》自 2024年1月1日起施行，其修订完成的时间是___。   
+  A、2023年10月B、2023年11月 C、2023年12月 D、2024年1月
+C  84. 留党察看期限最长不得超过___。
+  A、半年B、一年 C、两年D、三年
+A  85. ___是党在社会基层组织中的战斗堡垒，是党的全部工作和战斗力的基础。
+  A、党的基层组织 B、党支部 C、支委会D、党支书
+B  86. 企业、农村、机关、学校、医院、科研院所、街道社区、社会组织、人民解放军连队和其他基层单位，		凡是有正式党员___人以上的，都应当成立党的基层组织
+  A、二 B、三 C、四 D、五
+B  87. 党的地方各级委员会全体会议，每年至少召开___。   
+  A、一次 B、两次 C、三次 D、四次
+D  88. 党的中央委员会由党的全国代表大会选举产生，每届任期___。   
+  A、两年  B、三年  C、四年D、五年
+D  89. ___是中国共产党的根本组织制度，是科学的合理的有效的制度。   
+ A、党的代表大会制度 B、党的组织生活制度  C、党的选举制度 D、民主集中制
+D  90. ___作为党的根本组织原则，是党的组织制度的核心内容。   
+  A、党的代表大会制度B、党的组织生活制度  C、党的选举制度 D、民主集中制
+B  91. ___是党的建设的重要基础。  
+  A、思想建设 B、组织建设C、纪律建设 D、作风建设
+B  92. 党的二十届三中全会审议通过的文件是___。   
+  A、《中共中央关于全面深化改革若干重大问题的决定》
+  B、《中共中央关于进一步全面深化改革、推进中国式现代化的决定》
+  C、《中共中央关于制定国民经济和社会发展第十四个五年规划和二〇三五年远景目标的建议》
+  D、《中共中央关于坚持和完善中国特色社会主义制度、推进国家治理体系和治理能力现代化若干重大问题的决定》
+D  93. 牢记党的宗旨是党在长期执政条件下保持同人民群众血肉联系的___。 
+  A、基本原则B、根本要求C、力量源泉 D、现实需求
+C  94. 坚持党的群众路线，是坚持全心全意为人民服务宗旨的___。  
+  A、必由之路 B、基本要求C、必然要求  D、本质要求
+D  95. 一切为了群众，一切依靠群众，是群众路线的___。  
+  A、领导方法B、必然要求  C、基本原则D、核心内容
+A  96. 1945年，___把“为人民服务”的宗旨正式写进党章，明确了“全心全意为人民服务”是中国共产党的		根本宗旨。   
+  A、党的七大B、党的八大 C、党的九大 D、党的十大
+D  97. “张思德同志是为人民利益而死的，他的死是比泰山还要重的。”1944年9月8日，中共中央主席毛		泽东发表的___著名演讲。   
+  A、《新民主主义论》B、《论持久战》C、《星星之火，可以燎原》D、《为人民服务
+A  98. ___是最活跃、最革命的因素，是社会发展的最终决定力量。
+  A、生产  B、人民 C、共产主义信仰 D、党的建设
+C  99. 1935年召开的___明确指出，中国共产党是中国无产阶级的先锋队，同时又是全民族的先锋队。
+  A、古田会议  B、遵义会议C、瓦窑堡会议 D、洛川会议
+B  100. 《共产党宣言》发表于___年。  
+  A、1843 B、1848 C、1851 D、1870
+A  101. 《共产党宣言》的作者是___。 
+  A、马克思和恩格斯B、列宁和斯大林C、毛泽东和朱德D、马克思和列宁
+C  102. ___是与社会大生产密切联系的最先进、最有前途的阶级，是最革命的阶级，是最有组织性、纪律性的		阶级，因而是最有力量的阶级。 
+  A、地主阶级 B、中产阶级 C、工人阶级D、资产阶级
+A  103. 党的___，是指中国共产党是由工人阶级中具有共产主义觉悟的先进分子所组成的。 
+  A、先进性 B、纯洁性C、科学性 D、阶级性
+D  104. 党的___，是指中国共产党以工人阶级为基础，代表工人阶级和广大人民群众的利益。   
+  A、先进性B、纯洁性C、科学性D、阶级性
+C  105. ___参加过著名的“五四运动”，也曾领导过震惊中外的上海三次工人大罢工。 
+  A、夏明翰B、方志敏C、赵世炎 D、王良
+A  106. 每年的___被定为“雷锋纪念日”。 
+  A、3月5日  B、3月15日C、4月5日D、4月15日
+A  107. “敌人只能砍下我们的头颅，决不能动摇我们的信仰” 这句话出自___。   
+  A、方志敏B、杨靖宇 C、赵一曼 D、左权
+A  108. 下列诗句中，与夏明翰 “砍头不要紧，只要主义真” 表达情感和主题最相似的是___。   
+  A、人生自古谁无死，留取丹心照汗青B、采得百花成蜜后，为谁辛苦为谁甜
+  C、我劝天公重抖擞，不拘一格降人才D、不要人夸好颜色，只留清气满乾坤
+D  109. 在“太空授课”的中国首位“太空教师”是___。   
+  A、杨利伟B、费俊龙C、刘洋  D、王亚平
+C  110. 夏明翰在写下 “坚持革命继吾志，誓将真理传人寰” 的豪迈誓言时，处于以下哪种情境___。   
+  A、领导秋收起义时 B、参加党的重要会议途中 C、被敌人囚禁于狱中 D、秘密开展工人运动时
+A  111. 在___，毛泽东深情指出：“满堂青年，朝气蓬勃。”
+  		A、延安各界纪念一二·九运动四周年大会上 B、反抗阶级统治的斗争过程中
+C、中华人民共和国成立后     D、推进社会主义制度建设的历史进程中
+`;
+
+const RAW_DUO = `
+ABC  1. “十五五”时期推进宜居宜业和美乡村建设的关键举措包括（ ）。   
+  A、学习运用“千万工程”经验   B、片区化推进乡村振兴
+  C、完善乡村建设实施机制 D、一刀切推进农村改造
+ABC  2. “十五五”规划建议提出扩大有效投资需优化政府投资结构，重点投向的领域包括（ ）。   
+  A、民生类项目 B、国家重大战略实施项目 C、重点领域安全能力项目 D、房地产开发项目
+ABC  3. “十五五”规划建议提出建设现代化产业体系需坚持的发展方向包括（ ）。   
+  A、智能化  B、绿色化  C、融合化 D、规模化
+ABCD  4. 党的二十届四中全会提出“建设现代化产业体系”，具体包括（ ）。   
+  A、加快建设制造强国、质量强国 B、加快建设航天强国、交通强国、网络强国
+  C、优化提升传统产业  D、培育壮大新兴产业和未来产业
+ABC  5. 党的二十届四中全会指出，加快高水平科技自立自强的举措包括（ ）。   
+  A、加强原始创新和关键核心技术攻关 B、推动科技创新和产业创新深度融合
+  C、深入推进数字中国建设 D、依赖国外核心技术
+ABC  6. “十五五”时期经济社会发展必须遵循的原则包括（ ）。   
+  A、坚持党的全面领导 B、坚持人民至上 C、坚持高质量发展  D、坚持深化改革
+ABC  7. 党的二十届四中全会高度评价“十四五”时期我国发展取得的重大成就，包括（ ）。  
+  A、经济实力、科技实力、综合国力跃上新台阶 B、中国式现代化迈出新的坚实步伐
+  C、第二个百年奋斗目标新征程实现良好开局  D、全面实现社会主义现代化
+ABC  8. 党的二十届四中全会充分肯定党的二十届三中全会以来中央政治局的工作，指出中央政治局统筹推进		的“五位一体”总体布局包括( )。   
+  A、经济建设 B、政治建设 C、文化建设 D、精神文明建设
+ABCD  9. 入党志愿要写明（ ）等内容。   
+  A、入党的态度  B、对党的认识  C、自己的优缺点 D、入党的决心
+ABCD  10. 属于入党自传正文的主要内容的有( )。   
+  A、入党申请人的基本情况  B、家庭成员情况和主要社会关系情况
+  C、本人履历 D、个人思想演变过程
+ABCD  11. 发展党员工作要严格遵循党的二十大精神和《中国共产党发展党员工作细则》的规定，按照（ ）的		  总要求，坚持党章规定的党员标准，始终把政治标准放在首位。   
+  A、控制总量 B、优化结构 C、提高质量 D、发挥作用
+CD  12. 党组织对入党积极分子的培养、教育和考察工作，能有效避免把不符合党员条件的人吸收入党，保证		党组织的( )。   
+  A、科学性B、组织性 C、先进性 D、纯洁性
+ABC  13. 党的纲领包括（ ）、党在当前历史阶段的总任务和基本政策，以及党的建设的基本要求等。   
+  A、党的性质  B、党的指导思想  C、党的最终目标 D、党的根本宗旨
+ABCD  14. 申请加入中国共产党，必须是（ ）和其他社会阶层的先进分子。   
+  A、工人 B、农民 C、军人 D、知识分子
+AB  15. 申请入党的自然条件包括（ ）。   
+  A、年龄条件 B、国籍条件 C、身份条件 D、思想条件
+BCD  16. 党员履行义务是保证党的（ ）贯彻执行的需要。   
+  A、基本思想 B、基本理论 C、基本路线 D、基本纲领
+BD  17. 共产党员要正确地行使自己的权利，就要坚持（ ）的原则。   
+  A、解放思想 B、实事求是 C、群众路线 D、民主集中制
+ACD  18. 从国际看，世界百年未有之大变局加速演进，国际环境日趋复杂，世界进入新的动荡变革期，（ ）		  对世界和平与发展构成威胁。  
+  A、单边主义  B、多边主义  C、保护主义 D、霸权主义
+ABCD  19. 党的二十届三中全会强调：“中国式现代化是人与自然和谐共生的现代化。必须完善生态文明制度		 体系，协同推进( )，积极应对气候变化，加快完善落实绿水青山就是金山银山理念的体制机制。”   
+  A、降碳 B、减污 C、扩绿 D、增长
+ABC  20. 以下属于 “四个自信” 内容的是（ ）。   
+  A、道路自信 B、理论自信  C、制度自信 D、经济自信
+ABCD  21. 推进中国式现代化的奋斗目标，必须全面提升我国的物质文明、( )水平。
+  A、政治文明  B、精神文明C、社会文明 D、生态文明
+ABCD  22. 中国式现代化破解了人类社会发展的诸多难题，摒弃了（ ）老路，拓展了发展中国家走向现代化的		 途径，为人类对更好社会制度的探索提供了中国智慧和中国方案。  
+  A、西方以资本为中心的现代化 B、两极分化的现代化  
+C、物质主义膨胀的现代化  D、对外扩张掠夺的现代化
+ABCD  23. 我们坚定站在历史正确的一边、站在人类文明进步的一边，高举（ ）旗帜。   
+  A、和平  B、发展C、合作D、共赢
+BCD  24. 我们坚持可持续发展，坚持（ ）为主的方针，像保护眼睛一样保护自然和生态环境。
+  A、尊重自然B、节约优先C、保护优先D、自然恢复
+AB  25. ( )是社会主义现代化的根本要求。   
+  A、物质富足B、精神富有 C、共同富裕D、和平发展
+ABCD  26. 习近平新时代中国特色社会主义思想，指导我们党团结带领全国各族人民，统揽（ ），开创了中国		 特色社会主义新时代，完成了脱贫攻坚、全面建成小康社会的历史任务。
+  A、伟大斗争B、伟大工程 C、伟大事业 D、伟大梦想
+ABC  27. 党的十九大、十九届六中全会提出的( )概括了习近平新时代中国特色社会主义思想的主要内容。  
+  A、“十个明确”  B、“十四个坚持” C、“十三个方面成就” D、“两个确立”
+ABCD  28. 习近平新时代中国特色社会主义思想，正是在党不断实现( )，以伟大自我革命引领伟大社会革命的		  过程中创立并不断丰富发展的。
+  A、自我净化B、自我完善 C、自我革新 D、自我提高
+CD  29. 从党的十二大到党的十八大，我们党相继提出党的基本理论、基本路线、基本纲领、（ ），构成了中		 国特色社会主义的“五个基本”。
+  A、基本方针  B、基本政策 C、基本经验D、基本要求
+BC  30. 社会主义初级阶段党的基本路线的根本立足点是( )。  
+  A、独立自主B、自力更生  C、艰苦创业D、与时俱进
+ABCD  31. （ ），是科学发展观最鲜明的精神实质。
+  A、解放思想B、实事求是C、与时俱进 D、求真务实
+CD  32. 科学社会主义以（ ）为理论基础，阐明了无产阶级解放运动的条件和发展规律，指明了无产阶级彻底		 解放的正确道路。
+  A、唯物论  B、认识论C、马克思主义哲学 D、政治经济学
+ABC  33. 马克思主义主要包括（ ）。
+  A、马克思主义哲学B、马克思主义政治经济学C、科学社会主义  D、自然科学
+ABCD  34. 新时代十年的伟大变革，在（ ）、中华民族发展史上具有里程碑意义。
+  A、党史 B、新中国史  C、改革开放史  D、社会主义发展史
+ABCD  35. 伟大建党精神的内涵包括（ ）。   
+  A、坚持真理、坚守理想 B、践行初心、担当使命 C、不怕牺牲、英勇斗争D、对党忠诚、不负人民
+ABCD  36. “四个全面”的具体内容是（ ）。
+  A、全面建设社会主义现代化国家B、全面深化改革  C、全面依法治国D、全面从严治党
+ABC  37. 中国梦核心内涵是中华民族伟大复兴，本质是（ ）。   
+  A、国家富强B、民族振兴C、人民幸福 D、共同富裕
+ABC  38. 香港、澳门回归对中国的重大意义有（ ）。
+  A、提升了中国的国际地位B、促进了中国与其他国家的经济合作
+C、增强了民族凝聚力     D、推动了中国社会主义现代化建设
+AB   39. 1978年12月召开的党的十一届三中全会，重新确立了（ ）的思想路线。   
+  A、解放思想B、实事求是C、自力更生D、改革开放
+ABC  40. 毛泽东思想的活的灵魂是贯穿于各个组成部分的立场、观点、方法，体现为（ ）。   
+  A、实事求是B 、群众路线C、独立自主 D、改革开放
+ACD  41. 在留党察看期间，受处分党员没有（ ），党内职务自然撤销。   
+  A、表决权B、监督权 C、选举权 D、被选举权
+BC   42. 留党察看处分，分为( )。 
+  A、留党察看半年B、留党察看一年C、留党察看两年 D、留党察看三年
+AB   43. 对严重违犯党纪的党组织的纪律处理措施有（ ）。   
+  A、改组B、解散 C、留党察看D、开除党籍
+ACD  44政治纪律是（ ）的纪律，全党在政治方向、政治立场、政治言论、政治行动方面必须遵守的刚性约束
+  A、最根本B、最基础C、最关键D、最重要
+ACD  45. 党的纪律的主要特点有（ ）。   
+  A、自觉性 B、义务性C、严格D、统一性
+ABCD  46. 要坚持谦虚谨慎、戒骄戒躁、艰苦奋斗，反对（ ）。   
+  A、形式主义B、官僚主义 C、享乐主义 D、奢靡之风
+ABD  47. 党的“三大作风”指的是（ ）。   
+  A、密切联系群众  B、批评和自我批评  C、实事求是 D、理论联系实际
+ABCD  48. 党的作风主要包括（ ）和生活作风。   
+  A、思想作风 B、工作作风C、学习作风D、领导作风
+ABC  49. 完善一体推进( )工作机制，着力铲除腐败滋生的土壤和条件。   
+  A、不敢腐 B、不能腐 C、不想腐D、不肯腐
+ABCD  50. 经过党的十八大以来全面从严治党，我们解决了党内许多突出问题，但党面临的( )将长期存在，精		  神懈怠危险、能力不足危险、脱离群众危险、消极腐败危险将长期存在。   
+  A、执政考验 B、改革开放考验C、市场经济考验 D、外部环境考验
+ACD  51. 属于“四个意识”的是（ ）。   
+  A、政治意识B、全局意识 C、核心意识D、看齐意
+ABC  52. 属于纠治“四风”中的“四风”的有（ ）。   
+  A、形式主义 B、官僚主义C、享乐主义 D、拜金主义
+ACD  53. 党支部是党的基础组织，担负直接（ ）和组织群众、宣传群众、凝聚群众、服务群众的职责。   
+  A、教育党员 B、培养党员C、管理党员 D、监督党员
+ABC  54. 党的基层组织，根据工作需要和党员人数，经上级党组织批准，分别设立( )。   
+  A、党的基层委员会 B、总支部委员会 C、支部委员会会  D、党员大会
+BCD  55. 民主集中制是（ ）制度。   
+  A、先进的B、科学的C、合理的D、有效率的
+ABCD  56. 党的组织制度包含的内容主要有党的民主集中制、( )等。 
+  A、党的代表大会制度 B、党的组织生活制度C、党的选举制度D、党内监督制度
+ABCD  57. 我们党领导中国人民进行革命、建设和改革的历史，就是一部群众工作史，就是一部（ ）的奋斗史。   
+  A、动员群众  B、组织群众 C、团结群众D、依靠群众
+ABD  58. 为人民服务应该是( )的。   
+  A、与时俱进 B、始终如一 C、脚踏实地D、具体
+ABC  59. 我们党的（ ），密切联系群众是我们党的最大政治优势，脱离群众是我们党执政后的最大危险。
+  A、根基在人民  B、血脉在人民  C、力量在人民D、未来在人民
+BCD  60. ( )，三者紧密相连，不可分割。 
+  A、共产主义理想B、共产主义理论C、共产主义运动D、共产主义制度
+ACD  61. 共产主义是人类历史上( )的社会制度。   
+  A、最美好 B、最完善 C、最进步D、最合理
+BCD  62. 党的理论、路线、纲领、方针、政策和各项工作，必须努力体现发展面向现代化、面向世界、面向未		来的，（ ）社会主义文化的要求。  
+  A、先进的  B、民族的C、科学的  D、大众的
+ABC  63. 新时代新征程，我们党的中心任务就是团结带领全国各族人民( )。   
+  	A、全面建成社会主义现代化强国  B、实现第二个百年奋斗目标
+  	C、以中国式现代化全面推进中华民族伟大复兴 D、实现共同富裕
+AC  64. 中国共产党自从登上历史舞台，就肩负着的双重使命是（ ）。 
+  A、消灭阶级压迫 B、推翻“三座大山”  C、实现民族独立D、实现中华民族伟大复兴
+AD  65. 中国共产党是中国工人阶级的先锋队，这是从党的（ ）两个方面来阐述党的性质。   
+  A、先进性  B、纯洁性  C、科学性D、阶级性
+ABC  66. 下列人物中属于“沂蒙六姐妹”的是（ ）。
+  A、张玉梅B、伊廷珍 C、杨桂英D、江竹筠
+ACD  67. “坚持革命继吾志，誓将真理传人寰” 体现了夏明翰（ ）的精神品质。   
+  A、坚定的革命信仰 B、对家人的愧疚之情 C、大无畏的牺牲精神 D、对真理的执着追求
+BCD  68. 广大青年要爱国爱民，从党史学习中激发信仰、获得启发、汲取力量，不断坚定‘四个自信’，不断		 增强做中国人的（ ），树立为祖国为人民永久奋斗、赤诚奉献的坚定理想。   
+  A、正气 B、志气C、骨气 D、底气
+AB  69. 习近平在纪念五四运动 100 周年大会上指出：“青年是整个社会力量中最积极、最有生气的力量，( )。   
+  A、国家的希望在青年 B、民族的未来在青年 C、祖国的建设在青年 D、党的希望在青年
+`;
+
+const RAW_PAN = `
+F  1. “十五五”时期推进雄安新区建设，将以快速扩张城市规模为核心目标，打造区域增长极。   
+F  2. “十五五”时期将继续实行基本养老保险省级统筹制度，暂不推进基本养老保险全国统筹。   
+T  3. “十五五”规划建议提出深化主流媒体系统性变革，推进新闻宣传和网络舆论一体化管理，以提高主流舆	论引导能力。   
+F  4. 党的二十届四中全会提出，扩大高水平对外开放需稳步扩大商品型开放。   
+T  5. 党的二十届四中全会提出，加快经济社会发展全面绿色转型，需以碳达峰碳中和为牵引。  
+T  6. 党的二十届四中全会提出，建设现代化产业体系需保持制造业合理比重。
+T  7. 党的二十届四中全会提出，把解决好“三农”问题作为全党工作重中之重。  
+F  8. “十五五”时期经济社会发展坚持以政治建设为中心。   
+T  9. “十五五”时期我国发展处于战略机遇和风险挑战并存、不确定难预料因素增多的时期。
+T  10. 中国共产党第二十届中央委员会第四次全体会议在北京举行。
+F  11. 预备党员提出转正申请后，党支部应及时讨论其转正问题，根据本人在预备期间的表现和对转正的态度，	作出决议，可以不报上级党组织审批。 
+T  12. 入党志愿是入党志愿书的一项重要内容，要根据自己的思想认识及其演变过程，实事求是地把自己对党	的认识、态度、入党动机、优缺点及入党的决心等写清楚。  
+F  13. 要求入党的同志向党组织提出入党申请后，可以不向党组织递交入党自传。 
+T  14. 入党自传是要求入党的同志，向党组织递交的个人客观情况说明的文书材料，是向党组织汇报个人情况	的重要形式之一。  
+T  15. 一般写一次入党申请书即可，以后就以思想汇报的形式向党组织反映自己的思想情况。   
+T  16. 如递交入党申请书时间较长或离开原单位，或有重大问题需要补充说明，可以重新写入党申请书或补充	说明材料。   
+T  17. 申请可分为口头申请和书面申请两种形式，一般是书面申请形式，即入党申请书。
+T  18. 开展短期集中培训。基层党委或县级党委组织部门应当对发展对象进行短期集中培训。培训时间一般不		少于三天（或不少于二十四个学时）。
+F  19. 党组织可以用思想汇报次数的多少衡量一个人是否积极靠拢党组织。
+T  20. 党组织每半年对入党积极分子进行一次考察。 
+F  21. 只要递交了入党申请书就会被列为入党积极分子。 
+F  22. 被确定为入党积极分子后，党支部会及时指定培养联系人，一般由两名至三名正式党员负责。 
+T  23. 具有中国国籍的公民方可申请入党，外国国籍或无国籍的人不能加入中国共产党。 
+F  24. “年满十六岁”是申请入党的起始年龄，不满16岁的人不能入党。
+ F  25. 预备党员有选举权和被选举权。
+T  26. 被选举权，主要是指党员享有的经过规定程序成为候选人和当选的权利
+F  27. 党员的义务是党章赋予的，是健全党内政治生活的基本条件，是贯彻执行党的路线、方针、政策，维护		党的团结和统一的有力保证。
+T  28. 党员权利是坚持和健全民主集中制的基础。 
+F  29. 党员的权利，是指党员对党应尽的责任，是党对党员的基本要求，是党员条件的具体化，也是衡量一个		党员合格不合格的具体标准。 
+T  30. 一切从人民利益出发，全心全意为人民服务，是我们党一切行动的根本出发点和落脚点，是我们党区别		于其他一切政党的根本标志。
+T  31. “两个一百年”奋斗目标指的是，在中国共产党成立100年时全面建成小康社会，在新中国成立100年		时建成富强民主文明和谐美丽的社会主义现代化强国。
+T  32. 坚持中国特色社会主义，是中国式现代化同西方现代化道路的根本区别，是推进中国式现代化的最本质		要求。 
+F  33. 坚持中国共产党领导决定了中国式现代化的基本性质和未来走向。
+T  34. 中国共产党是为中国人民谋幸福、为中华民族谋复兴的党，也是为人类谋进步、为世界谋大同的党。   
+T  35. 坚持和发展马克思主义，必须同中国具体实际相结合、同中华优秀传统文化相结合。
+F  36. 科学发展观强调经济发展速度越快越好。
+F  37. 科学发展观是当代中国马克思主义、二十一世纪马克思主义，是中华文化和中国精神的时代精华，实现		了马克思主义中国化时代化新的飞跃。
+T  38. 习近平新时代中国特色社会主义思想是指导思想层面的表述，在行动纲领层面的表述称之为新时代坚持		和发展中国特色社会主义的基本方略。
+F  39. 社会主义初级阶段党的基本路线的核心内容是“两个中心，一个基本点”。
+F  40. 党的十六大强调，我国仍处于并将长期处于社会主义初级阶段的基本国情没有变，人民日益增长的物质		文化需要同落后的社会生产之间的矛盾这一社会主要矛盾没有变。
+F  41. 列宁认为，社会主义本身是一个发展过程，需要分阶段逐步过渡，并提出“初级形式的社会主义”“不	发达的社会主义”“发达的社会主义”“完全的社会主义”等概念。
+T  42. 中国共产党为什么能，中国特色社会主义为什么好，归根到底是马克思主义行，是中国化时代化的马克		思主义行。
+T  43. 马克思主义中国化的第一次历史性飞跃是毛泽东思想。
+T  44. 马克思主义是我们立党立国、兴党兴国的根本指导思想。   
+T  45. “两个确立”是新时代党和国家事业取得历史性成就、发生历史性变革的决定性因素，是党和人民应对		一切不确定性的最大确定性、最大底气、最大保证。   
+F  46. 延安精神是中国共产党的精神之源。   
+F  47. “两弹一星” 中的 “两弹” 最初是指核弹和炸弹。   
+F  48. 1931年9月18日深夜，英法联军制造了震惊中外的九一八事变。   
+T  49. 中国共产党经过艰苦探索，开辟了农村包围城市、武装夺取政权这样一条前人没有走过的正确道路。   
+F  50. 遵义会议确定实行土地革命和武装起义的方针。   
+F  51. 党的各级纪律检查委员会每届任期和同级党的委员会并不相同。   
+T  52. 对受到改组处理的党组织领导机构成员，除应受到撤销党内职务以上处分的外，均自然免职。   
+T  53. 开除党籍是党内最重的一种处分。
+T  54. 受到撤销党内职务处分的党员，在受到处分后两年内，不得在党内担任和向党外组织推荐担任与其原任		职务相当或高于其原任职务的职务。   
+F  55. 如果定撤销党员两个以上职务，则必须从其担任的最低职务开始依次撤销。   
+F  56. 如果党员不宜担任原任职务，可以免职或调动工作，这种处理属于党纪处分。   
+F  57. 受到警告处分的党员，在受处分后一年内可以在党内提拔职务或者进一步使用，也可以向党外组织推荐		担任高于其原任职务的党外职务或者进一步使用。   
+T  58. 党的纪律是以服从为前提的。   
+F  59.群众路线是党的生命线和根本工作路线。保持党同人民群众的血肉联系，是党的思想作风建设的核心问		题  
+T  60. 腐败是危害党的生命力和战斗力的最大毒瘤，反腐败是最彻底的自我革命。  
+T  61. 党的基层委员会、总支部委员会、支部委员会每届任期３年至５年。   
+F  62. 基层委员会由党员大会或代表大会选举产生，总支部委员会和支部委员会由代表大会选举产生。   
+F  63. 党的地方各级委员会的常务委员会，在委员会全体会议上行使委员会职权。   
+F  64. 是否坚持民主集中制，并不影响党和国家政治生活全局，也不影响党和国家的前途与命运。   
+T  65. 1927年毛泽东领导三湾改编，建立了“支部建在连上”的制度。   
+F  66. 党的纪律是党赖以存在、发展和完成使命任务的物质基础，是实现党的领导的基本保证。  
+T  67. 党除了工人阶级和最广大人民群众的利益，没有自己的任何特殊利益。   
+F  68. 我们现阶段的远大理想是建设和发展中国特色社会主义，它是共产主义事业的一部分，是实现共产主义		这个最高理想必经的一个历史阶段。   
+F  69. 在资本主义制度下，坚持生产资料公有制和按劳分配占主体地位，坚持消灭剥削和消除两极分化，并最		终实现共同富裕。   
+T  70. 《共产党宣言》的发表和共产主义者同盟的成立，标志着科学社会主义理论的诞生和国际共产主义运动		的开始。 
+F  71. 马克思、恩格斯认为，共产主义社会形态可根据成熟程度可分为低级阶段和高级阶段，分别是共产主义		社会和社会主义社会。 
+T  72. 全心全意为人民服务是我们党同一切剥削阶级政党的根本区别。
+F  73. 党领导新民主主义革命，目的是取消封建主义在中国的特权，消灭地主阶级和官僚资产阶级的剥削和压		迫。   
+T  74. 中国共产党是中国特色社会主义事业的领导核心。
+T  75. 我们党之所以有取之不尽的力量源泉，最根本的原因在于党不仅深深扎根于中国工人阶级之中，而且深		深扎根于中国人民和中华民族之中。
+F  76. 吸收其他阶级的人入党就改变了党的工人阶级先锋队性质。   
+F  77. 中国共产党由工人阶级先进分子所组成，其他阶级出身的具备党员条件的人不能入党。 
+`;
+
+// ==========================================
+// 2. 增强容错解析引擎与状态管理
+// ==========================================
+let questions = [];
+let userAnswers = {};
+let currentIndex = 0;
+let appState = 'loading'; // 'loading', 'home', 'exam', 'result'
+let isWrongQuestionMode = false;
+
+function parseOptions(text) {
+    const opts = [];
+    const optRegex = /([A-F])\s*[、\.]\s*(.*?)(?=(?:[A-F]\s*[、\.]|$))/g;
+    let match;
+    while ((match = optRegex.exec(text)) !== null) {
+        opts.push({ letter: match[1], text: match[2].trim() });
+    }
+    return opts;
+}
+
+function parseBlock(rawText, type) {
+    const lines = rawText.split('\n');
+    const qs = [];
+    let currentQ = null;
+    let optionBuffer = "";
+
+    for (let line of lines) {
+        line = line.trim();
+        if (!line) continue;
+        let match;
+        if (type === 'judge') {
+            match = line.match(/^\s*([TF])\s+(\d+)[.、\s]*(.*)/i);
+        } else {
+            match = line.match(/^\s*([A-Z]+)\s+(\d+)[.、\s]*(.*)/i);
+        }
+
+        if (match) {
+            if (currentQ) {
+                if (type !== 'judge') currentQ.options = parseOptions(optionBuffer);
+                qs.push(currentQ);
+            }
+            currentQ = {
+                id: `${type}_${match[2]}_${new Date().getTime()}`,
+                type: type,
+                originalNumber: match[2],
+                correctAnswer: match[1].toUpperCase().split('').sort().join(''),
+                text: match[3],
+                options: type === 'judge' ? [
+                    { letter: 'T', text: '正确' },
+                    { letter: 'F', text: '错误' }
+                ] : []
+            };
+            optionBuffer = "";
+        } else if (currentQ) {
+            optionBuffer += " " + line;
+        }
+    }
+    if (currentQ) {
+        if (type !== 'judge') currentQ.options = parseOptions(optionBuffer);
+        qs.push(currentQ);
+    }
+    return qs;
+}
+
+// ==========================================
+// 3. 业务核心与视图切换
+// ==========================================
+
+function initApp() {
+    appState = 'home';
+    renderHome();
+}
+
+function startDefaultExam() {
+    try {
+        questions = [
+            ...parseBlock(RAW_DAN, 'single'),
+            ...parseBlock(RAW_DUO, 'multiple'),
+            ...parseBlock(RAW_PAN, 'judge')
+        ];
+        userAnswers = {};
+        currentIndex = 0;
+        isWrongQuestionMode = false;
+        appState = 'exam';
+        document.getElementById('header-subtitle').innerText = `全真模拟考场：共 ${questions.length} 题`;
+        renderExam();
+    } catch (e) {
+        console.error("默认题库解析失败", e);
+        alert('系统核心题库发生异常！');
+    }
+}
+
+function importWrongQuestions(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const importedData = JSON.parse(e.target.result);
+            if (!Array.isArray(importedData) || importedData.length === 0) {
+                throw new Error("无有效错题数据");
+            }
+            questions = importedData;
+            userAnswers = {};
+            currentIndex = 0;
+            isWrongQuestionMode = true;
+            appState = 'exam';
+            document.getElementById('header-subtitle').innerText = `【错题专场考场】：共 ${questions.length} 题`;
+            renderExam();
+        } catch (err) {
+            alert('错题本导入失败！请确保上传的是系统导出的专属重练包 .json 文件。');
+        }
+    };
+    reader.readAsText(file);
+}
+
+function renderHome() {
+    const defaultCount = parseBlock(RAW_DAN, 'single').length + parseBlock(RAW_DUO, 'multiple').length + parseBlock(RAW_PAN, 'judge').length;
+    
+    const html = `
+    <div class="flex flex-col items-center justify-center min-h-[60vh] bg-white rounded-xl shadow-sm border border-gray-100 p-8">
+        <h2 class="text-2xl font-bold text-gray-800 mb-8">欢迎进入智能评估系统</h2>
+        
+        <div class="space-y-6 w-full max-w-md">
+            <!-- 标准考场 -->
+            <button onclick="startDefaultExam()" class="w-full py-4 rounded-xl font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-200 transition-all text-lg flex justify-center items-center">
+                <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                开始全真模拟 (${defaultCount} 题)
+            </button>
+            
+            <div class="relative py-4">
+                <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-gray-200"></div></div>
+                <div class="relative flex justify-center text-sm"><span class="px-2 bg-white text-gray-400 font-medium">或者进行专项突破</span></div>
+            </div>
+
+            <!-- 错题本导入 -->
+            <label class="block w-full py-4 rounded-xl font-bold text-blue-600 bg-blue-50 border-2 border-dashed border-blue-200 hover:bg-blue-100 cursor-pointer text-center transition-all text-lg flex justify-center items-center">
+                <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                导入系统重练包 (.json)
+                <input type="file" accept=".json" onchange="importWrongQuestions(event)" class="hidden">
+            </label>
+        </div>
+    </div>`;
+    document.getElementById('app-container').innerHTML = html;
+}
+
+function getScoreData() {
+    let correctCount = 0;
+    questions.forEach(q => {
+        if (userAnswers[q.id] === q.correctAnswer) correctCount++;
+    });
+    return {
+        correctCount,
+        total: questions.length,
+        score: questions.length ? Math.round((correctCount / questions.length) * 100) : 0
+    };
+}
+
+function handleAnswer(qId, optionLetter, type) {
+    if (type === 'single' || type === 'judge') {
+        userAnswers[qId] = optionLetter;
+    } else if (type === 'multiple') {
+        let currentAns = userAnswers[qId] ? userAnswers[qId].split('') : [];
+        if (currentAns.includes(optionLetter)) {
+            currentAns = currentAns.filter(l => l !== optionLetter);
+        } else {
+            currentAns.push(optionLetter);
+        }
+        userAnswers[qId] = currentAns.sort().join('');
+    }
+    renderExam();
+}
+
+function goPrev() {
+    if (currentIndex > 0) {
+        currentIndex--;
+        renderExam();
+    }
+}
+
+function goNext() {
+    if (currentIndex < questions.length - 1) {
+        currentIndex++;
+        renderExam();
+    }
+}
+
+function jumpTo(idx) {
+    currentIndex = idx;
+    renderExam();
+}
+
+function submitExam() {
+    const answeredCount = Object.keys(userAnswers).length;
+    if (answeredCount < questions.length) {
+        const confirmSubmit = window.confirm(`您还有 ${questions.length - answeredCount} 道题目未作答，确认要强行交卷吗？`);
+        if (!confirmSubmit) return;
+    }
+    appState = 'result';
+    renderResult();
+}
+
+function renderGridHTML() {
+    let html = '';
+    ['single', 'multiple', 'judge'].forEach(typeKey => {
+        const qs = questions.filter(q => q.type === typeKey);
+        if (qs.length === 0) return;
+        const title = typeKey === 'single' ? '单选' : (typeKey === 'multiple' ? '多选' : '判断');
+        html += `<div class="text-xs text-gray-400 mb-2 font-bold mt-4">${title} (${qs.length}题)</div>
+                 <div class="grid grid-cols-5 gap-2">`;
+        
+        qs.forEach(q => {
+            const idx = questions.findIndex(item => item.id === q.id);
+            const isDone = userAnswers[q.id] !== undefined && userAnswers[q.id].length > 0;
+            const isCurrent = idx === currentIndex;
+            
+            let cls = 'h-8 text-xs font-medium rounded-md transition-all ';
+            if (isCurrent) cls += 'ring-2 ring-blue-500 ring-offset-1 ';
+            if (isDone) cls += 'bg-blue-100 text-blue-700 border border-blue-200';
+            else cls += 'bg-gray-50 text-gray-500 border border-gray-200 hover:bg-gray-100';
+
+            html += `<button onclick="jumpTo(${idx})" class="${cls}">${q.originalNumber}</button>`;
+        });
+        html += `</div>`;
+    });
+    return html;
+}
+
+function renderExam() {
+    if (questions.length === 0) return;
+    const currentQ = questions[currentIndex];
+    
+    const typeLabel = {
+        'single': '单项选择题',
+        'multiple': '多项选择题 (漏选错选均不得分)',
+        'judge': '判断题'
+    }[currentQ.type];
+    const typeClass = currentQ.type === 'multiple' ? 'bg-orange-100 text-orange-700' : 'bg-blue-100 text-blue-700';
+
+    let optionsHtml = '';
+    currentQ.options.forEach((opt, idx) => {
+        const isSelected = currentQ.type === 'multiple' 
+            ? (userAnswers[currentQ.id] || '').includes(opt.letter) 
+            : userAnswers[currentQ.id] === opt.letter;
+        
+        const inputType = currentQ.type === 'multiple' ? 'checkbox' : 'radio';
+        const activeCls = isSelected ? 'border-blue-500 bg-blue-50/50' : 'border-gray-200 hover:bg-gray-50';
+        
+        optionsHtml += `
+            <label class="flex items-start p-4 border rounded-lg cursor-pointer transition-all ${activeCls}">
+                <input type="${inputType}" name="q_${currentQ.id}" value="${opt.letter}" 
+                       ${isSelected ? 'checked' : ''} 
+                       onchange="handleAnswer('${currentQ.id}', '${opt.letter}', '${currentQ.type}')" 
+                       class="mt-1 w-4 h-4 text-blue-600 border-gray-300 ${currentQ.type === 'multiple' ? 'rounded' : 'focus:ring-blue-500'}">
+                <div class="ml-3">
+                    <span class="font-semibold text-gray-700 mr-2">${opt.letter}.</span>
+                    <span class="text-gray-700 whitespace-pre-wrap">${opt.text}</span>
+                </div>
+            </label>
+        `;
+    });
+
+    const prevBtn = `<button onclick="goPrev()" ${currentIndex === 0 ? 'disabled' : ''} class="px-6 py-2 rounded-lg font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">上一题</button>`;
+    const nextBtn = currentIndex === questions.length - 1 
+        ? `<button onclick="submitExam()" class="px-8 py-2 rounded-lg font-medium text-white bg-green-600 hover:bg-green-700 shadow-md shadow-green-200 transition-colors">结束作答并交卷</button>`
+        : `<button onclick="goNext()" class="px-6 py-2 rounded-lg font-medium text-white bg-blue-600 hover:bg-blue-700 shadow-md shadow-blue-200 transition-colors">下一题</button>`;
+
+    const html = `
+    <div class="flex flex-col md:flex-row gap-6 items-start">
+        <div class="w-full md:w-3/4 bg-white rounded-xl shadow-sm border border-gray-100 p-6 md:p-10 min-h-[60vh] flex flex-col">
+            <div class="flex justify-between items-center mb-8 pb-4 border-b border-gray-100">
+                <span class="text-sm font-semibold px-3 py-1 rounded-md ${typeClass}">${typeLabel}</span>
+                <span class="text-sm font-medium text-gray-500">本题数：${currentIndex + 1} / ${questions.length}</span>
+            </div>
+            <div class="flex-grow">
+                <h3 class="text-lg font-medium text-gray-800 mb-6 leading-relaxed whitespace-pre-wrap">
+                    <span class="font-bold mr-2 text-blue-600">${currentQ.originalNumber}.</span>${currentQ.text}
+                </h3>
+                <div class="space-y-4">${optionsHtml}</div>
+            </div>
+            <div class="flex justify-between items-center mt-10 pt-6 border-t border-gray-100">
+                ${prevBtn} ${nextBtn}
+            </div>
+        </div>
+        <div class="w-full md:w-1/4 bg-white rounded-xl shadow-sm border border-gray-100 p-6 sticky top-6 max-h-[85vh] overflow-y-auto scrollbar-hide">
+            <div class="flex items-center text-gray-700 font-semibold mb-2">答题卡面板</div>
+            ${renderGridHTML()}
+            <div class="mt-8 pt-6 border-t border-gray-100">
+                <button onclick="submitExam()" class="w-full py-3 rounded-lg font-bold text-white bg-gray-800 hover:bg-gray-900 transition-colors shadow-lg">提交试卷</button>
+            </div>
+        </div>
+    </div>
+    `;
+    
+    document.getElementById('app-container').innerHTML = html;
+}
+
+function renderResult() {
+    const sd = getScoreData();
+    document.getElementById('header-subtitle').innerText = `作答完毕 · ${isWrongQuestionMode ? '错题重练成绩' : '全真模拟成绩'}`;
+
+    let reportHtml = `
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-8 text-center mb-6">
+        <h2 class="text-xl font-bold text-gray-800 mb-6">考核成绩报告</h2>
+        <div class="inline-flex flex-col items-center justify-center w-40 h-40 rounded-full border-8 border-gray-50 mb-6">
+            <span class="text-4xl font-black ${sd.score >= 60 ? 'text-green-600' : 'text-red-500'}">${sd.score}</span>
+            <span class="text-sm font-medium text-gray-500 mt-1">分</span>
+        </div>
+        <div class="flex justify-center gap-8 text-sm font-medium text-gray-600 mb-8">
+            <div class="bg-gray-50 px-4 py-2 rounded-lg">题量: ${sd.total} 题</div>
+            <div class="bg-green-50 text-green-700 px-4 py-2 rounded-lg">正确: ${sd.correctCount} 题</div>
+            <div class="bg-red-50 text-red-700 px-4 py-2 rounded-lg">错误: ${sd.total - sd.correctCount} 题</div>
+        </div>
+        <div class="flex flex-wrap justify-center gap-4">
+            ${sd.correctCount < sd.total ? `
+                <button onclick="exportWrongQuestionsDoc()" class="px-5 py-2.5 rounded-lg font-medium text-white bg-red-600 hover:bg-red-700 shadow-md shadow-red-200 transition-colors flex items-center">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"></path></svg>导出打印背诵版 (Word)
+                </button>
+                <button onclick="exportWrongQuestionsJson()" class="px-5 py-2.5 rounded-lg font-medium text-white bg-orange-500 hover:bg-orange-600 shadow-md shadow-orange-200 transition-colors flex items-center">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>导出系统重练包 (.json)
+                </button>
+            ` : ''}
+            <button onclick="initApp()" class="px-6 py-2.5 rounded-lg font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition-colors">返回首页</button>
+        </div>
+        ${sd.correctCount < sd.total ? '<p class="text-xs text-gray-400 mt-4">提示：若需重新考核错题，请先下载【系统重练包】，并在首页导入。</p>' : ''}
+    </div>
+    `;
+
+    let detailsHtml = '<div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 md:p-8"><h3 class="text-lg font-bold text-gray-800 mb-6">题目解析明细</h3><div class="space-y-6">';
+    
+    questions.forEach(q => {
+        const uAns = userAnswers[q.id];
+        const isCorrect = uAns === q.correctAnswer;
+        
+        let displayUAns = uAns || '未作答';
+        let displayCAns = q.correctAnswer;
+        if (q.type === 'judge') {
+            displayUAns = displayUAns === 'T' ? '正确' : (displayUAns === 'F' ? '错误' : displayUAns);
+            displayCAns = displayCAns === 'T' ? '正确' : '错误';
+        }
+
+        let optsHtml = '<div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">';
+        q.options.forEach(opt => {
+            const isOptCorrect = q.correctAnswer.includes(opt.letter);
+            optsHtml += `<div class="text-sm flex items-start ${isOptCorrect ? 'text-green-700 font-semibold' : 'text-gray-600'}">
+                            <span class="mr-2">${opt.letter}.</span>
+                            <span class="whitespace-pre-wrap">${opt.text}</span>
+                         </div>`;
+        });
+        optsHtml += '</div>';
+
+        const iconHtml = isCorrect 
+            ? `<svg class="text-green-500 w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>` 
+            : `<svg class="text-red-500 w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+
+        detailsHtml += `
+        <div class="p-5 border border-gray-100 rounded-lg bg-gray-50/50">
+            <div class="flex items-start justify-between mb-4">
+                <h4 class="text-base font-medium text-gray-800 whitespace-pre-wrap leading-relaxed pr-4">
+                    <span class="font-bold mr-2">${q.originalNumber}.</span>${q.text}
+                </h4>
+                <div class="shrink-0 mt-1">${iconHtml}</div>
+            </div>
+            ${optsHtml}
+            <div class="mt-4 pt-3 border-t text-sm font-medium flex items-center ${isCorrect ? 'text-green-700' : 'text-red-700'}">
+                <span class="mr-6">标准答案：${displayCAns}</span>
+                <span>考生作答：${displayUAns}</span>
+            </div>
+        </div>`;
+    });
+    
+    detailsHtml += '</div></div>';
+    document.getElementById('app-container').innerHTML = reportHtml + detailsHtml;
+}
+
+// ==========================================
+// 4. 双轨导出功能 (Word背诵版 + JSON重练版)
+// ==========================================
+function exportWrongQuestionsDoc() {
+    const wrongQs = questions.filter(q => userAnswers[q.id] !== q.correctAnswer);
+    if (wrongQs.length === 0) return;
+
+    let html = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+    <head><meta charset='utf-8'><title>错题档案</title>
+    <style>
+        body { font-family: 'SimSun', 'Microsoft YaHei', sans-serif; font-size: 14pt; line-height: 1.5; }
+        .title { text-align: center; font-size: 20pt; font-weight: bold; margin-bottom: 20px; }
+        .q-title { font-weight: bold; margin-top: 24px; margin-bottom: 12px; }
+        .q-option { margin-left: 20px; margin-bottom: 8px; }
+        .q-analysis { margin-top: 16px; color: #c62828; font-weight: bold; background: #ffebee; padding: 10px; border-radius: 4px; }
+    </style>
+    </head><body>
+    <div class="title">专场考核错题档案</div>`;
+
+    wrongQs.forEach(q => {
+        const typeLabel = q.type === 'multiple' ? '【多选题】' : (q.type === 'judge' ? '【判断题】' : '【单选题】');
+        html += `<div class="q-title">${q.originalNumber}. ${typeLabel} ${q.text.replace(/\n/g, '<br/>')}</div>`;
+        q.options.forEach(opt => {
+            html += `<div class="q-option">${opt.letter}. ${opt.text.replace(/\n/g, '<br/>')}</div>`;
+        });
+        
+        let uAns = userAnswers[q.id] || '未作答';
+        let cAns = q.correctAnswer;
+        if (q.type === 'judge') {
+            uAns = uAns === 'T' ? '正确' : (uAns === 'F' ? '错误' : uAns);
+            cAns = cAns === 'T' ? '正确' : '错误';
+        }
+        html += `<div class="q-analysis">标准答案：${cAns} &nbsp;&nbsp;|&nbsp;&nbsp; 考生作答：${uAns}</div>`;
+    });
+
+    html += `</body></html>`;
+    const blob = new Blob([html], { type: 'application/msword;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `错题档案_背诵版_${new Date().getTime()}.doc`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+}
+
+function exportWrongQuestionsJson() {
+    const wrongQs = questions.filter(q => userAnswers[q.id] !== q.correctAnswer);
+    if (wrongQs.length === 0) return;
+    
+    const blob = new Blob([JSON.stringify(wrongQs, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `错题档案_系统重练包_${new Date().getTime()}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+}
+
+// 启动应用
+window.onload = initApp;
+
+</script>
+</body>
+</html>
