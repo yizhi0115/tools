@@ -64,6 +64,8 @@
             { id: 'tool-timestamp', title: '题库', type: 'iframe', url: './tiku.html' },
             { id: 'tool-crypto', title: '抽奖系统', type: 'iframe', url: './抽奖.html' },
             { id: 'tool-custom', title: 'gif转换', type: 'iframe', url: './gif.html' },
+            // 新增：利用 external 类型安全挂载受安全策略保护的外部系统
+            { id: 'tool-gemini', title: 'Gemini', type: 'external', url: 'https://gemini.google.com' },
         ];
 
         // ================= 2. 核心调度引擎 =================
@@ -82,7 +84,14 @@
             window.TOOL_CONFIG.forEach(tool => {
                 const btn = document.createElement('button');
                 btn.className = `nav-btn w-full text-left px-6 py-3 hover:bg-gray-800 transition-colors border-l-4 ${tool.id === 'welcome' ? 'bg-gray-800 border-blue-500' : 'border-transparent'}`;
-                btn.textContent = tool.title;
+                
+                // 为外部链接增加视觉标识 (可选)
+                if (tool.type === 'external') {
+                    btn.innerHTML = `<div class="flex items-center justify-between w-full"><span>${tool.title}</span><svg class="w-3.5 h-3.5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg></div>`;
+                } else {
+                    btn.textContent = tool.title;
+                }
+                
                 btn.dataset.id = tool.id;
                 btn.onclick = () => dispatchRoute(tool);
                 navMenu.appendChild(btn);
@@ -90,6 +99,17 @@
         }
 
         function dispatchRoute(tool) {
+            // 架构升级：外部链接拦截层，规避 Clickjacking 防护导致的 iframe 拒绝访问
+            if (tool.type === 'external') {
+                window.open(tool.url, '_blank');
+                // 移动端交互闭环：点击外链后亦收起侧边栏
+                if (window.innerWidth < 768) {
+                    document.getElementById('sidebar').classList.add('-translate-x-full');
+                    document.getElementById('mobile-overlay').classList.add('hidden');
+                }
+                return; // 终止执行，不影响当前主框架的 UI 状态和 iframe
+            }
+
             // 刷新侧边栏激活状态
             document.querySelectorAll('.nav-btn').forEach(btn => {
                 if (btn.dataset.id === tool.id) {
