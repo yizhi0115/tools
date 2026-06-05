@@ -39,14 +39,19 @@
     <!-- 右侧主内容区 -->
     <main class="flex-1 bg-gray-50 flex flex-col relative min-w-0" id="main-content">
         
-        <!-- 极简顶部控制栏 -->
-        <header class="h-12 bg-white border-b border-gray-200 flex items-center px-4 flex-shrink-0 z-10 shadow-sm">
-            <button onclick="toggleSidebar()" class="p-1.5 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded transition-colors focus:outline-none" title="折叠/展开侧边栏">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
-            </button>
-            <div class="h-4 w-px bg-gray-300 mx-4"></div>
-            <span id="current-tool-title" class="text-sm font-semibold text-gray-700 tracking-wide">全景工作台</span>
-        </header>
+        <!-- 极简顶部控制栏 (悬浮感应式引擎) -->
+        <div class="w-full z-20 md:absolute md:top-0 md:left-0 group/header md:pointer-events-none transition-all">
+            <!-- 桌面端隐形感应区：仅在桌面端负责捕捉鼠标轨迹 -->
+            <div class="hidden md:block absolute top-0 left-0 w-full h-10 z-10 pointer-events-auto"></div>
+            
+            <header class="h-12 bg-white/90 backdrop-blur-md border-b border-gray-200 flex items-center px-4 shadow-sm relative z-20 md:pointer-events-auto transition-transform duration-300 ease-out md:-translate-y-full md:group-hover/header:translate-y-0">
+                <button onclick="toggleSidebar()" class="p-1.5 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded transition-colors focus:outline-none" title="折叠/展开侧边栏">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                </button>
+                <div class="h-4 w-px bg-gray-300 mx-4"></div>
+                <span id="current-tool-title" class="text-sm font-semibold text-gray-700 tracking-wide">全景工作台</span>
+            </header>
+        </div>
 
         <!-- 工具挂载容器区 -->
         <div class="flex-1 overflow-auto bg-gray-50 relative">
@@ -74,6 +79,21 @@
             // 初始化时强制装载工作台
             if (window.TOOL_CONFIG.length > 0) {
                 dispatchRoute(window.TOOL_CONFIG[0]);
+            }
+        });
+
+        // 新增：IPC 跨域通信总线，解决本地 file:// 协议下的跨域隔离拦截
+        window.addEventListener('message', (event) => {
+            if (event.data && event.data.type === 'REQUEST_TOOLS') {
+                // 将配置项安全投递给工作台沙箱
+                const iframe = document.getElementById('tool-frame');
+                if (iframe && iframe.contentWindow) {
+                    iframe.contentWindow.postMessage({ type: 'SYNC_TOOLS', tools: window.TOOL_CONFIG }, '*');
+                }
+            } else if (event.data && event.data.type === 'NAVIGATE_TOOL') {
+                // 接收工作台发出的路由跳转请求
+                const targetTool = window.TOOL_CONFIG.find(t => t.id === event.data.id);
+                if (targetTool) dispatchRoute(targetTool);
             }
         });
 
