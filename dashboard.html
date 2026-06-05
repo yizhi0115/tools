@@ -24,59 +24,145 @@
         .glass-shadow { box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.15); }
         .dark .glass-shadow { box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4); }
         .clock-font { font-variant-numeric: tabular-nums; }
+        
+        /* 柔性缩放核心引擎：CSS 变量响应体系 */
+        :root {
+            --ui-max-w: 672px;         
+            --ui-clock-num: 7.5rem;
+            --ui-clock-colon: 7rem;
+            --ui-colon-y: -6%;
+            --ui-search-h: 3.5rem;     
+            --ui-search-text: 1rem;
+            --ui-search-icon: 1.125rem;
+            --ui-search-div: 1.5rem;
+            --ui-dropdown-y: 4rem;
+            --ui-links-mt: 3rem;       
+            --ui-poem-h: 104px;
+            --ui-poem-py: 1.5rem;
+            --ui-poem-px: 3.5rem;
+            --ui-poem-text: 15px;
+            --ui-poem-auth: 13px;
+            --ui-poem-menu-y: 3.25rem;
+            --ui-search-btn-w: 3rem;   
+            --ui-search-btn-px: 0.75rem;
+        }
+        .ui-small {
+            --ui-max-w: 600px;         
+            --ui-clock-num: 6rem;
+            --ui-clock-colon: 5.5rem;
+            --ui-colon-y: -7%;
+            --ui-search-h: 3rem;       
+            --ui-search-text: 15px;
+            --ui-search-icon: 1rem;
+            --ui-search-div: 1.25rem;
+            --ui-dropdown-y: 3.5rem;
+            --ui-links-mt: 2.5rem;     
+            --ui-poem-h: 88px;
+            --ui-poem-py: 1.25rem;
+            --ui-poem-px: 2.5rem;
+            --ui-poem-text: 14px;
+            --ui-poem-auth: 12px;
+            --ui-poem-menu-y: 3rem;
+            --ui-search-btn-w: 2.75rem; 
+            --ui-search-btn-px: 0.625rem;
+        }
+
+        /* 细胞抽离物理拖拽引擎重构 */
+        .sortable-list { touch-action: none; position: relative; }
+        .sortable-item { transition: transform 0.2s ease, opacity 0.2s ease; }
+        .sortable-placeholder {
+            border: 2px dashed #cbd5e1; 
+            border-radius: 0.75rem;
+            background-color: rgba(243, 244, 246, 0.4);
+            height: 56px; 
+            margin-bottom: 0.5rem;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .dark .sortable-placeholder {
+            border-color: #4b5563; 
+            background-color: rgba(31, 41, 55, 0.4);
+        }
+        
+        .drag-clone {
+            position: fixed !important;
+            z-index: 9999 !important;
+            pointer-events: none; /* 保证硬件穿透，不阻挡鼠标事件 */
+            margin: 0 !important;
+            box-sizing: border-box;
+            will-change: width, height, transform, border-radius;
+            /* 严格移除了 left 和 top 的过渡，确保元素始终无延迟绑定鼠标 */
+            transition: width 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+                        height 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+                        border-radius 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+                        transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-origin: top left;
+        }
+        /* 极致收缩变身为水滴光点 */
+        .drag-clone.morph-circle {
+            width: 44px !important;
+            height: 44px !important;
+            min-height: 44px !important;
+            border-radius: 50% !important;
+            padding: 0 !important;
+            justify-content: center !important;
+            background: transparent !important;
+            box-shadow: none !important;
+            border: none !important;
+            /* 在此移除了所有不可控的百分比 transform 属性，全面接管至 JS */
+        }
+        .drag-clone.morph-circle .item-details,
+        .drag-clone.morph-circle .item-actions {
+            display: none !important; 
+        }
+        .drag-clone.morph-circle .item-avatar {
+            transform: scale(1.2);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3) !important;
+            margin: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            border-radius: 50% !important;
+        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col items-center font-sans text-gray-800 dark:text-gray-100 overflow-hidden selection:bg-green-500 selection:text-white pt-[12vh] md:pt-[15vh]">
 
-    <!-- ================= 1. 物理背景层 ================= -->
     <div id="bg-layer" class="fixed inset-0 z-0 bg-gradient-to-br from-[#6b7b62] to-[#8d9f82] dark:from-gray-900 dark:to-gray-800 bg-cover bg-center bg-no-repeat transition-all duration-700"></div>
-
-    <!-- ================= 2. 专注模式全屏遮罩 ================= -->
     <div id="focus-overlay" class="fixed inset-0 z-10 bg-black/10 dark:bg-black/40 backdrop-blur-[20px] opacity-0 transition-opacity duration-500 pointer-events-none"></div>
 
-    <!-- ================= 3. 顶层主业务架构 ================= -->
-    <div class="relative z-20 w-full max-w-2xl px-5 md:px-4 flex flex-col items-center" id="main-container">
+    <div class="relative z-20 w-full px-5 md:px-4 flex flex-col items-center transition-all duration-500 md:max-w-[var(--ui-max-w)]" id="main-container">
         
-        <!-- 时钟模块 -->
-        <div id="clock-module" class="text-center mb-6 md:mb-8 flex justify-center items-center font-medium text-white drop-shadow-md clock-font tracking-tight" style="text-shadow: 0 2px 12px rgba(0,0,0,0.15);">
-            <span id="time-hours" class="text-[5rem] sm:text-[5.5rem] md:text-[7.5rem] leading-none">00</span>
-            <span class="text-[4.5rem] sm:text-[5rem] md:text-[7rem] leading-none mx-0.5 md:mx-1 transform -translate-y-[8%] md:-translate-y-[6%] opacity-90">:</span>
-            <span id="time-minutes" class="text-[5rem] sm:text-[5.5rem] md:text-[7.5rem] leading-none">00</span>
+        <div id="clock-module" class="text-center mb-6 md:mb-8 flex justify-center items-center font-medium text-white drop-shadow-md clock-font tracking-tight cursor-pointer transition-transform duration-300 select-none" style="text-shadow: 0 2px 12px rgba(0,0,0,0.15);">
+            <span id="time-hours" class="text-[5rem] sm:text-[5.5rem] md:text-[length:var(--ui-clock-num)] leading-none transition-all duration-500 ease-out">00</span>
+            <span class="text-[4.5rem] sm:text-[5rem] md:text-[length:var(--ui-clock-colon)] leading-none mx-0.5 md:mx-1 transform -translate-y-[8%] md:translate-y-[var(--ui-colon-y)] opacity-90 transition-all duration-500 ease-out">:</span>
+            <span id="time-minutes" class="text-[5rem] sm:text-[5.5rem] md:text-[length:var(--ui-clock-num)] leading-none transition-all duration-500 ease-out">00</span>
         </div>
 
-        <!-- 检索中枢 -->
-        <div class="relative w-full z-30" id="search-wrapper">
-            <form id="search-form" class="relative group flex items-center bg-white/20 backdrop-blur-lg rounded-full h-12 md:h-14 shadow-sm transition-all duration-300 border border-white/20 w-full mx-auto">
-                
-                <button type="button" id="engine-selector-btn" class="w-0 opacity-0 px-0 overflow-hidden flex items-center justify-center h-full text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200 focus:outline-none transition-all duration-300 whitespace-nowrap" title="切换搜索引擎 (Alt+1~6)">
-                    <span id="current-engine-icon" class="w-5 h-5 flex items-center justify-center font-bold text-base md:text-lg leading-none"></span>
+        <div class="relative w-full z-30 group/search" id="search-wrapper">
+            <form id="search-form" class="relative flex items-center bg-white/20 backdrop-blur-lg rounded-full h-12 md:h-[var(--ui-search-h)] shadow-sm transition-all duration-300 border border-white/20 w-full mx-auto group-[.focused]/search:bg-[#f8f9fa] dark:group-[.focused]/search:bg-gray-800 group-[.focused]/search:border-transparent">
+                <button type="button" id="engine-selector-btn" class="w-0 opacity-0 px-0 overflow-hidden flex items-center justify-center h-full text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200 focus:outline-none transition-all duration-300 whitespace-nowrap group-[.focused]/search:w-10 md:group-[.focused]/search:w-[var(--ui-search-btn-w)] group-[.focused]/search:opacity-100 group-[.focused]/search:px-2 md:group-[.focused]/search:px-[var(--ui-search-btn-px)]" title="切换搜索引擎 (Alt+1~6)">
+                    <span id="current-engine-icon" class="flex items-center justify-center font-bold leading-none text-base md:text-[length:var(--ui-search-icon)] transition-all duration-500 ease-out"></span>
                 </button>
-
-                <div id="search-divider" class="w-0 opacity-0 h-5 md:h-6 bg-gray-300 dark:bg-gray-600 transition-all duration-300"></div>
-
-                <input type="text" id="search-input" autocomplete="off" class="flex-1 bg-transparent border-none focus:ring-0 outline-none px-4 text-white placeholder-white text-center text-[15px] md:text-base transition-all duration-300 w-full" placeholder="搜索">
-
-                <button type="submit" id="search-submit-btn" class="w-0 opacity-0 px-0 overflow-hidden flex items-center justify-center h-full text-[#64c81a] hover:text-[#55a815] focus:outline-none transition-all duration-300">
+                <div id="search-divider" class="w-0 opacity-0 h-5 md:h-[var(--ui-search-div)] bg-gray-300 dark:bg-gray-600 transition-all duration-300 group-[.focused]/search:w-px group-[.focused]/search:opacity-100"></div>
+                <input type="text" id="search-input" autocomplete="off" class="flex-1 bg-transparent border-none focus:ring-0 outline-none px-4 text-white placeholder-white text-center text-[15px] md:text-[length:var(--ui-search-text)] transition-all duration-300 w-full group-[.focused]/search:text-left group-[.focused]/search:text-gray-900 dark:group-[.focused]/search:text-gray-100 group-[.focused]/search:placeholder-gray-400" placeholder="搜索">
+                <button type="submit" id="search-submit-btn" class="w-0 opacity-0 px-0 overflow-hidden flex items-center justify-center h-full text-[#64c81a] hover:text-[#55a815] focus:outline-none transition-all duration-300 group-[.focused]/search:w-10 md:group-[.focused]/search:w-[var(--ui-search-btn-w)] group-[.focused]/search:opacity-100 group-[.focused]/search:px-2 md:group-[.focused]/search:px-[var(--ui-search-btn-px)]">
                     <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                 </button>
             </form>
 
-            <div id="engine-dropdown" class="hidden absolute top-[3.5rem] md:top-[4rem] left-0 w-48 bg-[#fcfcfc]/95 dark:bg-gray-800/95 backdrop-blur-2xl rounded-2xl shadow-xl glass-shadow border border-white/40 dark:border-gray-700 overflow-hidden z-50 transform origin-top transition-all">
-                <div class="py-1 md:py-2" id="engine-list"></div>
+            <div id="engine-dropdown" class="hidden absolute top-[3.5rem] md:top-[var(--ui-dropdown-y)] left-0 w-48 bg-[#fcfcfc]/95 dark:bg-gray-800/95 backdrop-blur-2xl rounded-2xl shadow-xl glass-shadow border border-white/40 dark:border-gray-700 overflow-hidden z-50 transform origin-top transition-all duration-500 ease-out">
+                <div class="py-1 md:py-1.5" id="engine-list"></div>
                 <div class="border-t border-gray-100 dark:border-gray-700 py-1">
-                    <button type="button" onclick="openEnginePrefs()" class="w-full text-left px-5 py-2.5 text-xs md:text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-100/50 dark:hover:bg-gray-700/50 flex items-center gap-4 transition-colors">
+                    <button type="button" onclick="openEnginePrefs()" class="w-full text-left px-5 py-2 text-xs md:text-[13px] text-gray-600 dark:text-gray-300 hover:bg-gray-100/50 dark:hover:bg-gray-700/50 flex items-center gap-4 transition-colors">
                         <span class="w-4 h-4 text-gray-400 flex items-center justify-center"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg></span> 
                         偏好设置
                     </button>
                 </div>
             </div>
 
-            <!-- 毛玻璃历史记录面板 (默认强隐藏，由渲染器接管) -->
-            <div id="suggestions" class="hidden absolute top-[3.5rem] md:top-[4rem] left-0 right-0 bg-black/20 dark:bg-black/40 backdrop-blur-2xl rounded-2xl shadow-2xl glass-shadow border border-white/10 overflow-hidden z-40 flex-col">
-                <div id="suggestions-content" class="py-2 max-h-52 md:max-h-60 overflow-y-auto no-scrollbar flex-1"></div>
-                
+            <div id="suggestions" class="hidden absolute top-[3.5rem] md:top-[var(--ui-dropdown-y)] left-0 right-0 bg-black/20 dark:bg-black/40 backdrop-blur-2xl rounded-2xl shadow-2xl glass-shadow border border-white/10 overflow-hidden z-50 flex-col transition-all duration-500 ease-out">
+                <div id="suggestions-content" class="py-2 max-h-[35vh] overflow-y-auto no-scrollbar flex-1"></div>
                 <div id="clear-history-box" class="border-t border-white/10 py-1 hidden">
-                    <button type="button" onclick="clearHistory()" class="w-full text-left px-5 py-2.5 text-xs text-gray-300 hover:text-white hover:bg-white/10 flex items-center gap-2 transition-colors">
+                    <button type="button" onclick="clearHistory()" class="w-full text-left px-5 py-2.5 text-[11px] md:text-xs text-gray-300 hover:text-white hover:bg-white/10 flex items-center gap-2 transition-colors">
                         <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                         清除历史记录
                     </button>
@@ -84,36 +170,29 @@
             </div>
         </div>
 
-        <!-- 常用网站矩阵 -->
-        <div id="links-module" class="mt-10 md:mt-12 w-full transition-opacity duration-500 ease-in-out">
-            <div id="links-grid" class="grid grid-cols-4 md:grid-cols-6 gap-3 md:gap-4"></div>
+        <div id="links-module" class="mt-10 md:mt-[var(--ui-links-mt)] w-full transition-all duration-500 ease-in-out">
+            <div id="links-grid" class="grid grid-cols-4 md:grid-cols-6 gap-3 md:gap-3"></div>
         </div>
     </div>
 
-    <!-- ================= 4. 深度毛玻璃：动态诗词模块 ================= -->
-    <div id="poem-module" class="fixed bottom-20 md:bottom-28 left-1/2 transform -translate-x-1/2 w-full max-w-2xl px-5 md:px-4 z-40 opacity-0 pointer-events-none transition-opacity duration-700 ease-out">
-        <div class="group relative w-full h-[88px] md:h-[104px] rounded-2xl transition-all duration-300 bg-transparent border border-transparent hover:bg-black/20 dark:hover:bg-black/40 hover:backdrop-blur-[24px] hover:border-white/20 hover:shadow-2xl flex flex-col items-center">
-            
-            <div class="absolute inset-x-0 top-6 md:top-8 text-center px-12 md:px-16 pointer-events-none">
-                <p id="poem-text" class="text-white text-[14px] md:text-[15px] tracking-[0.1em] drop-shadow-md font-medium transition-all duration-300">「 加载中... 」</p>
+    <!-- ================= 4. 动态诗词模块 ================= -->
+    <div id="poem-module" class="fixed bottom-16 md:bottom-20 left-1/2 transform -translate-x-1/2 w-full px-5 md:px-4 z-40 opacity-0 pointer-events-none transition-all duration-700 ease-out md:max-w-[var(--ui-max-w)]">
+        <div class="group relative w-full min-h-[84px] md:min-h-[var(--ui-poem-h)] rounded-2xl transition-all duration-500 ease-out bg-transparent border border-transparent hover:bg-black/20 dark:hover:bg-black/40 hover:backdrop-blur-[24px] hover:border-white/20 hover:shadow-2xl flex flex-col items-center justify-center py-4 md:py-[var(--ui-poem-py)] px-8 md:px-[var(--ui-poem-px)]">
+            <p id="poem-text" class="text-white text-[13px] md:text-[length:var(--ui-poem-text)] tracking-[0.1em] drop-shadow-md font-medium text-center leading-relaxed w-full transition-all duration-500 ease-out">「 加载中... 」</p>
+            <div class="mt-2 w-full text-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+                <p id="poem-author" class="text-white/80 text-[11px] md:text-[length:var(--ui-poem-auth)] tracking-widest drop-shadow-sm transition-all duration-500 ease-out">—— ...</p>
             </div>
-            
-            <div class="absolute inset-x-0 bottom-4 md:bottom-5 text-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
-                <p id="poem-author" class="text-white/80 text-[12px] md:text-[13px] tracking-widest drop-shadow-sm">—— ...</p>
-            </div>
-
-            <button id="poem-menu-btn" class="absolute top-3 right-3 md:top-4 md:right-4 opacity-0 group-hover:opacity-100 text-white/70 hover:text-white transition-all focus:outline-none p-1.5 rounded-lg hover:bg-white/10 z-10">
-                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z"></path></svg>
+            <button id="poem-menu-btn" class="absolute top-2.5 right-2.5 md:top-3 md:right-3 opacity-0 group-hover:opacity-100 text-white/70 hover:text-white transition-all focus:outline-none p-1.5 rounded-lg hover:bg-white/10 z-10">
+                <svg class="w-4 h-4 md:w-5 md:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z"></path></svg>
             </button>
-
-            <div id="poem-menu-dropdown" class="hidden absolute top-[3.25rem] right-3 md:right-4 w-32 bg-[#fcfcfc]/95 dark:bg-gray-800/95 backdrop-blur-xl rounded-xl shadow-xl glass-shadow border border-white/40 dark:border-gray-700 overflow-hidden z-50 transform transition-all">
-                <div class="py-1.5">
-                    <button type="button" onclick="copyPoem(event)" class="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3 transition-colors">
-                        <svg class="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+            <div id="poem-menu-dropdown" class="hidden absolute top-[3rem] md:top-[var(--ui-poem-menu-y)] right-2 md:right-3 w-28 md:w-32 bg-[#fcfcfc]/95 dark:bg-gray-800/95 backdrop-blur-xl rounded-xl shadow-xl glass-shadow border border-white/40 dark:border-gray-700 overflow-hidden z-50 transform transition-all duration-500 ease-out">
+                <div class="py-1">
+                    <button type="button" onclick="copyPoem(event)" class="w-full text-left px-4 py-2 text-[13px] text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2.5 transition-colors">
+                        <svg class="w-3.5 h-3.5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
                         复制
                     </button>
-                    <button type="button" onclick="searchPoem(event)" class="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3 transition-colors">
-                        <svg class="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    <button type="button" onclick="searchPoem(event)" class="w-full text-left px-4 py-2 text-[13px] text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2.5 transition-colors">
+                        <svg class="w-3.5 h-3.5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                         搜索
                     </button>
                 </div>
@@ -121,27 +200,84 @@
         </div>
     </div>
 
-    <!-- ================= 5. 全局控件 & 偏好模态窗 ================= -->
-    <!-- 优化：触控热区放大为 w-12 h-12 (48px)，剥离边框背景，采用纯水印形态，位置抬高避开底部冲突 -->
-    <button id="theme-toggle-btn" class="fixed bottom-10 right-6 md:bottom-12 md:right-10 z-40 w-12 h-12 flex items-center justify-center rounded-full bg-transparent text-white/40 hover:text-white/90 hover:bg-white/10 transition-all duration-300 focus:outline-none group">
-        <svg class="w-6 h-6 hidden dark:block group-hover:text-yellow-400 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
-        <svg class="w-6 h-6 block dark:hidden transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
-    </button>
+    <!-- ================= 5. 右下角全局控件组 ================= -->
+    <div class="fixed bottom-3 right-3 md:bottom-4 md:right-4 z-40 flex flex-col gap-2.5">
+        <button id="settings-toggle-btn" class="w-10 h-10 flex items-center justify-center rounded-full bg-transparent text-white/40 hover:text-white/90 hover:bg-white/10 transition-all duration-300 focus:outline-none group" title="导航与设置">
+            <svg class="w-5 h-5 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+        </button>
+        <button id="theme-toggle-btn" class="w-10 h-10 flex items-center justify-center rounded-full bg-transparent text-white/40 hover:text-white/90 hover:bg-white/10 transition-all duration-300 focus:outline-none group" title="切换模式">
+            <svg class="w-5 h-5 hidden dark:block group-hover:text-yellow-400 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+            <svg class="w-5 h-5 block dark:hidden transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+        </button>
+    </div>
 
-    <div id="prefs-modal" class="fixed inset-0 bg-black/40 backdrop-blur-md z-[60] hidden flex flex-col items-center justify-center p-4 transition-opacity duration-300">
-        <div class="bg-[#fcfcfc] dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden p-6 md:p-8 relative">
+    <!-- ================= 6. 模态窗区域 ================= -->
+    <div id="prefs-modal" class="fixed inset-0 bg-black/40 backdrop-blur-md z-[60] hidden flex-col items-center justify-center p-4 transition-opacity duration-300">
+        <div class="bg-[#fcfcfc] dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-[600px] overflow-hidden p-6 md:p-6 relative">
             <button onclick="closeEnginePrefs()" class="absolute top-5 right-5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 focus:outline-none transition-colors">
                 <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
             </button>
-            <h2 class="text-xl md:text-2xl font-bold text-gray-900 dark:text-white mb-5 md:mb-6">搜索引擎偏好</h2>
-            <div id="prefs-grid" class="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 max-h-[60vh] overflow-y-auto no-scrollbar pb-4"></div>
+            <h2 class="text-xl md:text-xl font-bold text-gray-900 dark:text-white mb-5">搜索引擎偏好</h2>
+            <div id="prefs-grid" class="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 max-h-[60vh] overflow-y-auto no-scrollbar pb-2"></div>
+        </div>
+    </div>
+
+    <!-- 网址导航管理模态窗 -->
+    <div id="settings-modal" class="fixed inset-0 bg-black/40 backdrop-blur-md z-[60] hidden flex-col items-center justify-center p-4 transition-opacity duration-300">
+        <div class="bg-[#fcfcfc] dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-[600px] overflow-hidden p-6 md:p-6 relative flex flex-col max-h-[85vh]">
+            <button onclick="attemptCloseSettings()" class="absolute top-5 right-5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 focus:outline-none transition-colors">
+                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+            
+            <div class="flex items-center justify-between mb-5">
+                <h2 class="text-xl md:text-xl font-bold text-gray-900 dark:text-white">网址导航管理</h2>
+                <button onclick="commitSettings()" class="bg-[#64c81a] hover:bg-[#55a815] text-white px-4 py-1.5 rounded-lg text-sm font-medium transition-colors shadow-sm mr-8">保存更改</button>
+            </div>
+            
+            <div class="overflow-y-auto no-scrollbar flex-1 mb-5 border border-gray-100 dark:border-gray-700/50 rounded-xl bg-gray-50/50 dark:bg-gray-800/50">
+                <ul id="settings-links-list" class="sortable-list p-2">
+                    <!-- JS 动态渲染 -->
+                </ul>
+            </div>
+            
+            <form id="add-link-form" class="flex gap-2 items-center bg-white dark:bg-gray-700 p-2 md:p-3 rounded-2xl border border-gray-200 dark:border-gray-600 shadow-sm">
+                <input type="text" id="new-link-name" placeholder="网站名称" required class="w-1/3 bg-gray-50 dark:bg-gray-800/50 px-3 py-2 rounded-xl text-[13px] md:text-sm outline-none focus:ring-2 focus:ring-green-500 border border-transparent dark:border-gray-600 dark:text-white">
+                <input type="text" id="new-link-url" placeholder="URL (如 github.com)" required class="flex-1 bg-gray-50 dark:bg-gray-800/50 px-3 py-2 rounded-xl text-[13px] md:text-sm outline-none focus:ring-2 focus:ring-green-500 border border-transparent dark:border-gray-600 dark:text-white">
+                <button type="submit" class="bg-gray-800 hover:bg-gray-900 dark:bg-gray-600 dark:hover:bg-gray-500 text-white px-4 py-2 rounded-xl text-[13px] md:text-sm font-medium transition-colors whitespace-nowrap shadow-sm">添加</button>
+            </form>
         </div>
     </div>
 
     <!-- ================= 核心业务逻辑 ================= -->
     <script>
-        // ---------------- A. 主题与背景 ----------------
+        // ---------------- A. 基础环境设置与 UI 尺寸热切换引擎 ----------------
         const htmlEl = document.documentElement;
+        
+        function initUISize() {
+            if (localStorage.getItem('dashboard_ui_size') === 'small') {
+                htmlEl.classList.add('ui-small');
+            }
+        }
+        
+        let sizeClickCount = 0;
+        let sizeClickTimer = null;
+        document.getElementById('clock-module').addEventListener('click', () => {
+            sizeClickCount++;
+            clearTimeout(sizeClickTimer);
+            sizeClickTimer = setTimeout(() => { sizeClickCount = 0; }, 600);
+            
+            if(sizeClickCount >= 3) {
+                sizeClickCount = 0;
+                htmlEl.classList.toggle('ui-small');
+                localStorage.setItem('dashboard_ui_size', htmlEl.classList.contains('ui-small') ? 'small' : 'large');
+                
+                const clock = document.getElementById('clock-module');
+                clock.style.transform = 'scale(1.05)';
+                setTimeout(() => { clock.style.transform = ''; }, 200);
+            }
+        });
+
+        // ---------------- B. 主题与背景 ----------------
         const themeBtn = document.getElementById('theme-toggle-btn');
         const bgLayer = document.getElementById('bg-layer');
 
@@ -160,7 +296,7 @@
             if (customBg) bgLayer.style.backgroundImage = `url('${customBg}')`;
         }
 
-        // ---------------- B. 时钟引擎 ----------------
+        // ---------------- C. 时钟引擎 ----------------
         const hoursDisplay = document.getElementById('time-hours');
         const minsDisplay = document.getElementById('time-minutes');
         function updateClock() {
@@ -171,7 +307,7 @@
             setTimeout(updateClock, delay);
         }
 
-        // ---------------- C. 首字符引擎架构 ----------------
+        // ---------------- D. 搜索引擎库 ----------------
         const DEFAULT_ENGINES = {
             baidu:  { name: '百度', hotkey: 1, url: 'https://www.baidu.com/s?wd=', char: '百' },
             bing:   { name: '必应', hotkey: 2, url: 'https://www.bing.com/search?q=', char: '必' },
@@ -208,7 +344,7 @@
                 const isActive = id === currentEngineId;
                 const el = document.createElement('button');
                 el.type = "button";
-                el.className = `w-full text-left px-5 py-2.5 text-xs md:text-sm flex justify-between items-center transition-colors ${isActive ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50'}`;
+                el.className = `w-full text-left px-5 py-2.5 text-xs md:text-[13px] flex justify-between items-center transition-colors ${isActive ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50'}`;
                 el.innerHTML = `
                     <div class="flex items-center gap-4">
                         <span class="w-5 h-5 flex items-center justify-center font-bold text-gray-500">${ENGINES[id].char}</span> 
@@ -226,11 +362,11 @@
             engineDropdown.classList.toggle('hidden');
         });
 
-        // ---------------- D. 偏好管理 ----------------
+        // ---------------- E. 偏好设置面板 ----------------
         const prefsModal = document.getElementById('prefs-modal');
         const prefsGrid = document.getElementById('prefs-grid');
-        function openEnginePrefs() { engineDropdown.classList.add('hidden'); renderEnginePrefsGrid(); prefsModal.classList.remove('hidden'); }
-        function closeEnginePrefs() { prefsModal.classList.add('hidden'); }
+        function openEnginePrefs() { engineDropdown.classList.add('hidden'); renderEnginePrefsGrid(); prefsModal.classList.remove('hidden'); prefsModal.classList.add('flex'); }
+        function closeEnginePrefs() { prefsModal.classList.add('hidden'); prefsModal.classList.remove('flex'); }
 
         function renderEnginePrefsGrid() {
             prefsGrid.innerHTML = '';
@@ -238,13 +374,13 @@
                 const isActive = id === currentEngineId;
                 const card = document.createElement('div');
                 card.className = isActive 
-                    ? "relative bg-[#64c81a] rounded-xl md:rounded-2xl p-3 md:p-4 flex items-center cursor-pointer shadow-md transition-transform hover:scale-[1.02]"
-                    : "bg-white dark:bg-gray-700 border border-gray-100 dark:border-gray-600 rounded-xl md:rounded-2xl p-3 md:p-4 flex items-center cursor-pointer shadow-sm transition-all hover:shadow-md hover:border-gray-200 hover:scale-[1.02]";
+                    ? "relative bg-[#64c81a] rounded-xl p-3 md:p-3.5 flex items-center cursor-pointer shadow-md transition-transform hover:scale-[1.02]"
+                    : "bg-white dark:bg-gray-700 border border-gray-100 dark:border-gray-600 rounded-xl p-3 md:p-3.5 flex items-center cursor-pointer shadow-sm transition-all hover:shadow-md hover:border-gray-200 hover:scale-[1.02]";
                 card.innerHTML = `
-                    <div class="w-8 h-8 flex items-center justify-center font-bold text-lg md:text-xl ${isActive ? 'text-white' : 'text-gray-400'} mr-3 md:mr-4 flex-shrink-0">${ENGINES[id].char}</div>
+                    <div class="w-8 h-8 flex items-center justify-center font-bold text-lg md:text-xl ${isActive ? 'text-white' : 'text-gray-400'} mr-3 flex-shrink-0">${ENGINES[id].char}</div>
                     <div class="flex-1 overflow-hidden pr-6">
-                        <h3 class="${isActive ? 'text-white' : 'text-gray-900 dark:text-white'} font-bold text-base md:text-lg leading-tight mb-1">${ENGINES[id].name}</h3>
-                        <p class="${isActive ? 'text-green-100' : 'text-gray-400'} text-[10px] md:text-xs truncate w-full">${ENGINES[id].url}</p>
+                        <h3 class="${isActive ? 'text-white' : 'text-gray-900 dark:text-white'} font-bold text-[15px] md:text-base leading-tight mb-1">${ENGINES[id].name}</h3>
+                        <p class="${isActive ? 'text-green-100' : 'text-gray-400'} text-[10px] md:text-[11px] truncate w-full">${ENGINES[id].url}</p>
                     </div>
                 `;
                 card.onclick = () => { setEngine(id); setTimeout(closeEnginePrefs, 150); };
@@ -252,10 +388,8 @@
             });
         }
 
-        // ---------------- E. 状态机与诗文 API ----------------
+        // ---------------- F. 纯 CSS 驱动的焦点状态机 ----------------
         const searchForm = document.getElementById('search-form');
-        const searchDivider = document.getElementById('search-divider');
-        const searchSubmitBtn = document.getElementById('search-submit-btn');
         const searchWrapper = document.getElementById('search-wrapper');
         const suggestionsBox = document.getElementById('suggestions');
         const linksModule = document.getElementById('links-module');
@@ -288,19 +422,8 @@
                 focusOverlay.classList.remove('opacity-0', 'pointer-events-none');
                 focusOverlay.classList.add('opacity-100', 'pointer-events-auto');
                 
-                searchForm.classList.remove('bg-white/20', 'border-white/20');
-                searchForm.classList.add('bg-[#f8f9fa]', 'dark:bg-gray-800', 'border-transparent');
-                
-                searchInput.classList.remove('text-center', 'text-white', 'placeholder-white');
-                searchInput.classList.add('text-left', 'text-gray-900', 'dark:text-gray-100', 'placeholder-gray-400');
+                searchWrapper.classList.add('focused');
                 searchInput.placeholder = `在 ${ENGINES[currentEngineId].name} 中搜索...`;
-                
-                engineBtn.classList.remove('w-0', 'opacity-0', 'px-0');
-                engineBtn.classList.add('w-10', 'md:w-12', 'opacity-100', 'px-2', 'md:px-3');
-                searchDivider.classList.remove('w-0', 'opacity-0');
-                searchDivider.classList.add('w-px', 'opacity-100');
-                searchSubmitBtn.classList.remove('w-0', 'opacity-0', 'px-0');
-                searchSubmitBtn.classList.add('w-10', 'md:w-12', 'opacity-100', 'px-2', 'md:px-3');
 
                 linksModule.classList.add('opacity-0', 'pointer-events-none');
                 poemModule.classList.remove('opacity-0', 'pointer-events-none');
@@ -311,19 +434,8 @@
                 focusOverlay.classList.add('opacity-0', 'pointer-events-none');
                 focusOverlay.classList.remove('opacity-100', 'pointer-events-auto');
                 
-                searchForm.classList.add('bg-white/20', 'border-white/20');
-                searchForm.classList.remove('bg-[#f8f9fa]', 'dark:bg-gray-800', 'border-transparent');
-                
-                searchInput.classList.add('text-center', 'text-white', 'placeholder-white');
-                searchInput.classList.remove('text-left', 'text-gray-900', 'dark:text-gray-100', 'placeholder-gray-400');
+                searchWrapper.classList.remove('focused');
                 searchInput.placeholder = "搜索";
-                
-                engineBtn.classList.add('w-0', 'opacity-0', 'px-0');
-                engineBtn.classList.remove('w-10', 'md:w-12', 'opacity-100', 'px-2', 'md:px-3');
-                searchDivider.classList.add('w-0', 'opacity-0');
-                searchDivider.classList.remove('w-px', 'opacity-100');
-                searchSubmitBtn.classList.add('w-0', 'opacity-0', 'px-0');
-                searchSubmitBtn.classList.remove('w-10', 'md:w-12', 'opacity-100', 'px-2', 'md:px-3');
 
                 engineDropdown.classList.add('hidden');
                 poemMenuDropdown.classList.add('hidden');
@@ -356,7 +468,8 @@
         }
 
         document.addEventListener('click', (e) => {
-            if (prefsModal.contains(e.target)) return;
+            const settingsModal = document.getElementById('settings-modal');
+            if (prefsModal.contains(e.target) || settingsModal.contains(e.target)) return;
             if (!poemMenuBtn.contains(e.target) && !poemMenuDropdown.contains(e.target)) { poemMenuDropdown.classList.add('hidden'); }
             if (searchWrapper.contains(e.target) || poemModule.contains(e.target)) { toggleFocusMode(true); } 
             else { toggleFocusMode(false); engineDropdown.classList.add('hidden'); }
@@ -374,9 +487,19 @@
             }
         });
 
-        // ---------------- F. 历史记录系统 ----------------
+        // ---------------- G. 工具联想与跨域 IPC 跳转系统 ----------------
         const suggestionsContent = document.getElementById('suggestions-content');
         const clearHistoryBox = document.getElementById('clear-history-box');
+
+        let availableTools = [];
+
+        window.addEventListener('message', (event) => {
+            if (event.data && event.data.type === 'SYNC_TOOLS') {
+                availableTools = event.data.tools.filter(t => t.id !== 'welcome');
+            }
+        });
+
+        window.parent.postMessage({ type: 'REQUEST_TOOLS' }, '*');
 
         function getHistory() { return JSON.parse(localStorage.getItem('dashboard_history') || '[]'); }
         function saveHistory(query) {
@@ -397,21 +520,52 @@
         function renderSuggestions() {
             const query = searchInput.value.trim().toLowerCase();
             let hist = getHistory();
-            if (query) hist = hist.filter(h => h.toLowerCase().includes(query));
+            let matchedTools = [];
+
+            if (query) {
+                hist = hist.filter(h => h.toLowerCase().includes(query));
+                matchedTools = availableTools.filter(t => t.title.toLowerCase().includes(query));
+            }
 
             suggestionsContent.innerHTML = '';
-            // 修复逻辑：实时判定数组长度决定容器是否渲染
+            let hasContent = false;
+
+            if (matchedTools.length > 0) {
+                hasContent = true;
+                matchedTools.forEach(tool => {
+                    const el = document.createElement('div');
+                    el.className = "px-5 py-2 hover:bg-white/10 cursor-pointer flex items-center justify-between transition-colors group/tool";
+                    el.innerHTML = `
+                        <div class="flex items-center gap-3 text-[#64c81a]">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>
+                            <span class="text-[13px] md:text-[14px] font-medium">${tool.title}</span>
+                        </div>
+                        <span class="text-[10px] md:text-[11px] bg-[#64c81a]/20 border border-[#64c81a]/30 text-[#64c81a] px-2 py-0.5 rounded shadow-sm opacity-80 group-hover/tool:opacity-100 transition-opacity tracking-widest">打开应用</span>
+                    `;
+                    el.onclick = (e) => { 
+                        e.stopPropagation(); 
+                        window.parent.postMessage({ type: 'NAVIGATE_TOOL', id: tool.id }, '*');
+                    };
+                    suggestionsContent.appendChild(el);
+                });
+            }
+
             if (hist.length > 0) {
-                suggestionsBox.classList.remove('hidden');
-                suggestionsBox.classList.add('flex');
-                clearHistoryBox.classList.remove('hidden');
+                hasContent = true;
                 hist.forEach(item => {
                     const el = document.createElement('div');
-                    el.className = "px-5 py-2.5 hover:bg-white/10 cursor-pointer flex items-center transition-colors text-[13px] md:text-sm text-white/90";
+                    el.className = "px-5 py-2 hover:bg-white/10 cursor-pointer flex items-center transition-colors text-[13px] md:text-[14px] text-white/90";
                     el.textContent = item;
                     el.onclick = (e) => { e.stopPropagation(); doSearch(item); };
                     suggestionsContent.appendChild(el);
                 });
+            }
+
+            if (hasContent) {
+                suggestionsBox.classList.remove('hidden');
+                suggestionsBox.classList.add('flex');
+                if (hist.length > 0) clearHistoryBox.classList.remove('hidden');
+                else clearHistoryBox.classList.add('hidden');
             } else {
                 suggestionsBox.classList.add('hidden');
                 suggestionsBox.classList.remove('flex');
@@ -427,15 +581,20 @@
 
         searchForm.addEventListener('submit', (e) => {
             e.preventDefault();
-            doSearch(searchInput.value.trim());
+            const query = searchInput.value.trim();
+            if (!query) return;
+            doSearch(query);
         });
 
-        // ---------------- G. 常用网站矩阵数据初始化 ----------------
+        // ---------------- H. 常用网站矩阵与本地沙箱管理系统 (精准物理拖拽引擎) ----------------
         const DEFAULT_LINKS = [
             { id: 1, name: 'GitHub', url: 'https://github.com' },
             { id: 2, name: 'Bilibili', url: 'https://bilibili.com' },
-            { id: 3, name: 'V2EX', url: 'https://v2ex.com' },
+            { id: 3, name: 'V2EX', url: 'https://v2ex.com' }
         ];
+
+        let currentLinksBuffer = []; 
+        let hasUnsavedChanges = false;
 
         function getLinks() {
             const raw = localStorage.getItem('dashboard_custom_links');
@@ -451,35 +610,239 @@
             const grid = document.getElementById('links-grid');
             grid.innerHTML = '';
             const links = getLinks();
-
             links.forEach(link => {
                 const a = document.createElement('a');
                 a.href = link.url;
                 a.target = '_blank';
-                a.className = "group relative flex flex-col items-center justify-center p-2 md:p-3 bg-white/10 backdrop-blur-md rounded-xl md:rounded-2xl border border-white/20 hover:bg-white/20 transition-all duration-300 focus:outline-none";
-                
-                const delBtn = document.createElement('button');
-                delBtn.className = "absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-sm hover:scale-110";
-                delBtn.innerHTML = '<svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>';
-                delBtn.onclick = (e) => {
-                    e.preventDefault(); e.stopPropagation();
-                    if(confirm(`确定删除导航 [${link.name}] 吗？`)) { saveLinks(links.filter(l => l.id !== link.id)); }
-                };
-
+                a.className = "group relative flex flex-col items-center justify-center p-2.5 bg-white/10 backdrop-blur-md rounded-xl md:rounded-2xl border border-white/20 hover:bg-white/20 transition-all duration-300 focus:outline-none";
                 const initial = link.name ? link.name.charAt(0).toUpperCase() : '?';
                 a.innerHTML = `
-                    <div class="w-10 h-10 md:w-11 md:h-11 flex items-center justify-center bg-white/20 text-white rounded-full text-lg font-bold mb-2 shadow-inner">
+                    <div class="w-10 h-10 flex items-center justify-center bg-white/20 text-white rounded-full text-base md:text-lg font-bold mb-2 shadow-inner transition-colors duration-300 group-hover:bg-white/30">
                         ${initial}
                     </div>
-                    <span class="text-[10px] md:text-xs font-medium text-white text-center w-full truncate px-1">${link.name}</span>
+                    <span class="text-[10px] md:text-[11px] font-medium text-white text-center w-full truncate px-1">${link.name}</span>
                 `;
-                a.appendChild(delBtn);
                 grid.appendChild(a);
             });
         }
 
-        // ---------------- H. 系统调度 ----------------
-        initTheme(); initBackground(); setEngine(currentEngineId); updateClock(); renderLinks();
+        // ================= 面板交互与防丢失拦截 =================
+        const settingsModal = document.getElementById('settings-modal');
+        const settingsLinksList = document.getElementById('settings-links-list');
+        const addLinkForm = document.getElementById('add-link-form');
+
+        document.getElementById('settings-toggle-btn').addEventListener('click', () => {
+            currentLinksBuffer = JSON.parse(JSON.stringify(getLinks())); 
+            hasUnsavedChanges = false;
+            renderSettingsList();
+            settingsModal.classList.remove('hidden');
+            settingsModal.classList.add('flex');
+        });
+
+        function attemptCloseSettings() {
+            if (hasUnsavedChanges) {
+                if (confirm('检测到未保存的更改，是否在关闭前保存？')) {
+                    commitSettings();
+                }
+            }
+            settingsModal.classList.add('hidden');
+            settingsModal.classList.remove('flex');
+        }
+
+        function commitSettings() {
+            saveLinks(currentLinksBuffer);
+            hasUnsavedChanges = false;
+            attemptCloseSettings();
+        }
+
+        // ================= 渲染控制台列表 =================
+        function renderSettingsList() {
+            settingsLinksList.innerHTML = '';
+            currentLinksBuffer.forEach((link, index) => {
+                const li = document.createElement('li');
+                li.className = "sortable-item relative flex items-center justify-between px-4 py-3 bg-white dark:bg-gray-800 rounded-xl mb-2 shadow-sm cursor-grab active:cursor-grabbing select-none";
+                li.dataset.index = index;
+                li.innerHTML = `
+                    <div class="item-avatar w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-sm font-bold text-gray-600 dark:text-gray-300 flex-shrink-0 transition-all duration-300">
+                        ${link.name.charAt(0).toUpperCase()}
+                    </div>
+                    <div class="item-details flex flex-col flex-1 overflow-hidden pl-3 transition-opacity duration-300 pointer-events-none">
+                        <span class="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">${link.name}</span>
+                        <span class="text-[10px] text-gray-400 truncate">${link.url}</span>
+                    </div>
+                    <div class="item-actions flex items-center flex-shrink-0 transition-opacity duration-300">
+                        <button type="button" onclick="removeLinkBuffer(${index})" class="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-gray-600 rounded transition-colors" title="删除">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        </button>
+                    </div>
+                `;
+                settingsLinksList.appendChild(li);
+            });
+        }
+
+        window.removeLinkBuffer = function(index) {
+            const name = currentLinksBuffer[index].name;
+            if(confirm(`确定删除导航 [${name}] 吗？`)) {
+                currentLinksBuffer.splice(index, 1);
+                hasUnsavedChanges = true;
+                renderSettingsList();
+            }
+        };
+
+        addLinkForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const nameEl = document.getElementById('new-link-name');
+            const urlEl = document.getElementById('new-link-url');
+            let name = nameEl.value.trim();
+            let url = urlEl.value.trim();
+            if(!name || !url) return;
+            if(!/^https?:\/\//i.test(url)) url = 'https://' + url;
+            
+            currentLinksBuffer.push({ id: Date.now(), name, url });
+            hasUnsavedChanges = true;
+            renderSettingsList();
+            
+            nameEl.value = '';
+            urlEl.value = '';
+        });
+
+        // ================= 核心修复：纯绝对坐标系拖拽算法 =================
+        let isDragging = false;
+        let dragEl = null;
+        let cloneEl = null;
+        let placeholder = null;
+        let dragStartIndex = -1;
+        let dragMouseX = 0;
+        let dragMouseY = 0;
+
+        settingsLinksList.addEventListener('pointerdown', (e) => {
+            // 物理防误触拦截
+            if (e.button !== undefined && e.button !== 0) return; 
+            if (e.target.closest('button')) return; 
+            const li = e.target.closest('.sortable-item');
+            if (!li) return;
+
+            dragEl = li;
+            dragStartIndex = parseInt(li.dataset.index);
+
+            // 占位符渲染，触发列表重排缓冲
+            placeholder = document.createElement('li');
+            placeholder.className = 'sortable-placeholder';
+
+            // DOM 深度克隆，规避原节点样式污染
+            cloneEl = li.cloneNode(true);
+            const rect = li.getBoundingClientRect();
+            cloneEl.className = li.className + ' drag-clone';
+            
+            // 将长条形克隆体强行约束为原始长宽
+            cloneEl.style.width = rect.width + 'px';
+            cloneEl.style.height = rect.height + 'px';
+            
+            // 初始化鼠标绝对坐标系捕捉点
+            dragMouseX = e.clientX;
+            dragMouseY = e.clientY;
+            cloneEl.style.left = e.clientX + 'px';
+            cloneEl.style.top = e.clientY + 'px';
+            
+            // 精准求导初始偏移差值，并用 transform 补偿归位，杜绝生成时的闪烁
+            const offsetX = e.clientX - rect.left;
+            const offsetY = e.clientY - rect.top;
+            cloneEl.style.transform = `translate(-${offsetX}px, -${offsetY}px)`;
+            
+            document.body.appendChild(cloneEl);
+            isDragging = true;
+            
+            li.style.display = 'none';
+            li.parentNode.insertBefore(placeholder, li);
+
+            cloneEl.offsetHeight; // 强制浏览器刷新渲染流水线
+
+            requestAnimationFrame(() => {
+                cloneEl.classList.add('morph-circle');
+                // 通过基于像素(px)的过渡逻辑取代百分比(%)，确保细胞收缩时圆心直达鼠标
+                cloneEl.style.transform = 'translate(-22px, -22px)';
+            });
+
+            document.addEventListener('pointermove', onMove, {passive: false});
+            document.addEventListener('pointerup', onUp);
+            document.addEventListener('pointercancel', onUp);
+            e.preventDefault();
+        });
+
+        function onMove(e) {
+            if (!isDragging) return;
+            e.preventDefault(); 
+            
+            dragMouseX = e.clientX;
+            dragMouseY = e.clientY;
+            
+            // 纯绝对坐标系推进
+            cloneEl.style.left = e.clientX + 'px';
+            cloneEl.style.top = e.clientY + 'px';
+
+            // 直接进行碰撞几何检测，pointer-events: none 会自动让其穿透克隆体
+            const target = document.elementFromPoint(e.clientX, e.clientY);
+
+            if (!target) return;
+            const targetLi = target.closest('.sortable-item');
+            if (targetLi && targetLi !== dragEl) {
+                const tRect = targetLi.getBoundingClientRect();
+                if (e.clientY > tRect.top + tRect.height / 2) {
+                    settingsLinksList.insertBefore(placeholder, targetLi.nextSibling);
+                } else {
+                    settingsLinksList.insertBefore(placeholder, targetLi);
+                }
+            } else {
+                // 边界兜底捕捉：解决鼠标滑动脱离具体元素，或处于底部空白 padding 区域时无法识别插入点的问题
+                const listRect = settingsLinksList.getBoundingClientRect();
+                if (e.clientY > listRect.bottom - 30) {
+                    settingsLinksList.appendChild(placeholder);
+                } else if (e.clientY < listRect.top + 30) {
+                    settingsLinksList.insertBefore(placeholder, settingsLinksList.firstChild);
+                }
+            }
+        }
+
+        function onUp(e) {
+            if (!isDragging) return;
+            isDragging = false;
+            document.removeEventListener('pointermove', onMove);
+            document.removeEventListener('pointerup', onUp);
+            document.removeEventListener('pointercancel', onUp);
+
+            const listItems = Array.from(placeholder.parentNode.children).filter(el => el.classList.contains('sortable-item') && el.style.display !== 'none' || el === placeholder);
+            const newIndex = listItems.indexOf(placeholder);
+
+            const pRect = placeholder.getBoundingClientRect();
+            cloneEl.classList.remove('morph-circle');
+            cloneEl.style.width = pRect.width + 'px';
+            cloneEl.style.height = pRect.height + 'px';
+            
+            // 逆推终点矩阵向量，指令克隆体弹回占位符
+            const curX = e.clientX || dragMouseX;
+            const curY = e.clientY || dragMouseY;
+            const destX = pRect.left - curX;
+            const destY = pRect.top - curY;
+            cloneEl.style.transform = `translate(${destX}px, ${destY}px)`;
+
+            setTimeout(() => {
+                if(cloneEl.parentNode) cloneEl.remove();
+                dragEl.style.display = 'flex';
+                placeholder.parentNode.insertBefore(dragEl, placeholder);
+                placeholder.remove();
+
+                if (newIndex !== -1 && newIndex !== dragStartIndex) {
+                    const item = currentLinksBuffer.splice(dragStartIndex, 1)[0];
+                    // 核心修复：剔除错误的 -1 偏移量算法。在排除了隐藏节点后，newIndex 的推导是绝对正确的映射。
+                    currentLinksBuffer.splice(newIndex, 0, item);
+                    hasUnsavedChanges = true;
+                    renderSettingsList(); 
+                }
+            }, 200);
+        }
+
+        // ---------------- I. 系统调度 ----------------
+        initUISize(); initTheme(); initBackground(); setEngine(currentEngineId); updateClock(); renderLinks();
     </script>
 </body>
 </html>
