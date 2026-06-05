@@ -19,6 +19,15 @@
         }
     </script>
     <style>
+        /* 彻底消除桌面端与移动端点击时的系统默认高亮及方块轮廓 */
+        * { -webkit-tap-highlight-color: transparent; }
+        button:focus, button:active, button:focus-visible {
+            outline: none !important;
+        }
+        #engine-selector-btn, #search-submit-btn {
+            outline: none !important;
+        }
+        
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         .glass-shadow { box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.15); }
@@ -86,18 +95,16 @@
         .drag-clone {
             position: fixed !important;
             z-index: 9999 !important;
-            pointer-events: none; /* 保证硬件穿透，不阻挡鼠标事件 */
+            pointer-events: none; 
             margin: 0 !important;
             box-sizing: border-box;
             will-change: width, height, transform, border-radius;
-            /* 严格移除了 left 和 top 的过渡，确保元素始终无延迟绑定鼠标 */
             transition: width 0.2s cubic-bezier(0.4, 0, 0.2, 1),
                         height 0.2s cubic-bezier(0.4, 0, 0.2, 1),
                         border-radius 0.2s cubic-bezier(0.4, 0, 0.2, 1),
                         transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             transform-origin: top left;
         }
-        /* 极致收缩变身为水滴光点 */
         .drag-clone.morph-circle {
             width: 44px !important;
             height: 44px !important;
@@ -108,7 +115,6 @@
             background: transparent !important;
             box-shadow: none !important;
             border: none !important;
-            /* 在此移除了所有不可控的百分比 transform 属性，全面接管至 JS */
         }
         .drag-clone.morph-circle .item-details,
         .drag-clone.morph-circle .item-actions {
@@ -139,17 +145,23 @@
 
         <div class="relative w-full z-30 group/search" id="search-wrapper">
             <form id="search-form" class="relative flex items-center bg-white/20 backdrop-blur-lg rounded-full h-12 md:h-[var(--ui-search-h)] shadow-sm transition-all duration-300 border border-white/20 w-full mx-auto group-[.focused]/search:bg-[#f8f9fa] dark:group-[.focused]/search:bg-gray-800 group-[.focused]/search:border-transparent">
-                <button type="button" id="engine-selector-btn" class="w-0 opacity-0 px-0 overflow-hidden flex items-center justify-center h-full text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200 focus:outline-none transition-all duration-300 whitespace-nowrap group-[.focused]/search:w-10 md:group-[.focused]/search:w-[var(--ui-search-btn-w)] group-[.focused]/search:opacity-100 group-[.focused]/search:px-2 md:group-[.focused]/search:px-[var(--ui-search-btn-px)]" title="切换搜索引擎 (Alt+1~6)">
-                    <span id="current-engine-icon" class="flex items-center justify-center font-bold leading-none text-base md:text-[length:var(--ui-search-icon)] transition-all duration-500 ease-out"></span>
+                <!-- 增加了 outline-none focus:outline-none focus:ring-0 约束 -->
+                <button type="button" id="engine-selector-btn" style="outline: none;" class="w-0 opacity-0 px-0 overflow-hidden flex items-center justify-center h-full text-gray-500 dark:text-gray-400 outline-none focus:outline-none focus:ring-0 transition-all duration-300 whitespace-nowrap group-[.focused]/search:w-10 md:group-[.focused]/search:w-[var(--ui-search-btn-w)] group-[.focused]/search:opacity-100 group-[.focused]/search:px-1" title="切换搜索引擎 (Alt+1~6)">
+                    <span id="current-engine-icon" class="flex items-center justify-center w-8 h-8 md:w-[2.25rem] md:h-[2.25rem] rounded-full hover:bg-white/50 dark:hover:bg-white/20 group-[.focused]/search:hover:bg-gray-200/80 dark:group-[.focused]/search:hover:bg-gray-700 transition-all duration-300 ease-out"></span>
                 </button>
+                
                 <div id="search-divider" class="w-0 opacity-0 h-5 md:h-[var(--ui-search-div)] bg-gray-300 dark:bg-gray-600 transition-all duration-300 group-[.focused]/search:w-px group-[.focused]/search:opacity-100"></div>
                 <input type="text" id="search-input" autocomplete="off" class="flex-1 bg-transparent border-none focus:ring-0 outline-none px-4 text-white placeholder-white text-center text-[15px] md:text-[length:var(--ui-search-text)] transition-all duration-300 w-full group-[.focused]/search:text-left group-[.focused]/search:text-gray-900 dark:group-[.focused]/search:text-gray-100 group-[.focused]/search:placeholder-gray-400" placeholder="搜索">
-                <button type="submit" id="search-submit-btn" class="w-0 opacity-0 px-0 overflow-hidden flex items-center justify-center h-full text-[#64c81a] hover:text-[#55a815] focus:outline-none transition-all duration-300 group-[.focused]/search:w-10 md:group-[.focused]/search:w-[var(--ui-search-btn-w)] group-[.focused]/search:opacity-100 group-[.focused]/search:px-2 md:group-[.focused]/search:px-[var(--ui-search-btn-px)]">
-                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                
+                <!-- 增加了 outline-none focus:outline-none focus:ring-0 约束 -->
+                <button type="submit" id="search-submit-btn" style="outline: none;" class="w-0 opacity-0 px-0 overflow-hidden flex items-center justify-center h-full text-[#64c81a] outline-none focus:outline-none focus:ring-0 transition-all duration-300 group-[.focused]/search:w-10 md:group-[.focused]/search:w-[var(--ui-search-btn-w)] group-[.focused]/search:opacity-100 group-[.focused]/search:px-1">
+                    <div class="flex items-center justify-center w-8 h-8 md:w-[2.25rem] md:h-[2.25rem] rounded-full hover:bg-white/50 dark:hover:bg-white/20 group-[.focused]/search:hover:bg-[#64c81a]/10 dark:group-[.focused]/search:hover:bg-gray-700 transition-all duration-300 ease-out">
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                    </div>
                 </button>
             </form>
 
-            <div id="engine-dropdown" class="hidden absolute top-[3.5rem] md:top-[var(--ui-dropdown-y)] left-0 w-48 bg-[#fcfcfc]/95 dark:bg-gray-800/95 backdrop-blur-2xl rounded-2xl shadow-xl glass-shadow border border-white/40 dark:border-gray-700 overflow-hidden z-50 transform origin-top transition-all duration-500 ease-out">
+            <div id="engine-dropdown" class="hidden absolute top-[3.5rem] md:top-[var(--ui-dropdown-y)] left-0 w-48 bg-[#fcfcfc]/95 dark:bg-gray-800/95 backdrop-blur-2xl rounded-2xl shadow-xl glass-shadow border border-white/40 dark:border-gray-700 overflow-hidden z-[60] transform origin-top transition-all duration-500 ease-out">
                 <div class="py-1 md:py-1.5" id="engine-list"></div>
                 <div class="border-t border-gray-100 dark:border-gray-700 py-1">
                     <button type="button" onclick="openEnginePrefs()" class="w-full text-left px-5 py-2 text-xs md:text-[13px] text-gray-600 dark:text-gray-300 hover:bg-gray-100/50 dark:hover:bg-gray-700/50 flex items-center gap-4 transition-colors">
@@ -188,7 +200,11 @@
             <div id="poem-menu-dropdown" class="hidden absolute top-[3rem] md:top-[var(--ui-poem-menu-y)] right-2 md:right-3 w-28 md:w-32 bg-[#fcfcfc]/95 dark:bg-gray-800/95 backdrop-blur-xl rounded-xl shadow-xl glass-shadow border border-white/40 dark:border-gray-700 overflow-hidden z-50 transform transition-all duration-500 ease-out">
                 <div class="py-1">
                     <button type="button" onclick="copyPoem(event)" class="w-full text-left px-4 py-2 text-[13px] text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2.5 transition-colors">
-                        <svg class="w-3.5 h-3.5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                        <!-- 严谨引入 Lucide 官方 Copy 矢量图标准路径 -->
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect width="14" height="14" x="8" y="8" rx="2" ry="2"></rect>
+                            <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"></path>
+                        </svg>
                         复制
                     </button>
                     <button type="button" onclick="searchPoem(event)" class="w-full text-left px-4 py-2 text-[13px] text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2.5 transition-colors">
@@ -308,16 +324,28 @@
         }
 
         // ---------------- D. 搜索引擎库 ----------------
+        const svgClass = "w-[1.125rem] h-[1.125rem] md:w-5 md:h-5 fill-current";
+        
         const DEFAULT_ENGINES = {
-            baidu:  { name: '百度', hotkey: 1, url: 'https://www.baidu.com/s?wd=', char: '百' },
-            bing:   { name: '必应', hotkey: 2, url: 'https://www.bing.com/search?q=', char: '必' },
-            google: { name: '谷歌', hotkey: 3, url: 'https://www.google.com/search?q=', char: 'G' },
-            yandex: { name: 'Yandex', hotkey: 4, url: 'https://yandex.com/search/?text=', char: 'Y' },
-            sogou:  { name: '搜狗搜索', hotkey: 5, url: 'https://www.sogou.com/web?query=', char: '搜' },
-            so360:  { name: '360 搜索', hotkey: 6, url: 'https://www.so.com/s?q=', char: '3' }
+            baidu:  { name: '百度', hotkey: 1, url: 'https://www.baidu.com/s?wd=', char: '百', icon: `<svg viewBox="0 0 24 24" fill="currentColor" class="${svgClass}"><path d="M9.154 0C7.71 0 6.54 1.658 6.54 3.707c0 2.051 1.171 3.71 2.615 3.71 1.446 0 2.614-1.659 2.614-3.71C11.768 1.658 10.6 0 9.154 0zm7.025.594C14.86.58 13.347 2.589 13.2 3.927c-.187 1.745.25 3.487 2.179 3.735 1.933.25 3.175-1.806 3.422-3.364.252-1.555-.995-3.364-2.362-3.674a1.218 1.218 0 0 0-.261-.03zM3.582 5.535a2.811 2.811 0 0 0-.156.008c-2.118.19-2.428 3.24-2.428 3.24-.287 1.41.686 4.425 3.297 3.864 2.617-.561 2.262-3.68 2.183-4.362-.125-1.018-1.292-2.773-2.896-2.75zm16.534 1.753c-2.308 0-2.617 2.119-2.617 3.616 0 1.43.121 3.425 2.988 3.362 2.867-.063 2.553-3.238 2.553-3.988 0-.745-.62-2.99-2.924-2.99zm-8.264 2.478c-1.424.014-2.708.925-3.323 1.947-1.118 1.868-2.863 3.05-3.112 3.363-.25.309-3.61 2.116-2.864 5.42.746 3.301 3.365 3.237 3.365 3.237s1.93.19 4.171-.31c2.24-.495 4.17.123 4.17.123s5.233 1.748 6.665-1.616c1.43-3.364-.808-5.109-.808-5.109s-2.99-2.306-4.736-4.798c-1.072-1.665-2.348-2.268-3.528-2.257zm-2.234 3.84l1.542.024v8.197H7.758c-1.47-.291-2.055-1.292-2.13-1.462-.072-.173-.488-.976-.268-2.343.635-2.049 2.447-2.196 2.447-2.196h1.81zm3.964 2.39v3.881c.096.413.612.488.612.488h1.614v-4.343h1.689v5.782h-3.915c-1.517-.39-1.59-1.465-1.59-1.465v-4.317zm-5.458 1.147c-.66.197-.978.708-1.05.928-.076.22-.247.78-.1 1.269.294 1.095 1.248 1.144 1.248 1.144h1.37v-3.34z"/></svg>` },
+            bing:   { name: '必应', hotkey: 2, url: 'https://www.bing.com/search?q=', char: '必', icon: `<svg viewBox="0 0 24 24" fill="currentColor" class="${svgClass}"><path d="m10.1 8.6l1.7 4.3l2.8 1.3L9 17.5V3.4L5 2v17.8L9 22l10-5.8v-4.5z"/></svg>` },
+            google: { name: '谷歌', hotkey: 3, url: 'https://www.google.com/search?q=', char: 'G', icon: `<svg viewBox="0 0 24 24" fill="currentColor" class="${svgClass}"><path d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z"/></svg>` },
+            yandex: { name: 'Yandex', hotkey: 4, url: 'https://yandex.com/search/?text=', char: 'Y', icon: `<svg viewBox="0 0 32 32" fill="currentColor" class="${svgClass}"><path d="m20.8 1l-5.6 16.2l-5-13.2H7l7 18.6V31h3v-9.9L24 1z"/></svg>` },
+            sogou:  { name: '搜狗搜索', hotkey: 5, url: 'https://www.sogou.com/web?query=', char: '搜', icon: `<svg viewBox="0 0 24 24" fill="currentColor" class="${svgClass}"><path d="M16.801 22.74L17.79 24c1.561-.676 2.926-1.62 4.051-2.851l-.946-1.318c-1.11 1.289-2.475 2.279-4.08 2.909h-.014zM12 22.199c-5.775 0-10.455-4.619-10.455-10.35C1.545 6.15 6.225 1.53 12 1.53s10.456 4.65 10.456 10.35c0 2.55-.946 4.891-2.507 6.69l.945 1.261C22.801 17.729 24 14.939 24 11.88 24 5.295 18.63 0 12 0S0 5.311 0 11.85c0 6.57 5.37 11.88 12 11.88 1.71 0 3.33-.346 4.801-.99l-.961-1.26c-1.2.45-2.49.719-3.84.719zM18 12.646c-2.25-1.86-5.34-2.101-7.801-3.556-.75-.479-.148-1.395.602-1.425 2.699-.45 5.369.63 7.889 1.5l.151-2.655c-3.151-1.14-6.57-1.875-9.901-1.35-1.2.3-2.4.675-3.254 1.56-1.171 1.2-.961 3.36.389 4.32 2.236 1.755 5.176 2.011 7.621 3.36.96.39.555 1.68-.391 1.77-2.925.555-5.805-.721-8.325-2.1-.03 1.02-.06 2.01-.06 3 3.195 1.409 6.75 2.069 10.2 1.529 1.17-.225 2.37-.6 3.225-1.454 1.229-1.2 1.111-3.511-.33-4.5H18z"/></svg>` },
+            so360:  { name: '360 搜索', hotkey: 6, url: 'https://www.so.com/s?q=', char: '3', icon: `<svg viewBox="0 0 1176 1024" fill="currentColor" class="${svgClass}"><path d="M652.869375 32s-0.6525 0.6515625 0 0zM12 637.6634375a6.845625 6.845625 0 0 1 0 3.5859375 5.2153125 5.2153125 0 0 0 0-3.5859375z m866.11875 11.083125a74.6484375 74.6484375 0 0 1 74.6484375 74.323125 68.4553125 68.4553125 0 0 1-14.0165625 42.703125 462.8859375 462.8859375 0 1 0-798.9675-7.8234375 71.38875 71.38875 0 0 1-9.1275-34.8796875 73.996875 73.996875 0 0 1 137.56125-37.813125A313.5890625 313.5890625 0 1 1 854.9746875 529.765625a310.655625 310.655625 0 0 1-42.050625 156.795 75.9525 75.9525 0 0 1 65.1946875-37.8140625z"/><path d="M272.4553125 688.19a11.409375 11.409375 0 0 0-1.9565625-2.934375s0.6525 1.9565625 1.9565625 2.934375z"/><path d="M952.7671875 723.72125a74.3221875 74.3221875 0 0 0-138.8653125-36.5090625 312.9375 312.9375 0 0 1-541.12125 1.6303125 73.996875 73.996875 0 0 0-139.190625 34.87875 71.38875 71.38875 0 0 0 13.0378125 42.0515625 461.2565625 461.2565625 0 0 0 793.426875 0 72.6928125 72.6928125 0 0 0 12.7125-42.0515625z m-759.525 73.0190625a84.4275 84.4275 0 0 0 13.3659375 0 92.9034375 92.9034375 0 0 1-13.365 0z m-22.8178125-9.1275l4.89 2.934375z m9.7790625 5.5415625a58.35 58.35 0 0 0 11.409375 3.5859375z m101.053125-82.145625a84.1021875 84.1021875 0 0 1 0 12.7125 88.6659375 88.6659375 0 0 0-0.9778125-12.7125z m-2.934375-8.80125v3.91125a9.1275 9.1275 0 0 0-0.9778125-3.91125z m527.75625 8.80125a84.1021875 84.1021875 0 0 0 0 12.7125 43.3546875 43.3546875 0 0 1-0.9778125-12.7125z m2.281875-10.4315625a19.2328125 19.2328125 0 0 0 0 5.5415625 44.3325 44.3325 0 0 0-0.97875-5.540625z m83.775 96.163125a88.3396875 88.3396875 0 0 1-13.03875 0 76.6040625 76.6040625 0 0 0 12.0609375 0z m37.8140625-18.9065625l-8.1496875 6.845625a53.46 53.46 0 0 0 7.171875-6.845625z m-11.083125 9.1275l-8.1496875 4.8890625a35.8575 35.8575 0 0 1 7.171875-4.8890625z m-11.735625 5.540625a69.106875 69.106875 0 0 1-11.7346875 3.260625 37.1615625 37.1615625 0 0 0 10.756875-3.2596875z m26.40375-18.253125a69.106875 69.106875 0 0 0 6.5203125-7.824375 82.798125 82.798125 0 0 1-7.498125 6.519375z"/><path d="M811.62 707.7490625a74.3221875 74.3221875 0 1 0 75.9525-73.670625 74.3221875 74.3221875 0 0 0-75.9525 73.670625"/><path d="M803.7965625 723.72125a74.3221875 74.3221875 0 1 0 74.3221875-74.3221875 74.3221875 74.3221875 0 0 0-74.3221875 74.3221875M124.7878125 707.7490625a74.3221875 74.3221875 0 1 0 74.3221875-74.323125 74.3221875 74.3221875 0 0 0-74.3221875 74.323125"/><path d="M132.285 723.72125a74.3221875 74.3221875 0 1 0 74.323125-74.3221875 74.3221875 74.3221875 0 0 0-74.323125 74.3221875m833.8471875 194.281875a74.3221875 74.3221875 0 1 0 37.1615625-65.1946875 74.9746875 74.9746875 0 0 0-37.1615625 65.1946875"/></svg>` }
         };
 
         let ENGINES = { ...DEFAULT_ENGINES, ...JSON.parse(localStorage.getItem('dashboard_custom_engines') || '{}') };
+        
+        // 确保使用纯正矢量架构
+        Object.keys(ENGINES).forEach(id => {
+            const engine = ENGINES[id];
+            if (!engine.icon) {
+                const fallbackChar = engine.char || engine.name.charAt(0).toUpperCase();
+                engine.icon = `<span class="${svgClass} flex items-center justify-center font-bold text-[13px] md:text-[15px]">${fallbackChar}</span>`;
+            }
+        });
+
         let currentEngineId = localStorage.getItem('dashboard_engine') || 'bing'; 
         if (!ENGINES[currentEngineId]) currentEngineId = 'bing';
 
@@ -330,7 +358,7 @@
         function setEngine(id) {
             if (!ENGINES[id]) id = 'bing';
             currentEngineId = id;
-            engineIcon.textContent = ENGINES[id].char;
+            engineIcon.innerHTML = ENGINES[id].icon;
             if(isFocusMode) { searchInput.placeholder = `在 ${ENGINES[id].name} 中搜索...`; }
             localStorage.setItem('dashboard_engine', id);
             renderEngineList(); renderEnginePrefsGrid();
@@ -347,7 +375,7 @@
                 el.className = `w-full text-left px-5 py-2.5 text-xs md:text-[13px] flex justify-between items-center transition-colors ${isActive ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50'}`;
                 el.innerHTML = `
                     <div class="flex items-center gap-4">
-                        <span class="w-5 h-5 flex items-center justify-center font-bold text-gray-500">${ENGINES[id].char}</span> 
+                        <span class="w-5 h-5 flex items-center justify-center text-gray-500 transition-transform ${isActive ? 'scale-110' : ''}">${ENGINES[id].icon}</span> 
                         <span class="${isActive ? 'font-medium' : ''}">${ENGINES[id].name}</span>
                     </div>
                     <span class="text-xs text-gray-400 tracking-widest hidden md:inline">${ENGINES[id].hotkey ? 'Alt+'+ENGINES[id].hotkey : ''}</span>
@@ -377,7 +405,7 @@
                     ? "relative bg-[#64c81a] rounded-xl p-3 md:p-3.5 flex items-center cursor-pointer shadow-md transition-transform hover:scale-[1.02]"
                     : "bg-white dark:bg-gray-700 border border-gray-100 dark:border-gray-600 rounded-xl p-3 md:p-3.5 flex items-center cursor-pointer shadow-sm transition-all hover:shadow-md hover:border-gray-200 hover:scale-[1.02]";
                 card.innerHTML = `
-                    <div class="w-8 h-8 flex items-center justify-center font-bold text-lg md:text-xl ${isActive ? 'text-white' : 'text-gray-400'} mr-3 flex-shrink-0">${ENGINES[id].char}</div>
+                    <div class="w-8 h-8 flex items-center justify-center ${isActive ? 'text-white scale-110' : 'text-gray-400'} mr-3 flex-shrink-0 transition-transform">${ENGINES[id].icon}</div>
                     <div class="flex-1 overflow-hidden pr-6">
                         <h3 class="${isActive ? 'text-white' : 'text-gray-900 dark:text-white'} font-bold text-[15px] md:text-base leading-tight mb-1">${ENGINES[id].name}</h3>
                         <p class="${isActive ? 'text-green-100' : 'text-gray-400'} text-[10px] md:text-[11px] truncate w-full">${ENGINES[id].url}</p>
@@ -506,7 +534,7 @@
             let hist = getHistory();
             hist = hist.filter(h => h !== query);
             hist.unshift(query);
-            hist = hist.slice(0, 6);
+            hist = hist.slice(0, 5);
             localStorage.setItem('dashboard_history', JSON.stringify(hist));
         }
         function clearHistory() {
@@ -574,15 +602,26 @@
         }
 
         function doSearch(query) {
-            if (!query) return;
-            saveHistory(query);
-            window.open(ENGINES[currentEngineId].url + encodeURIComponent(query), '_blank');
+            if (!query) {
+                try {
+                    const engineUrl = ENGINES[currentEngineId].url;
+                    const urlObj = new URL(engineUrl);
+                    window.open(urlObj.origin, '_blank');
+                } catch(e) {
+                    window.open(ENGINES[currentEngineId].url, '_blank');
+                }
+            } else {
+                saveHistory(query);
+                window.open(ENGINES[currentEngineId].url + encodeURIComponent(query), '_blank');
+            }
+            
+            searchInput.value = '';
+            renderSuggestions();
         }
 
         searchForm.addEventListener('submit', (e) => {
             e.preventDefault();
             const query = searchInput.value.trim();
-            if (!query) return;
             doSearch(query);
         });
 
@@ -716,7 +755,6 @@
         let dragMouseY = 0;
 
         settingsLinksList.addEventListener('pointerdown', (e) => {
-            // 物理防误触拦截
             if (e.button !== undefined && e.button !== 0) return; 
             if (e.target.closest('button')) return; 
             const li = e.target.closest('.sortable-item');
@@ -725,26 +763,21 @@
             dragEl = li;
             dragStartIndex = parseInt(li.dataset.index);
 
-            // 占位符渲染，触发列表重排缓冲
             placeholder = document.createElement('li');
             placeholder.className = 'sortable-placeholder';
 
-            // DOM 深度克隆，规避原节点样式污染
             cloneEl = li.cloneNode(true);
             const rect = li.getBoundingClientRect();
             cloneEl.className = li.className + ' drag-clone';
             
-            // 将长条形克隆体强行约束为原始长宽
             cloneEl.style.width = rect.width + 'px';
             cloneEl.style.height = rect.height + 'px';
             
-            // 初始化鼠标绝对坐标系捕捉点
             dragMouseX = e.clientX;
             dragMouseY = e.clientY;
             cloneEl.style.left = e.clientX + 'px';
             cloneEl.style.top = e.clientY + 'px';
             
-            // 精准求导初始偏移差值，并用 transform 补偿归位，杜绝生成时的闪烁
             const offsetX = e.clientX - rect.left;
             const offsetY = e.clientY - rect.top;
             cloneEl.style.transform = `translate(-${offsetX}px, -${offsetY}px)`;
@@ -755,11 +788,10 @@
             li.style.display = 'none';
             li.parentNode.insertBefore(placeholder, li);
 
-            cloneEl.offsetHeight; // 强制浏览器刷新渲染流水线
+            cloneEl.offsetHeight; 
 
             requestAnimationFrame(() => {
                 cloneEl.classList.add('morph-circle');
-                // 通过基于像素(px)的过渡逻辑取代百分比(%)，确保细胞收缩时圆心直达鼠标
                 cloneEl.style.transform = 'translate(-22px, -22px)';
             });
 
@@ -776,11 +808,9 @@
             dragMouseX = e.clientX;
             dragMouseY = e.clientY;
             
-            // 纯绝对坐标系推进
             cloneEl.style.left = e.clientX + 'px';
             cloneEl.style.top = e.clientY + 'px';
 
-            // 直接进行碰撞几何检测，pointer-events: none 会自动让其穿透克隆体
             const target = document.elementFromPoint(e.clientX, e.clientY);
 
             if (!target) return;
@@ -793,7 +823,6 @@
                     settingsLinksList.insertBefore(placeholder, targetLi);
                 }
             } else {
-                // 边界兜底捕捉：解决鼠标滑动脱离具体元素，或处于底部空白 padding 区域时无法识别插入点的问题
                 const listRect = settingsLinksList.getBoundingClientRect();
                 if (e.clientY > listRect.bottom - 30) {
                     settingsLinksList.appendChild(placeholder);
@@ -818,7 +847,6 @@
             cloneEl.style.width = pRect.width + 'px';
             cloneEl.style.height = pRect.height + 'px';
             
-            // 逆推终点矩阵向量，指令克隆体弹回占位符
             const curX = e.clientX || dragMouseX;
             const curY = e.clientY || dragMouseY;
             const destX = pRect.left - curX;
@@ -833,7 +861,6 @@
 
                 if (newIndex !== -1 && newIndex !== dragStartIndex) {
                     const item = currentLinksBuffer.splice(dragStartIndex, 1)[0];
-                    // 核心修复：剔除错误的 -1 偏移量算法。在排除了隐藏节点后，newIndex 的推导是绝对正确的映射。
                     currentLinksBuffer.splice(newIndex, 0, item);
                     hasUnsavedChanges = true;
                     renderSettingsList(); 
