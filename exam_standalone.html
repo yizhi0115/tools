@@ -1,0 +1,757 @@
+<html lang="zh-CN"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>考試模擬器</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: "Microsoft YaHei", "PingFang SC", sans-serif; background: #f0f2f5; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+/* === 加載頁 === */
+#loadPage { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; }
+#loadPage .card { background: #fff; border-radius: 16px; padding: 40px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); text-align: center; max-width: 500px; width: 90%; }
+#loadPage .dropzone { border: 3px dashed #c0c0c0; border-radius: 12px; padding: 40px 30px; cursor: pointer; transition: all 0.2s; margin-bottom: 20px; }
+#loadPage .dropzone:hover, #loadPage .dropzone.dragover { border-color: #1a73e8; background: #f0f6ff; }
+#loadPage .dropzone p { margin: 4px 0; }
+#loadPage .dropzone .icon { font-size: 48px; margin-bottom: 10px; }
+#loadPage .file-info { margin: 15px 0; padding: 12px; background: #e8f5e9; border-radius: 8px; display: none; }
+#loadPage .file-info.show { display: block; }
+#loadPage .file-info .fi-title { font-weight: 600; margin-bottom: 4px; }
+#loadPage .file-info .fi-detail { font-size: 13px; color: #555; }
+#loadPage .shuffle-row { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 15px 0; font-size: 14px; }
+#loadPage .shuffle-row input[type=checkbox] { width: 18px; height: 18px; accent-color: #1a73e8; }
+#loadPage .btn-start { display: none; margin: 10px auto 0; padding: 14px 60px; font-size: 18px; font-weight: 700; border: none; border-radius: 8px; background: #1a73e8; color: #fff; cursor: pointer; transition: all 0.15s; }
+#loadPage .btn-start:hover { background: #1557b0; transform: scale(1.03); }
+#loadPage .btn-start.show { display: inline-block; }
+
+/* === 頂部狀態欄 === */
+#topBar { background: linear-gradient(135deg, #1a73e8, #1557b0); color: #fff; padding: 0 20px; height: 50px; display: none; align-items: center; justify-content: space-between; flex-shrink: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.15); z-index: 10; }
+#topBar .title { font-size: 16px; font-weight: 600; max-width: 40%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#topBar .center { display: flex; align-items: center; gap: 12px; font-size: 13px; }
+#topBar .timer { background: rgba(255,255,255,0.15); padding: 4px 12px; border-radius: 4px; font-variant-numeric: tabular-nums; }
+#topBar .btn-export-html { background: rgba(255,255,255,0.2); color: #fff; border: 1px solid rgba(255,255,255,0.3); padding: 5px 12px; border-radius: 4px; font-size: 12px; cursor: pointer; }
+#topBar .btn-export-html:hover { background: rgba(255,255,255,0.3); }
+#topBar .btn-submit { background: #ff6b35; color: #fff; border: none; padding: 7px 20px; border-radius: 4px; font-size: 14px; cursor: pointer; font-weight: 600; }
+#topBar .btn-submit:hover { background: #e85d2a; }
+
+/* === 主要內容 80/20 === */
+#mainContent { display: none; flex: 1; min-height: 0; }
+
+#questionPanel { flex: 4; background: #fff; margin: 10px 5px 10px 10px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); display: flex; flex-direction: column; overflow: hidden; }
+#questionPanel .q-header { padding: 12px 20px 8px; border-bottom: 1px solid #eee; flex-shrink: 0; }
+#questionPanel .q-header .q-type { display: inline-block; background: #e8f0fe; color: #1a73e8; padding: 2px 10px; border-radius: 3px; font-size: 12px; margin-right: 10px; }
+#questionPanel .q-header .q-num { font-size: 14px; color: #666; }
+#questionPanel .q-body { flex: 1; overflow-y: auto; padding: 20px 24px; }
+#questionPanel .q-stem { font-size: 16px; line-height: 1.8; color: #222; margin-bottom: 20px; }
+.blank { display: inline-block; border-bottom: 2px solid #1a73e8; min-width: 80px; margin: 0 4px; }
+
+.option-list { list-style: none; }
+.opt-item { display: flex; align-items: flex-start; padding: 10px 14px; margin-bottom: 8px; border: 2px solid #e8e8e8; border-radius: 6px; cursor: pointer; transition: all 0.15s; font-size: 15px; }
+.opt-item:hover { border-color: #1a73e8; background: #f8faff; }
+.opt-item.selected { border-color: #1a73e8; background: #e8f0fe; color: #1a73e8; font-weight: 500; }
+.opt-letter { width: 26px; height: 26px; border-radius: 50%; background: #f0f0f0; display: flex; align-items: center; justify-content: center; margin-right: 10px; flex-shrink: 0; font-size: 13px; font-weight: 600; }
+.opt-item.selected .opt-letter { background: #1a73e8; color: #fff; }
+
+.fill-input { width: 100%; padding: 10px 14px; border: 2px solid #e8e8e8; border-radius: 6px; font-size: 15px; outline: none; }
+.fill-input:focus { border-color: #1a73e8; }
+
+.judge-btns { display: flex; gap: 16px; }
+.judge-btn { flex: 1; padding: 14px; border: 2px solid #e8e8e8; border-radius: 6px; text-align: center; font-size: 16px; cursor: pointer; }
+.judge-btn:hover { border-color: #1a73e8; }
+.judge-btn.selected { border-color: #1a73e8; background: #e8f0fe; }
+
+.match-bank { background: #f8f9fa; padding: 12px; border-radius: 6px; margin-bottom: 15px; display: flex; flex-wrap: wrap; gap: 6px; }
+.match-tag { background: #e8f0fe; color: #1a73e8; padding: 3px 8px; border-radius: 3px; font-size: 12px; }
+
+.q-nav { display: flex; justify-content: space-between; padding: 12px 20px; border-top: 1px solid #eee; flex-shrink: 0; }
+.q-nav button { padding: 8px 20px; border: 1px solid #d0d0d0; background: #fff; border-radius: 4px; cursor: pointer; font-size: 14px; }
+.q-nav button:hover { background: #f5f5f5; }
+.q-nav button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* 右側題號 */
+#sidebarPanel { flex: 1; background: #fff; margin: 10px 10px 10px 5px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); display: flex; flex-direction: column; overflow: hidden; }
+#sidebarPanel .side-header { padding: 12px 15px; border-bottom: 1px solid #eee; flex-shrink: 0; font-size: 14px; font-weight: 600; color: #333; }
+#sidebarPanel .side-summary { padding: 6px 15px; font-size: 12px; color: #999; border-bottom: 1px solid #f0f0f0; flex-shrink: 0; }
+#sidebarPanel .side-scroll { flex: 1; overflow-y: auto; padding: 10px 15px; }
+.side-group { margin-bottom: 12px; }
+.side-group .sg-title { font-size: 12px; color: #888; margin-bottom: 6px; }
+.num-grid { display: flex; flex-wrap: wrap; gap: 5px; }
+.num-btn { width: 32px; height: 32px; border: 1px solid #d0d0d0; background: #fff; border-radius: 4px; font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.num-btn:hover { border-color: #1a73e8; background: #f0f6ff; }
+.num-btn.current { border-color: #1a73e8; background: #1a73e8; color: #fff; font-weight: 600; }
+.num-btn.answered { background: #e8f5e9; border-color: #81c784; color: #2e7d32; }
+.num-btn.answered.current { background: #1a73e8; color: #fff; border-color: #1a73e8; }
+
+/* 提交確認 */
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 100; align-items: center; justify-content: center; }
+.modal-overlay.show { display: flex; }
+.modal-box { background: #fff; border-radius: 12px; padding: 30px; text-align: center; min-width: 320px; box-shadow: 0 8px 30px rgba(0,0,0,0.2); }
+.modal-box h3 { margin-bottom: 10px; }
+.modal-box .warn { color: #ff6b35; font-size: 13px; margin-bottom: 18px; }
+.modal-box button { padding: 8px 24px; border: none; border-radius: 4px; font-size: 14px; cursor: pointer; margin: 0 6px; }
+.modal-box .btn-confirm { background: #1a73e8; color: #fff; }
+.modal-box .btn-cancel { background: #f0f0f0; color: #666; }
+
+/* 結果頁 */
+#resultPage { display: none; flex-direction: column; align-items: center; padding: 40px 20px; height: 100vh; overflow-y: auto; }
+#resultPage.show { display: flex; }
+.score-circle { width: 120px; height: 120px; border-radius: 50%; background: linear-gradient(135deg, #1a73e8, #4fc3f7); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 36px; font-weight: 700; margin-bottom: 10px; }
+.result-actions { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin: 20px 0; }
+.result-actions button { padding: 10px 24px; border: none; border-radius: 6px; font-size: 14px; cursor: pointer; font-weight: 600; }
+.btn-retry { background: #1a73e8; color: #fff; }
+.btn-wrong { background: #ff6b35; color: #fff; }
+.btn-reload { background: #f0f0f0; color: #333; }
+.wrong-list { width: 100%; max-width: 700px; margin-top: 20px; text-align: left; }
+.wrong-list h3 { margin-bottom: 10px; }
+.wrong-item { background: #fff; border-radius: 8px; padding: 15px; margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); border-left: 4px solid #f44336; }
+.wrong-item .wi-q { font-weight: 500; margin-bottom: 6px; }
+.wrong-item .wi-info { font-size: 13px; color: #666; }
+.wrong-item .wi-correct { color: #2e7d32; }
+.wrong-item .wi-user { color: #f44336; }
+.stat-table { margin: 10px 0 20px; border-collapse: collapse; width: 100%; max-width: 500px; }
+.stat-table td { padding: 6px 15px; border-bottom: 1px solid #eee; }
+.stat-table td:last-child { text-align: right; font-weight: 600; }
+</style>
+<script>window.__PRESET_DATA__ = {"title":"全部題目","total":120,"type_counts":{"single":80,"matching":40},"type_order":["single","multiple","fill","judge","matching"],"type_names":{"single":"單選題","multiple":"多選題","fill":"填空題","judge":"判斷題","matching":"匹配題"},"questions":[{"type":"single","index":1,"question":"You should spend some time ______ about how you can best deal with these issues.","options":["A. to think","B. think","C. thought","D. thinking"],"answer":"D","group_name":"單選題"},{"type":"single","index":2,"question":"______ to share so much information with friends as we can today.","options":["A. Never have been able we","C. Never have we been able","B. Never we have been able","D. Never have been we able"],"answer":"C","group_name":"單選題"},{"type":"single","index":3,"question":"At this point， officers have not found any evidence ______ a crime occurred.","options":["A. which","B. that","C. what","D. when"],"answer":"B","group_name":"單選題"},{"type":"single","index":4,"question":"John said he wasn’t hunting ______ a job because there weren’t any available in his area.","options":["A. with","B. on","C. in","D. for"],"answer":"D","group_name":"單選題"},{"type":"single","index":5,"question":"______ you have received a written job offer from the company， it is not final.","options":["A. If","B. Because","C. Unless","D. Once"],"answer":"C","group_name":"單選題"},{"type":"single","index":6,"question":"______ you graduated with lots of internship experience， don’t expect to have your dream job right after graduation.","options":["A. Ever since","B. Just because","C. Even if","D. As if"],"answer":"C","group_name":"單選題"},{"type":"single","index":7,"question":"Changing jobs is not easy， particularly if the circumstances in ______ you’re leaving are less than ideal.","options":["A. which","B. what","C. that","D. where"],"answer":"A","group_name":"單選題"},{"type":"single","index":8,"question":"As ______ earlier， hiring managers are busy because they have many other responsibilities.","options":["A. mentioning","B. to mention","C. mention","D. mentioned"],"answer":"D","group_name":"單選題"},{"type":"single","index":9,"question":"If you ______ them the deadline， they could have completed the project sooner.","options":["A. had told","B. told","C. tell","D. will tell"],"answer":"A","group_name":"單選題"},{"type":"single","index":10,"question":"No matter ______ good you are， there is no substitute for preparing well for your interview.","options":["A. how","B. where","C. what","D. when"],"answer":"A","group_name":"單選題"},{"type":"single","index":11,"question":"______ as a tourist city， Hangzhou is famous for its West Lake.","options":["A. Knowing","B. Known","C. Be known","D. To know"],"answer":"B","group_name":"單選題"},{"type":"single","index":12,"question":"No matter ______ angry the customer might be， you need to remain calm and listen without interrupting.","options":["A. what","B. when","C. how","D. where"],"answer":"C","group_name":"單選題"},{"type":"single","index":13,"question":"Have you read the book from ______ this well-known saying is taken？","options":["A. that","B. what","C. which","D. when"],"answer":"C","group_name":"單選題"},{"type":"single","index":14,"question":"______ employees may have areas they disagree on, there are often still areas of agreement.","options":["A. Ever since","B. Now that","C. As if","D. Even though"],"answer":"D","group_name":"單選題"},{"type":"single","index":15,"question":"The more communication you have between leaders and workers， ______ your workers feel.","options":["A. best supported","C. better supported","B. the more supported","D. well supported"],"answer":"B","group_name":"單選題"},{"type":"single","index":16,"question":"Employees don’t have to be best friends； they just need to get the job ______ .","options":["A. done","B. do","C. to do","D. doing"],"answer":"A","group_name":"單選題"},{"type":"single","index":17,"question":"______ you are one of the lucky few who works in a high-demand career， finding a new job can be challenging.","options":["A. Unless","B. As","C. If","D. Since"],"answer":"A","group_name":"單選題"},{"type":"single","index":18,"question":"We wouldn’t have driven all this way if we ______ the museum was closed.","options":["A. knew","B. know","C. had known","D. will know"],"answer":"C","group_name":"單選題"},{"type":"single","index":19,"question":"Unfortunately, some situations won’t work themselves out ______ their own.","options":["A. with","B. on","C. in","D. about"],"answer":"B","group_name":"單選題"},{"type":"single","index":20,"question":"______ you need now is a budget to control your spending.","options":["A. That","B. Which","C. Where","D. What"],"answer":"D","group_name":"單選題"},{"type":"single","index":21,"question":"Many of the representatives disagree with the decision ______ at yesterday’s conference.","options":["A. making","B. made","C. to make","D. be made"],"answer":"B","group_name":"單選題"},{"type":"single","index":22,"question":"If I ______ the advertisement last week， I would have applied for the job.","options":["A. saw","B. had seen","C. have seen","D. see"],"answer":"B","group_name":"單選題"},{"type":"single","index":23,"question":"______ I return these books to the library today， I’ll have to pay a fee.","options":["A. Because","B. As","C. Unless","D. While"],"answer":"C","group_name":"單選題"},{"type":"single","index":24,"question":"It was at the Olympic Games St. Louis 1904 ______ basketball was introduced in the Olympics.","options":["A. that","B. which","C. where","D. what"],"answer":"A","group_name":"單選題"},{"type":"single","index":25,"question":"By the time I got to the office they ______ the negotiation with the clients.","options":["A. will complete","B. had completed","C. have completed","D. complete"],"answer":"B","group_name":"單選題"},{"type":"single","index":26,"question":"We have reached the agreement that the job will be given to ______ asks for it first.","options":["A. whoever","B. whatever","C. whenever","D. wherever"],"answer":"A","group_name":"單選題"},{"type":"single","index":27,"question":"Did they give you the information ______ which the report was based？","options":["A. over","B. for","C. with","D. on"],"answer":"D","group_name":"單選題"},{"type":"single","index":28,"question":"Many members felt upset because they were not informed ______ the deal.","options":["A. of","B. in","C. with","D. over"],"answer":"A","group_name":"單選題"},{"type":"single","index":29,"question":"Neither the driver ______ the passengers were hurt in the accident yesterday.","options":["A. and","B. or","C. either","D. nor"],"answer":"D","group_name":"單選題"},{"type":"single","index":30,"question":"______ a machine so efficient and accurate like this one.","options":["A. Never we have seen","C. Never have we seen","B. Have we never seen","D. Never have seen we"],"answer":"C","group_name":"單選題"},{"type":"single","index":31,"question":"As a small business， you can move quickly and take advantage ______ opportunities as they arise.","options":["A. with","B. of","C. on","D. for"],"answer":"B","group_name":"單選題"},{"type":"single","index":32,"question":"______ as “Heaven on Earth”， Hangzhou attracts more than 20 million tourists every year.","options":["A. Regarded","B. Regard","C. To be regarded","D. Regarding"],"answer":"A","group_name":"單選題"},{"type":"single","index":33,"question":"______ the definition of a smart city is still developing， its major feature is the use of information and communication technologies.","options":["A. Unless","B. Since","C. Although","D. Until"],"answer":"C","group_name":"單選題"},{"type":"single","index":34,"question":"Once you have an ideal position to get， you are required to have experience ______ that position.","options":["A. with","B. for","C. over","D. in"],"answer":"D","group_name":"單選題"},{"type":"single","index":35,"question":"______ it comes to computers， most of us know how to use them but don’t know how they work.","options":["A. As","B. When","C. Unless","D. Because"],"answer":"B","group_name":"單選題"},{"type":"single","index":36,"question":"When we arrived there， the manager asked John to show us the rooms ______ were available.","options":["A. where","B. when","C. who","D. that"],"answer":"D","group_name":"單選題"},{"type":"single","index":37,"question":"No sooner ______ home than I received a call from my supervisor.","options":["A. had I arrived","B. I arrived","C. I had arrived","D. will I arrive"],"answer":"A","group_name":"單選題"},{"type":"single","index":38,"question":"We ______ in the same company ever since we graduated from college six years ago.","options":["A. have worked","B. worked","C. work","D. were working"],"answer":"A","group_name":"單選題"},{"type":"single","index":39,"question":"We were all surprised at the news ______ he had resigned from his position.","options":["A. which","B. that","C. whom","D. when"],"answer":"B","group_name":"單選題"},{"type":"single","index":40,"question":"If you ______ the objective， I could have completed the assignment sooner.","options":["A. have explained","B. had explained","C. explained","D. explain"],"answer":"B","group_name":"單選題"},{"type":"single","index":41,"question":"n. 宇航员，航天员","options":["A. astronout","B. astronaut"],"answer":"B","group_name":"选择正确单词"},{"type":"single","index":42,"question":"n.导师，指导者","options":["A. mentor","B. menter"],"answer":"A","group_name":"选择正确单词"},{"type":"single","index":43,"question":"n. 看法，评估","options":["A. assessment","B. assesment"],"answer":"A","group_name":"选择正确单词"},{"type":"single","index":44,"question":"a.人口的，人口学的","options":["A. demografic","B. demographic"],"answer":"B","group_name":"选择正确单词"},{"type":"single","index":45,"question":"n. 错误，失策","options":["A. misstep","B. mistep"],"answer":"A","group_name":"选择正确单词"},{"type":"single","index":46,"question":"a.有望的；可能的；预期的","options":["A. prosective","B. prospective"],"answer":"B","group_name":"选择正确单词"},{"type":"single","index":47,"question":"n.会计人员；会计师","options":["A. acountant","B. accountant"],"answer":"B","group_name":"选择正确单词"},{"type":"single","index":48,"question":"n.监督；管理；指导","options":["A. supervision","B. supervison"],"answer":"A","group_name":"选择正确单词"},{"type":"single","index":49,"question":"a. 致命的；灾难性的","options":["A. fatel","B. fatal"],"answer":"B","group_name":"选择正确单词"},{"type":"single","index":50,"question":"n. (人、动植物细胞的)组织","options":["A. tissue","B. tisue"],"answer":"A","group_name":"选择正确单词"},{"type":"single","index":51,"question":"ad. 大约；大概","options":["A. approximately","B. approxiately"],"answer":"A","group_name":"选择正确单词"},{"type":"single","index":52,"question":"a.连续的；相继的","options":["A. successive","B. sucessive"],"answer":"A","group_name":"选择正确单词"},{"type":"single","index":53,"question":"a.(外科)手术用的","options":["A. surgicle","B. surgical"],"answer":"B","group_name":"选择正确单词"},{"type":"single","index":54,"question":"n.外科医生","options":["A. surgeon","B. surgen"],"answer":"A","group_name":"选择正确单词"},{"type":"single","index":55,"question":"vt.使麻痹，使瘫痪","options":["A. paralyze","B. paralize"],"answer":"A","group_name":"选择正确单词"},{"type":"single","index":56,"question":"n.处方，药方","options":["A. prescription","B. perscription"],"answer":"A","group_name":"选择正确单词"},{"type":"single","index":57,"question":"n.主动性，积极性；倡议，新方案","options":["A. initiative","B. initative"],"answer":"A","group_name":"选择正确单词"},{"type":"single","index":58,"question":"n.同事","options":["A. collegue","B. colleague"],"answer":"B","group_name":"选择正确单词"},{"type":"single","index":59,"question":"n.上级，长官","options":["A. superior","B. superiour"],"answer":"A","group_name":"选择正确单词"},{"type":"single","index":60,"question":"vt.容纳；为某人提供住宿；考虑到，顾及","options":["A. accomodate","B. accommodate"],"answer":"B","group_name":"选择正确单词"},{"type":"single","index":61,"question":"a.人工的；人造；假的","options":["A. artificial","B. artifitial"],"answer":"A","group_name":"选择正确单词"},{"type":"single","index":62,"question":"n.创新，革新；新方法","options":["A. inovation","B. innovation"],"answer":"B","group_name":"选择正确单词"},{"type":"single","index":63,"question":"vt.使合并，成为一体","options":["A. integrate","B. intergrate"],"answer":"A","group_name":"选择正确单词"},{"type":"single","index":64,"question":"a.(动作)敏捷的，灵活的","options":["A. agile","B. agil"],"answer":"A","group_name":"选择正确单词"},{"type":"single","index":65,"question":"v.修改，改变","options":["A. alter","B. altar"],"answer":"A","group_name":"选择正确单词"},{"type":"single","index":66,"question":"n.批评者","options":["A. critick","B. critic"],"answer":"B","group_name":"选择正确单词"},{"type":"single","index":67,"question":"n.杀虫剂","options":["A. pesticide","B. pesticied"],"answer":"A","group_name":"选择正确单词"},{"type":"single","index":68,"question":"n.营养品，滋养物","options":["A. nutrent","B. nutrient"],"answer":"B","group_name":"选择正确单词"},{"type":"single","index":69,"question":"a.大量的，充足的","options":["A. abundant","B. abundent"],"answer":"A","group_name":"选择正确单词"},{"type":"single","index":70,"question":"vi.减少","options":["A. diminish","B. deminish"],"answer":"A","group_name":"选择正确单词"},{"type":"single","index":71,"question":"n.化石","options":["A. fosil","B. fossil"],"answer":"B","group_name":"选择正确单词"},{"type":"single","index":72,"question":"n. 燃料，燃烧剂","options":["A. fuel","B. fule"],"answer":"A","group_name":"选择正确单词"},{"type":"single","index":73,"question":"n.(机构的)部门","options":["A. division","B. divition"],"answer":"A","group_name":"选择正确单词"},{"type":"single","index":74,"question":"n.(饭后)甜点，甜食","options":["A. desert","B. dessert"],"answer":"B","group_name":"选择正确单词"},{"type":"single","index":75,"question":"a.怀疑的","options":["A. skeptical","B. skepical"],"answer":"A","group_name":"选择正确单词"},{"type":"single","index":76,"question":"a.单独的；分开的 v. 分离，分开","options":["A. seperate","B. separate"],"answer":"B","group_name":"选择正确单词"},{"type":"single","index":77,"question":"vt.主张；声称；认为","options":["A. contend","B. contand"],"answer":"A","group_name":"选择正确单词"},{"type":"single","index":78,"question":"n.询问","options":["A. inquery","B. inquiry"],"answer":"B","group_name":"选择正确单词"},{"type":"single","index":79,"question":"n.墓地；公墓","options":["A. cemetery","B. cemetary"],"answer":"A","group_name":"选择正确单词"},{"type":"single","index":80,"question":"n.布道，讲道","options":["A. sermen","B. sermon"],"answer":"B","group_name":"选择正确单词"},{"type":"matching","index":1,"question":"Although this job does not offer a good salary, it offers great career ______ .","options":[],"answer":"H","match_options":["A. arguments","B. occupations","C. precise","D. qualifications","E. resides","F. transplanted","G. lofty","H. prospects","I. accommodate","J. converted","K. financial","L. perform","M. abundant","N. prevail","O. integration","P. compromise","Q. executive","R. supervise","S. varieties","T. solution"],"group_name":"匹配題"},{"type":"matching","index":2,"question":"A person with higher ______ can get a better paid job at the beginning of their career.","options":[],"answer":"D","match_options":["A. arguments","B. occupations","C. precise","D. qualifications","E. resides","F. transplanted","G. lofty","H. prospects","I. accommodate","J. converted","K. financial","L. perform","M. abundant","N. prevail","O. integration","P. compromise","Q. executive","R. supervise","S. varieties","T. solution"],"group_name":"匹配題"},{"type":"matching","index":3,"question":"This career path is difficult but holds great ______ potential for me.","options":[],"answer":"K","match_options":["A. arguments","B. occupations","C. precise","D. qualifications","E. resides","F. transplanted","G. lofty","H. prospects","I. accommodate","J. converted","K. financial","L. perform","M. abundant","N. prevail","O. integration","P. compromise","Q. executive","R. supervise","S. varieties","T. solution"],"group_name":"匹配題"},{"type":"matching","index":4,"question":"The boy has set himself the ______ goal of being a rocket scientist when he grows up.","options":[],"answer":"G","match_options":["A. arguments","B. occupations","C. precise","D. qualifications","E. resides","F. transplanted","G. lofty","H. prospects","I. accommodate","J. converted","K. financial","L. perform","M. abundant","N. prevail","O. integration","P. compromise","Q. executive","R. supervise","S. varieties","T. solution"],"group_name":"匹配題"},{"type":"matching","index":5,"question":"He is thinking about changing ______ and becoming a police officer.","options":[],"answer":"B","match_options":["A. arguments","B. occupations","C. precise","D. qualifications","E. resides","F. transplanted","G. lofty","H. prospects","I. accommodate","J. converted","K. financial","L. perform","M. abundant","N. prevail","O. integration","P. compromise","Q. executive","R. supervise","S. varieties","T. solution"],"group_name":"匹配題"},{"type":"matching","index":6,"question":"Surgeons have successfully ______ a heart into a five-year-old boy.","options":[],"answer":"F","match_options":["A. arguments","B. occupations","C. precise","D. qualifications","E. resides","F. transplanted","G. lofty","H. prospects","I. accommodate","J. converted","K. financial","L. perform","M. abundant","N. prevail","O. integration","P. compromise","Q. executive","R. supervise","S. varieties","T. solution"],"group_name":"匹配題"},{"type":"matching","index":7,"question":"“She’s a lot older than you, isn’t she?” “Fifteen years, to be ______ .”","options":[],"answer":"C","match_options":["A. arguments","B. occupations","C. precise","D. qualifications","E. resides","F. transplanted","G. lofty","H. prospects","I. accommodate","J. converted","K. financial","L. perform","M. abundant","N. prevail","O. integration","P. compromise","Q. executive","R. supervise","S. varieties","T. solution"],"group_name":"匹配題"},{"type":"matching","index":8,"question":"A computer can ______ many tasks such as searching information and word processing.","options":[],"answer":"L","match_options":["A. arguments","B. occupations","C. precise","D. qualifications","E. resides","F. transplanted","G. lofty","H. prospects","I. accommodate","J. converted","K. financial","L. perform","M. abundant","N. prevail","O. integration","P. compromise","Q. executive","R. supervise","S. varieties","T. solution"],"group_name":"匹配題"},{"type":"matching","index":9,"question":"Since you are the only manager in this workshop, who will ______ the workers when you are away?","options":[],"answer":"R","match_options":["A. arguments","B. occupations","C. precise","D. qualifications","E. resides","F. transplanted","G. lofty","H. prospects","I. accommodate","J. converted","K. financial","L. perform","M. abundant","N. prevail","O. integration","P. compromise","Q. executive","R. supervise","S. varieties","T. solution"],"group_name":"匹配題"},{"type":"matching","index":10,"question":"I am confident that, in the end, justice and common sense will ______ .","options":[],"answer":"N","match_options":["A. arguments","B. occupations","C. precise","D. qualifications","E. resides","F. transplanted","G. lofty","H. prospects","I. accommodate","J. converted","K. financial","L. perform","M. abundant","N. prevail","O. integration","P. compromise","Q. executive","R. supervise","S. varieties","T. solution"],"group_name":"匹配題"},{"type":"matching","index":11,"question":"The runway of this airport is undergoing expansion to ______ large planes.","options":[],"answer":"I","match_options":["A. arguments","B. occupations","C. precise","D. qualifications","E. resides","F. transplanted","G. lofty","H. prospects","I. accommodate","J. converted","K. financial","L. perform","M. abundant","N. prevail","O. integration","P. compromise","Q. executive","R. supervise","S. varieties","T. solution"],"group_name":"匹配題"},{"type":"matching","index":12,"question":"His music is a(n) ______ of tradition and new technology.","options":[],"answer":"O","match_options":["A. arguments","B. occupations","C. precise","D. qualifications","E. resides","F. transplanted","G. lofty","H. prospects","I. accommodate","J. converted","K. financial","L. perform","M. abundant","N. prevail","O. integration","P. compromise","Q. executive","R. supervise","S. varieties","T. solution"],"group_name":"匹配題"},{"type":"matching","index":13,"question":"I know our competitor offers a lower price, but we can’t ______ quality and service for low price.","options":[],"answer":"P","match_options":["A. arguments","B. occupations","C. precise","D. qualifications","E. resides","F. transplanted","G. lofty","H. prospects","I. accommodate","J. converted","K. financial","L. perform","M. abundant","N. prevail","O. integration","P. compromise","Q. executive","R. supervise","S. varieties","T. solution"],"group_name":"匹配題"},{"type":"matching","index":14,"question":"She grows eight ______ of roses in her small backyard garden..","options":[],"answer":"S","match_options":["A. arguments","B. occupations","C. precise","D. qualifications","E. resides","F. transplanted","G. lofty","H. prospects","I. accommodate","J. converted","K. financial","L. perform","M. abundant","N. prevail","O. integration","P. compromise","Q. executive","R. supervise","S. varieties","T. solution"],"group_name":"匹配題"},{"type":"matching","index":15,"question":"Now that we’ve heard all the ______ for and against the case, let’s make a decision.","options":[],"answer":"A","match_options":["A. arguments","B. occupations","C. precise","D. qualifications","E. resides","F. transplanted","G. lofty","H. prospects","I. accommodate","J. converted","K. financial","L. perform","M. abundant","N. prevail","O. integration","P. compromise","Q. executive","R. supervise","S. varieties","T. solution"],"group_name":"匹配題"},{"type":"matching","index":16,"question":"There is ______ evidence that cars have a harmful effect on the environment.","options":[],"answer":"M","match_options":["A. arguments","B. occupations","C. precise","D. qualifications","E. resides","F. transplanted","G. lofty","H. prospects","I. accommodate","J. converted","K. financial","L. perform","M. abundant","N. prevail","O. integration","P. compromise","Q. executive","R. supervise","S. varieties","T. solution"],"group_name":"匹配題"},{"type":"matching","index":17,"question":"The office building that I’ve worked in for twenty years has been ______ into a hotel.","options":[],"answer":"J","match_options":["A. arguments","B. occupations","C. precise","D. qualifications","E. resides","F. transplanted","G. lofty","H. prospects","I. accommodate","J. converted","K. financial","L. perform","M. abundant","N. prevail","O. integration","P. compromise","Q. executive","R. supervise","S. varieties","T. solution"],"group_name":"匹配題"},{"type":"matching","index":18,"question":"We bought another car; it was the ______ to all our problems.","options":[],"answer":"T","match_options":["A. arguments","B. occupations","C. precise","D. qualifications","E. resides","F. transplanted","G. lofty","H. prospects","I. accommodate","J. converted","K. financial","L. perform","M. abundant","N. prevail","O. integration","P. compromise","Q. executive","R. supervise","S. varieties","T. solution"],"group_name":"匹配題"},{"type":"matching","index":19,"question":"It is not unusual for a woman ______ to have a man as her assistant.","options":[],"answer":"Q","match_options":["A. arguments","B. occupations","C. precise","D. qualifications","E. resides","F. transplanted","G. lofty","H. prospects","I. accommodate","J. converted","K. financial","L. perform","M. abundant","N. prevail","O. integration","P. compromise","Q. executive","R. supervise","S. varieties","T. solution"],"group_name":"匹配題"},{"type":"matching","index":20,"question":"Margret ______ with her mother in a big house left by her grandparents.","options":[],"answer":"E","match_options":["A. arguments","B. occupations","C. precise","D. qualifications","E. resides","F. transplanted","G. lofty","H. prospects","I. accommodate","J. converted","K. financial","L. perform","M. abundant","N. prevail","O. integration","P. compromise","Q. executive","R. supervise","S. varieties","T. solution"],"group_name":"匹配題"},{"type":"matching","index":21,"question":"He reads a lot of books and papers after work to stay ______ new developments in the field.","options":[],"answer":"F","match_options":["A. put in","B. laid out","C. turn a deaf ear to","D. branch out","E. at your service","F. on top of","G. be stuck with","H. open the door for","I. have been around","J. lost track","K. add to","L. at a high cost","M. allowing for","N. lies in","O. experiment with","P. mounted on","Q. life expectancy","R. back and forth","S. under the radar","T. checked out"],"group_name":"匹配題"},{"type":"matching","index":22,"question":"Whether you want progress in your current career or pursue more challenging opportunities, higher qualifications can ______ new possibilities.","options":[],"answer":"H","match_options":["A. put in","B. laid out","C. turn a deaf ear to","D. branch out","E. at your service","F. on top of","G. be stuck with","H. open the door for","I. have been around","J. lost track","K. add to","L. at a high cost","M. allowing for","N. lies in","O. experiment with","P. mounted on","Q. life expectancy","R. back and forth","S. under the radar","T. checked out"],"group_name":"匹配題"},{"type":"matching","index":23,"question":"After we came back from shopping, we ______ all the items on the ground and counted them.","options":[],"answer":"B","match_options":["A. put in","B. laid out","C. turn a deaf ear to","D. branch out","E. at your service","F. on top of","G. be stuck with","H. open the door for","I. have been around","J. lost track","K. add to","L. at a high cost","M. allowing for","N. lies in","O. experiment with","P. mounted on","Q. life expectancy","R. back and forth","S. under the radar","T. checked out"],"group_name":"匹配題"},{"type":"matching","index":24,"question":"Smartphones ______ for quite a while.","options":[],"answer":"I","match_options":["A. put in","B. laid out","C. turn a deaf ear to","D. branch out","E. at your service","F. on top of","G. be stuck with","H. open the door for","I. have been around","J. lost track","K. add to","L. at a high cost","M. allowing for","N. lies in","O. experiment with","P. mounted on","Q. life expectancy","R. back and forth","S. under the radar","T. checked out"],"group_name":"匹配題"},{"type":"matching","index":25,"question":"What he was saying was so professional that I ______ after the first few minutes.","options":[],"answer":"J","match_options":["A. put in","B. laid out","C. turn a deaf ear to","D. branch out","E. at your service","F. on top of","G. be stuck with","H. open the door for","I. have been around","J. lost track","K. add to","L. at a high cost","M. allowing for","N. lies in","O. experiment with","P. mounted on","Q. life expectancy","R. back and forth","S. under the radar","T. checked out"],"group_name":"匹配題"},{"type":"matching","index":26,"question":"The difficulty ______ cutting the costs while keeping the same quality of the product.","options":[],"answer":"N","match_options":["A. put in","B. laid out","C. turn a deaf ear to","D. branch out","E. at your service","F. on top of","G. be stuck with","H. open the door for","I. have been around","J. lost track","K. add to","L. at a high cost","M. allowing for","N. lies in","O. experiment with","P. mounted on","Q. life expectancy","R. back and forth","S. under the radar","T. checked out"],"group_name":"匹配題"},{"type":"matching","index":27,"question":"It will take about an hour to get to the train station, ______ traffic delays.","options":[],"answer":"M","match_options":["A. put in","B. laid out","C. turn a deaf ear to","D. branch out","E. at your service","F. on top of","G. be stuck with","H. open the door for","I. have been around","J. lost track","K. add to","L. at a high cost","M. allowing for","N. lies in","O. experiment with","P. mounted on","Q. life expectancy","R. back and forth","S. under the radar","T. checked out"],"group_name":"匹配題"},{"type":"matching","index":28,"question":"Jogging (慢跑) for just an hour a week can increase your ______ by around six years.","options":[],"answer":"Q","match_options":["A. put in","B. laid out","C. turn a deaf ear to","D. branch out","E. at your service","F. on top of","G. be stuck with","H. open the door for","I. have been around","J. lost track","K. add to","L. at a high cost","M. allowing for","N. lies in","O. experiment with","P. mounted on","Q. life expectancy","R. back and forth","S. under the radar","T. checked out"],"group_name":"匹配題"},{"type":"matching","index":29,"question":"We’re keeping our relationship ______ because we don’t want Mary’s father to know it.","options":[],"answer":"S","match_options":["A. put in","B. laid out","C. turn a deaf ear to","D. branch out","E. at your service","F. on top of","G. be stuck with","H. open the door for","I. have been around","J. lost track","K. add to","L. at a high cost","M. allowing for","N. lies in","O. experiment with","P. mounted on","Q. life expectancy","R. back and forth","S. under the radar","T. checked out"],"group_name":"匹配題"},{"type":"matching","index":30,"question":"If you don’t work hard to change your fate, you might ______ a miserable existence for the rest of your life.","options":[],"answer":"G","match_options":["A. put in","B. laid out","C. turn a deaf ear to","D. branch out","E. at your service","F. on top of","G. be stuck with","H. open the door for","I. have been around","J. lost track","K. add to","L. at a high cost","M. allowing for","N. lies in","O. experiment with","P. mounted on","Q. life expectancy","R. back and forth","S. under the radar","T. checked out"],"group_name":"匹配題"},{"type":"matching","index":31,"question":"Some people ______ from their main job to take on consulting work or teach a course in their field.","options":[],"answer":"D","match_options":["A. put in","B. laid out","C. turn a deaf ear to","D. branch out","E. at your service","F. on top of","G. be stuck with","H. open the door for","I. have been around","J. lost track","K. add to","L. at a high cost","M. allowing for","N. lies in","O. experiment with","P. mounted on","Q. life expectancy","R. back and forth","S. under the radar","T. checked out"],"group_name":"匹配題"},{"type":"matching","index":32,"question":"I am happy to be ______ if you have any questions, for guest satisfaction is our highest mission.","options":[],"answer":"E","match_options":["A. put in","B. laid out","C. turn a deaf ear to","D. branch out","E. at your service","F. on top of","G. be stuck with","H. open the door for","I. have been around","J. lost track","K. add to","L. at a high cost","M. allowing for","N. lies in","O. experiment with","P. mounted on","Q. life expectancy","R. back and forth","S. under the radar","T. checked out"],"group_name":"匹配題"},{"type":"matching","index":33,"question":"The school plans to ______ some new teaching methods to improve teaching.","options":[],"answer":"O","match_options":["A. put in","B. laid out","C. turn a deaf ear to","D. branch out","E. at your service","F. on top of","G. be stuck with","H. open the door for","I. have been around","J. lost track","K. add to","L. at a high cost","M. allowing for","N. lies in","O. experiment with","P. mounted on","Q. life expectancy","R. back and forth","S. under the radar","T. checked out"],"group_name":"匹配題"},{"type":"matching","index":34,"question":"A robot with a camera ______ it was sent down the well to discover what was in it.","options":[],"answer":"P","match_options":["A. put in","B. laid out","C. turn a deaf ear to","D. branch out","E. at your service","F. on top of","G. be stuck with","H. open the door for","I. have been around","J. lost track","K. add to","L. at a high cost","M. allowing for","N. lies in","O. experiment with","P. mounted on","Q. life expectancy","R. back and forth","S. under the radar","T. checked out"],"group_name":"匹配題"},{"type":"matching","index":35,"question":"She’s a successful career woman but only ______ of her family life.","options":[],"answer":"L","match_options":["A. put in","B. laid out","C. turn a deaf ear to","D. branch out","E. at your service","F. on top of","G. be stuck with","H. open the door for","I. have been around","J. lost track","K. add to","L. at a high cost","M. allowing for","N. lies in","O. experiment with","P. mounted on","Q. life expectancy","R. back and forth","S. under the radar","T. checked out"],"group_name":"匹配題"},{"type":"matching","index":36,"question":"The increase in fuel prices will ______ the cost of living of car owners.","options":[],"answer":"K","match_options":["A. put in","B. laid out","C. turn a deaf ear to","D. branch out","E. at your service","F. on top of","G. be stuck with","H. open the door for","I. have been around","J. lost track","K. add to","L. at a high cost","M. allowing for","N. lies in","O. experiment with","P. mounted on","Q. life expectancy","R. back and forth","S. under the radar","T. checked out"],"group_name":"匹配題"},{"type":"matching","index":37,"question":". They’ve ______ time and effort to solve this difficult problem ahead of schedule.","options":[],"answer":"A","match_options":["A. put in","B. laid out","C. turn a deaf ear to","D. branch out","E. at your service","F. on top of","G. be stuck with","H. open the door for","I. have been around","J. lost track","K. add to","L. at a high cost","M. allowing for","N. lies in","O. experiment with","P. mounted on","Q. life expectancy","R. back and forth","S. under the radar","T. checked out"],"group_name":"匹配題"},{"type":"matching","index":38,"question":"Our kids live in Canada and we in Britain, so we travel ______ all the time between the two countries.","options":[],"answer":"R","match_options":["A. put in","B. laid out","C. turn a deaf ear to","D. branch out","E. at your service","F. on top of","G. be stuck with","H. open the door for","I. have been around","J. lost track","K. add to","L. at a high cost","M. allowing for","N. lies in","O. experiment with","P. mounted on","Q. life expectancy","R. back and forth","S. under the radar","T. checked out"],"group_name":"匹配題"},{"type":"matching","index":39,"question":"The mechanic (机械师) ______ the plane before it took off.","options":[],"answer":"T","match_options":["A. put in","B. laid out","C. turn a deaf ear to","D. branch out","E. at your service","F. on top of","G. be stuck with","H. open the door for","I. have been around","J. lost track","K. add to","L. at a high cost","M. allowing for","N. lies in","O. experiment with","P. mounted on","Q. life expectancy","R. back and forth","S. under the radar","T. checked out"],"group_name":"匹配題"},{"type":"matching","index":40,"question":"It was unwise of the general manager to ______ the complaints of his employees.","options":[],"answer":"C","match_options":["A. put in","B. laid out","C. turn a deaf ear to","D. branch out","E. at your service","F. on top of","G. be stuck with","H. open the door for","I. have been around","J. lost track","K. add to","L. at a high cost","M. allowing for","N. lies in","O. experiment with","P. mounted on","Q. life expectancy","R. back and forth","S. under the radar","T. checked out"],"group_name":"匹配題"}]};</script>
+</head>
+<body>
+
+<!-- 加載頁 -->
+<div id="loadPage">
+  <div class="card">
+    <h2 style="margin-bottom:6px;color:#333;">📝 考試模擬器</h2>
+    <p style="font-size:13px;color:#999;margin-bottom:18px;">載入 JSON 試卷檔案以開始</p>
+    <div class="dropzone" id="dropzone">
+      <div class="icon">📂</div>
+      <p style="font-size:15px;color:#555;">拖放 JSON 檔案到此處</p>
+      <p style="font-size:12px;color:#aaa;">或點擊選擇檔案</p>
+    </div>
+    <input type="file" id="fileInput" accept=".json" style="position:absolute;width:0;height:0;opacity:0;">
+    <div class="file-info show" id="fileInfo">
+      <div class="fi-title" id="fiTitle">全部題目</div>
+      <div class="fi-detail" id="fiDetail">共 120 題 | 單選題 80題 | 匹配題 40題</div>
+    </div>
+    <div class="shuffle-row">
+      <input type="checkbox" id="shuffleCheck" checked="">
+      <label for="shuffleCheck">打亂每個題組內題目順序</label>
+    </div>
+    <button class="btn-start show" id="btnStart" onclick="startExam()">🚀 開始考試</button>
+    <div style="margin-top:8px;">
+      <button id="btnExportPre" style="display: inline-block; padding: 6px 16px; border: 1px solid rgb(26, 115, 232); background: rgb(255, 255, 255); color: rgb(26, 115, 232); border-radius: 4px; font-size: 13px; cursor: pointer;" onclick="exportStandaloneHtmlPre()">📥 匯出HTML（不含作答）</button>
+    </div>
+  </div>
+</div>
+
+<!-- 頂部狀態欄 -->
+<div id="topBar">
+  <span class="title" id="examTitle">考試模擬</span>
+  <div class="center">
+    <span class="timer" id="timerDisplay">00:00:00</span>
+    <span id="progressText" style="color:rgba(255,255,255,0.85);">0/0</span>
+  </div>
+  <button class="btn-submit" onclick="submitExam()">交卷</button>
+</div>
+
+<!-- 主要內容 -->
+<div id="mainContent">
+  <div id="questionPanel">
+    <div class="q-header">
+      <span class="q-type" id="qTypeBadge">單選題</span>
+      <span class="q-num" id="qIndexLabel"></span>
+    </div>
+    <div class="q-body" id="questionBody"></div>
+    <div class="q-nav">
+      <button id="btnPrev" onclick="prevQuestion()">← 上一題</button>
+      <button id="btnNext" onclick="nextQuestion()">下一題 →</button>
+    </div>
+  </div>
+  <div id="sidebarPanel">
+    <div class="side-header">📋 答題卡</div>
+    <div class="side-summary" id="sidebarSummary">已答 0 / 0 題</div>
+    <div class="side-scroll" id="sidebarScroll"></div>
+  </div>
+</div>
+
+<!-- 提交確認 -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal-box">
+    <h3>確認交卷？</h3>
+    <p id="unansweredWarn" class="warn"></p>
+    <button class="btn-cancel" onclick="closeModal()">繼續答題</button>
+    <button class="btn-confirm" onclick="confirmSubmit()">確認交卷</button>
+  </div>
+</div>
+
+<!-- 結果頁 -->
+<div id="resultPage"></div>
+
+<script>
+
+// 自動載入內嵌數據（如果有）
+if (window.__PRESET_DATA__) {
+  window.addEventListener('DOMContentLoaded', function() {
+    examData = window.__PRESET_DATA__;
+    showFileInfo();
+  });
+}
+
+const TYPE_NAMES = {
+  single: '單選題', multiple: '多選題', fill: '填空題', judge: '判斷題', matching: '匹配題'
+};
+const TYPE_ORDER = ['single','multiple','fill','judge','matching'];
+
+let examData = null;       // 原始資料
+let shuffledData = null;   // 打亂後的考題
+let answers = {};
+let currentGlobalIdx = 0;
+let timerInterval = null;
+let elapsedSeconds = 0;
+let submitted = false;
+let wrongQuestions = [];    // 錯題記錄
+
+// ========== 載入 ==========
+const dropzone = document.getElementById('dropzone');
+const fileInput = document.getElementById('fileInput');
+const fileInfo = document.getElementById('fileInfo');
+const btnStart = document.getElementById('btnStart');
+
+dropzone.addEventListener('click', () => fileInput.click());
+dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('dragover'); });
+dropzone.addEventListener('dragleave', e => { e.preventDefault(); dropzone.classList.remove('dragover'); });
+dropzone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropzone.classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (file && file.name.endsWith('.json')) loadJsonFile(file);
+});
+fileInput.addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (file) loadJsonFile(file);
+});
+
+function loadJsonFile(file) {
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      examData = JSON.parse(e.target.result);
+      showFileInfo();
+    } catch(err) {
+      alert('JSON 解析失敗：' + err.message);
+    }
+  };
+  reader.readAsText(file);
+}
+
+function showFileInfo() {
+  const tc = examData.type_counts || {};
+  const total = examData.total || examData.questions.length;
+  let detail = '共 ' + total + ' 題';
+  TYPE_ORDER.forEach(t => {
+    if (tc[t]) detail += ' | ' + TYPE_NAMES[t] + ' ' + tc[t] + '題';
+  });
+  document.getElementById('fiTitle').textContent = examData.title || '試卷';
+  document.getElementById('fiDetail').textContent = detail;
+  fileInfo.classList.add('show');
+  btnStart.classList.add('show');
+  document.getElementById('btnExportPre').style.display = 'inline-block';
+}
+
+// ========== 開始考試 ==========
+function startExam() {
+  if (!examData) return;
+  let qs = examData.questions.slice();
+
+  // 打亂選項
+  if (document.getElementById('shuffleCheck').checked) {
+    // 依 group_name 分組（保留 JSON 中的題組順序）
+    let subGroups = [];
+    let lastGN = null;
+    qs.forEach(q => {
+      const gn = q.group_name || '';
+      if (gn !== lastGN) {
+        subGroups.push([]);
+        lastGN = gn;
+      }
+      subGroups[subGroups.length - 1].push(q);
+    });
+    // 每組內部分別打亂，然後重新拼接，並重新編index
+    qs = [];
+    subGroups.forEach(group => {
+      shuffleArray(group);
+      // 重新給每題分配index（組內從1開始）
+      group.forEach((q, i) => { q.index = i + 1; });
+      qs = qs.concat(group);
+    });
+  }
+
+  shuffledData = {
+    title: examData.title,
+    questions: qs,
+    type_counts: examData.type_counts,
+    type_names: examData.type_names
+  };
+
+  submitted = false;
+  elapsedSeconds = 0;
+  answers = {};
+  wrongQuestions = [];
+  qs.forEach(q => {
+    answers[q.type + '|' + q.index] = (q.type === 'multiple') ? [] : '';
+  });
+
+  document.getElementById('loadPage').style.display = 'none';
+  document.getElementById('topBar').style.display = 'flex'; document.getElementById('btnExportPre').style.display = 'none';
+  document.getElementById('mainContent').style.display = 'flex';
+  document.getElementById('examTitle').textContent = examData.title || '考試模擬器';
+  currentGlobalIdx = 0;
+  buildSidebar();
+  renderQuestion();
+  startTimer();
+}
+
+function shuffleArray(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+}
+
+function startTimer() {
+  if (timerInterval) clearInterval(timerInterval);
+  timerInterval = setInterval(() => { elapsedSeconds++; updateTimerDisplay(); }, 1000);
+}
+function updateTimerDisplay() {
+  const h = Math.floor(elapsedSeconds / 3600);
+  const m = Math.floor((elapsedSeconds % 3600) / 60);
+  const s = elapsedSeconds % 60;
+  document.getElementById('timerDisplay').textContent =
+    String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+}
+
+// ========== 答題渲染 ==========
+function renderQuestion() {
+  const qs = shuffledData.questions;
+  if (currentGlobalIdx < 0) currentGlobalIdx = 0;
+  if (currentGlobalIdx >= qs.length) currentGlobalIdx = qs.length - 1;
+  const q = qs[currentGlobalIdx];
+  const key = q.type + '|' + q.index;
+  const savedAnswer = answers[key];
+  document.getElementById('qTypeBadge').textContent = TYPE_NAMES[q.type] || q.type;
+  document.getElementById('qIndexLabel').textContent = '第 ' + q.index + ' 題（共 ' + (shuffledData.type_counts[q.type] || '?') + ' 題）';
+  let html = '<div class="q-stem">' + escapeHtml(q.question) + '</div>';
+  switch (q.type) {
+    case 'single': html += renderSingle(q, savedAnswer); break;
+    case 'multiple': html += renderMulti(q, savedAnswer); break;
+    case 'fill': html += renderFill(q, savedAnswer); break;
+    case 'judge': html += renderJudge(q, savedAnswer); break;
+    case 'matching': html += renderMatching(q, savedAnswer); break;
+  }
+  document.getElementById('questionBody').innerHTML = html;
+  bindAnswerEvents(q);
+  updateSidebarHighlight();
+  updateNavButtons();
+  document.getElementById('progressText').textContent = (currentGlobalIdx + 1) + '/' + qs.length;
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML.replace(/_{3,}/g, '<span class="blank"></span>');
+}
+
+function renderSingle(q, saved) {
+  let html = '<ul class="option-list">';
+  q.options.forEach(opt => {
+    const letter = opt.charAt(0);
+    const cls = (saved === letter) ? ' selected' : '';
+    html += '<li class="opt-item' + cls + '" data-value="' + letter + '">';
+    html += '<span class="opt-letter">' + letter + '</span>';
+    html += '<span>' + escapeHtml(opt.substring(2).trim()) + '</span></li>';
+  });
+  return html + '</ul>';
+}
+
+function renderMulti(q, saved) {
+  let html = '<ul class="option-list">';
+  q.options.forEach(opt => {
+    const letter = opt.charAt(0);
+    const checked = (Array.isArray(saved) && saved.indexOf(letter) >= 0) ? ' selected' : '';
+    html += '<li class="opt-item' + checked + '" data-value="' + letter + '">';
+    html += '<span class="opt-letter">' + letter + '</span>';
+    html += '<span>' + escapeHtml(opt) + '</span></li>';
+  });
+  return html + '</ul>';
+}
+
+function renderFill(q, saved) {
+  return '<input type="text" class="fill-input" id="fillInput" value="' + escapeHtml(saved || '') + '" placeholder="請輸入答案">';
+}
+
+function renderJudge(q, saved) {
+  let html = '<div class="judge-btns">';
+  ['對', '錯'].forEach(v => {
+    html += '<div class="judge-btn' + (saved === v ? ' selected' : '') + '" data-value="' + v + '">' + v + '</div>';
+  });
+  return html + '</div>';
+}
+
+function renderMatching(q, saved) {
+  let html = '<div class="match-bank">';
+  (q.match_options || []).forEach(opt => {
+    html += '<span class="match-tag">' + escapeHtml(opt) + '</span>';
+  });
+  html += '</div><input type="text" class="fill-input" id="fillInput" value="' + escapeHtml(saved || '') + '" placeholder="請輸入選項字母">';
+  return html;
+}
+
+function bindAnswerEvents(q) {
+  const key = q.type + '|' + q.index;
+  document.querySelectorAll('.opt-item').forEach(item => {
+    item.addEventListener('click', function() {
+      if (q.type === 'single') {
+        answers[key] = this.dataset.value;
+        renderQuestion();
+      } else if (q.type === 'multiple') {
+        const val = this.dataset.value;
+        if (!Array.isArray(answers[key])) answers[key] = [];
+        const idx = answers[key].indexOf(val);
+        if (idx >= 0) answers[key].splice(idx, 1);
+        else answers[key].push(val);
+        renderQuestion();
+      }
+    });
+  });
+  document.querySelectorAll('.judge-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      answers[key] = this.dataset.value;
+      renderQuestion();
+    });
+  });
+  const fi = document.getElementById('fillInput');
+  if (fi) {
+    fi.addEventListener('input', function() { answers[key] = this.value; });
+    fi.addEventListener('keydown', function(e) { if (e.key === 'Enter') nextQuestion(); });
+  }
+}
+
+function nextQuestion() {
+  if (currentGlobalIdx < shuffledData.questions.length - 1) {
+    currentGlobalIdx++;
+    renderQuestion();
+    document.getElementById('questionBody').scrollTop = 0;
+  }
+}
+function prevQuestion() {
+  if (currentGlobalIdx > 0) {
+    currentGlobalIdx--;
+    renderQuestion();
+    document.getElementById('questionBody').scrollTop = 0;
+  }
+}
+function updateNavButtons() {
+  document.getElementById('btnPrev').disabled = (currentGlobalIdx === 0);
+  document.getElementById('btnNext').disabled = (currentGlobalIdx >= shuffledData.questions.length - 1);
+}
+
+// ========== 右側答題卡 ==========
+function buildSidebar() {
+  const qs = shuffledData.questions;
+  let html = '';
+  let lastGroup = '';
+  let globalNum = 0;
+  let currentGroupNums = [];
+  let currentGroupItems = [];
+  
+  function flushGroup() {
+    if (currentGroupItems.length === 0) return;
+    html += '<div class="side-group">';
+    html += '<div class="sg-title">' + escapeHtml(lastGroup || TYPE_NAMES[currentGroupItems[0].type] || '') + ' (' + currentGroupItems.length + ')</div>';
+    html += '<div class="num-grid">';
+    currentGroupItems.forEach(item => {
+      html += '<button class="num-btn" data-gi="' + item.globalIdx + '" onclick="jumpTo(' + item.globalIdx + ')">' + item.num + '</button>';
+    });
+    html += '</div></div>';
+    currentGroupNums = [];
+    currentGroupItems = [];
+  }
+  
+  qs.forEach((q, gi) => {
+    const gn = q.group_name || '';
+    if (gn !== lastGroup) {
+      flushGroup();
+      lastGroup = gn;
+      globalNum = 0;
+    }
+    globalNum++;
+    currentGroupItems.push({ globalIdx: gi, num: globalNum, type: q.type });
+  });
+  flushGroup();
+  
+  document.getElementById('sidebarScroll').innerHTML = html;
+  updateSidebarHighlight();
+}
+function updateSidebarHighlight() {
+  const qs = shuffledData.questions;
+  document.querySelectorAll('.num-btn').forEach(btn => {
+    const gi = parseInt(btn.dataset.gi);
+    const q = qs[gi];
+    const key = q.type + '|' + q.index;
+    const ans = answers[key];
+    const isAnswered = Array.isArray(ans) ? ans.length > 0 : (ans !== '' && ans !== null);
+    btn.classList.remove('current', 'answered');
+    if (gi === currentGlobalIdx) btn.classList.add('current');
+    else if (isAnswered) btn.classList.add('answered');
+  });
+  let answeredCount = 0;
+  qs.forEach(q => {
+    const key = q.type + '|' + q.index;
+    const ans = answers[key];
+    if (Array.isArray(ans) ? ans.length > 0 : (ans !== '' && ans !== null)) answeredCount++;
+  });
+  document.getElementById('sidebarSummary').textContent = '已答 ' + answeredCount + ' / ' + qs.length + ' 題';
+}
+function jumpTo(gi) {
+  currentGlobalIdx = gi;
+  renderQuestion();
+  document.getElementById('questionBody').scrollTop = 0;
+}
+
+// ========== 交卷 ==========
+function submitExam() {
+  if (submitted) return;
+  const qs = shuffledData.questions;
+  let unanswered = 0;
+  qs.forEach(q => {
+    const key = q.type + '|' + q.index;
+    const ans = answers[key];
+    if (Array.isArray(ans) ? ans.length === 0 : (ans === '' || ans === null)) unanswered++;
+  });
+  document.getElementById('unansweredWarn').textContent = unanswered > 0 ? '⚠ 還有 ' + unanswered + ' 道題目未作答！' : '';
+  document.getElementById('modalOverlay').classList.add('show');
+}
+function closeModal() { document.getElementById('modalOverlay').classList.remove('show'); }
+
+function confirmSubmit() {
+  document.getElementById('modalOverlay').classList.remove('show');
+  submitted = true;
+  if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+  const qs = shuffledData.questions;
+  let correct = 0, wrong = 0, unanswered = 0;
+  wrongQuestions = [];
+  qs.forEach(q => {
+    const key = q.type + '|' + q.index;
+    const userAns = answers[key];
+    const correctAns = q.answer;
+    let isCorrect = false;
+    if (q.type === 'multiple') {
+      const userSet = (userAns || []).slice().sort().join('');
+      const correctSet = (correctAns || '').split('').sort().join('');
+      isCorrect = (userSet === correctSet);
+    } else {
+      isCorrect = (String(userAns || '').trim().toUpperCase() === String(correctAns || '').trim().toUpperCase());
+    }
+    const isEmpty = Array.isArray(userAns) ? userAns.length === 0 : (!userAns);
+    if (isEmpty) {
+      unanswered++;
+      wrongQuestions.push({ ...q, userAnswer: '(未作答)', isWrong: true, isUnanswered: true });
+    } else if (isCorrect) {
+      correct++;
+    } else {
+      wrong++;
+      wrongQuestions.push({ ...q, userAnswer: Array.isArray(userAns) ? userAns.join('') : userAns, isWrong: true, isUnanswered: false });
+    }
+  });
+
+  const total = qs.length;
+  const score = total > 0 ? Math.round((correct / total) * 100) : 0;
+
+  document.getElementById('topBar').style.display = 'none';
+  document.getElementById('mainContent').style.display = 'none';
+
+  // 按類型統計錯題
+  let wrongStats = {};
+  wrongQuestions.forEach(wq => {
+    const t = wq.type;
+    if (!wrongStats[t]) wrongStats[t] = 0;
+    wrongStats[t]++;
+  });
+
+  let html = '<h2>考試結束</h2>';
+  html += '<div class="score-circle">' + score + '</div>';
+  html += '<p style="font-size:18px;color:#555">得分率 ' + score + '%</p>';
+  html += '<table class="stat-table">';
+  html += '<tr><td>總題數</td><td>' + total + '</td></tr>';
+  html += '<tr><td>答對</td><td style="color:#2e7d32">' + correct + '</td></tr>';
+  html += '<tr><td>答錯</td><td style="color:#f44336">' + wrong + '</td></tr>';
+  html += '<tr><td>未答</td><td style="color:#ff9800">' + unanswered + '</td></tr>';
+  html += '<tr><td>用時</td><td>' + document.getElementById('timerDisplay').textContent + '</td></tr>';
+  html += '</table>';
+
+  // 錯題統計
+  if (Object.keys(wrongStats).length > 0) {
+    html += '<div style="margin-top:10px;font-size:14px;color:#666;">錯題分佈：';
+    TYPE_ORDER.forEach(t => {
+      if (wrongStats[t]) html += ' ' + TYPE_NAMES[t] + ' ' + wrongStats[t] + '題';
+    });
+    html += '</div>';
+  }
+
+  html += '<div class="result-actions">';
+  html += '<button class="btn-retry" onclick="retryWrong()">🔄 重做錯題 (' + wrongQuestions.length + '題)</button>';
+  html += '<button class="btn-wrong" onclick="exportWrongJson()">📥 匯出錯題試卷 (JSON)</button>';
+  html += '<button class="btn-reload" onclick="location.reload()">🏠 返回首頁</button>';
+  html += '</div>';
+
+  // 錯題明細
+  if (wrongQuestions.length > 0) {
+    html += '<div class="wrong-list"><h3>❌ 錯題明細</h3>';
+    wrongQuestions.forEach((wq, i) => {
+      html += '<div class="wrong-item">';
+      html += '<div class="wi-q">' + (i+1) + '. [' + TYPE_NAMES[wq.type] + '] ' + escapeHtml(wq.question) + '</div>';
+      html += '<div class="wi-info">';
+      html += '<span class="wi-user">你的答案：' + escapeHtml(String(wq.userAnswer)) + '</span> | ';
+      html += '<span class="wi-correct">正確答案：' + escapeHtml(String(wq.answer)) + '</span>';
+      html += '</div></div>';
+    });
+    html += '</div>';
+  }
+
+  document.getElementById('resultPage').innerHTML = html;
+  document.getElementById('resultPage').classList.add('show');
+}
+
+// ========== 重做錯題 ==========
+function retryWrong() {
+  if (wrongQuestions.length === 0) { alert('沒有錯題！'); return; }
+  shuffledData = {
+    title: (examData.title || '試卷') + ' - 錯題重做',
+    questions: wrongQuestions.map((q, i) => ({ ...q, index: i + 1 })),
+    type_counts: {},
+    type_names: examData.type_names
+  };
+  // Recalculate type_counts
+  shuffledData.questions.forEach(q => {
+    const t = q.type;
+    shuffledData.type_counts[t] = (shuffledData.type_counts[t] || 0) + 1;
+  });
+
+  submitted = false;
+  elapsedSeconds = 0;
+  answers = {};
+  wrongQuestions = [];
+  shuffledData.questions.forEach(q => {
+    answers[q.type + '|' + q.index] = (q.type === 'multiple') ? [] : '';
+  });
+
+  document.getElementById('resultPage').classList.remove('show');
+  document.getElementById('resultPage').innerHTML = '';
+  document.getElementById('topBar').style.display = 'flex'; document.getElementById('btnExportPre').style.display = 'none';
+  document.getElementById('mainContent').style.display = 'flex';
+  document.getElementById('examTitle').textContent = shuffledData.title;
+  currentGlobalIdx = 0;
+  buildSidebar();
+  renderQuestion();
+  startTimer();
+}
+
+// ========== 匯出錯題 JSON ==========
+function exportWrongJson() {
+  if (wrongQuestions.length === 0) { alert('沒有錯題可匯出！'); return; }
+  const exportData = {
+    title: (examData.title || '試卷') + ' - 錯題',
+    total: wrongQuestions.length,
+    type_counts: {},
+    type_order: TYPE_ORDER,
+    type_names: examData.type_names || TYPE_NAMES,
+    questions: wrongQuestions.map((q, i) => ({ ...q, index: i + 1 }))
+  };
+  wrongQuestions.forEach(q => {
+    exportData.type_counts[q.type] = (exportData.type_counts[q.type] || 0) + 1;
+  });
+  downloadJson(exportData, 'wrong_exam.json');
+}
+
+// ========== 匯出獨立 HTML ==========
+function exportStandaloneHtml() {
+  const currentData = {
+    title: examData.title,
+    total: shuffledData.questions.length,
+    type_counts: {},
+    type_order: TYPE_ORDER,
+    type_names: examData.type_names || TYPE_NAMES,
+    questions: shuffledData.questions
+  };
+  shuffledData.questions.forEach(q => {
+    currentData.type_counts[q.type] = (currentData.type_counts[q.type] || 0) + 1;
+  });
+  try {
+    var htmlSource = document.documentElement.outerHTML;
+    htmlSource = htmlSource.replace(/<script>window\.__PRESET_DATA__[^<]*<\/script>/g, '');
+    var dataScript = '<script>window.__PRESET_DATA__ = ' + JSON.stringify(currentData) + ';<\/' + 'script>';
+    var injected = htmlSource.replace('</head>', dataScript + '\n</head>');
+    var blob = new Blob([injected], { type: 'text/html;charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'exam_standalone.html';
+    a.click();
+    URL.revokeObjectURL(url);
+  } catch(err) {
+    alert('匯出失敗：' + err.message);
+  }
+}
+
+function exportStandaloneHtmlPre() {
+  // 考試前匯出（含原始題目，不含作答）——使用當前頁面 HTML 注入數據
+  const currentData = {
+    title: examData.title,
+    total: examData.questions.length,
+    type_counts: examData.type_counts,
+    type_order: TYPE_ORDER,
+    type_names: examData.type_names || TYPE_NAMES,
+    questions: examData.questions
+  };
+  try {
+    var htmlSource = document.documentElement.outerHTML;
+    // 先清除任何已有的 __PRESET_DATA__
+    htmlSource = htmlSource.replace(/<script>window\.__PRESET_DATA__[^<]*<\/script>/g, '');
+    var dataScript = '<script>window.__PRESET_DATA__ = ' + JSON.stringify(currentData) + ';<\/' + 'script>';
+    var injected = htmlSource.replace('</head>', dataScript + '\n</head>');
+    
+    var blob = new Blob([injected], { type: 'text/html;charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'exam_standalone.html';
+    a.click();
+    URL.revokeObjectURL(url);
+  } catch(err) {
+    alert('匯出失敗：' + err.message);
+  }
+}
+
+function downloadJson(data, filename) {
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ========== 鍵盤快捷鍵 ==========
+document.addEventListener('keydown', function(e) {
+  if (submitted || !shuffledData) return;
+  if (document.activeElement.tagName === 'INPUT') return;
+  const q = shuffledData.questions[currentGlobalIdx];
+  if (q.type === 'single') {
+    const letters = q.options.map(o => o.charAt(0));
+    const idx = letters.indexOf(e.key.toUpperCase());
+    if (idx >= 0) { answers[q.type + '|' + q.index] = letters[idx]; renderQuestion(); }
+  }
+  if (e.key === 'ArrowRight') nextQuestion();
+  if (e.key === 'ArrowLeft') prevQuestion();
+});
+</script>
+
+</body></html>
