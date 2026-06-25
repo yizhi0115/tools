@@ -285,6 +285,9 @@ function startExam() {
     });
   }
 
+  // 賦予全域唯一 ID，避免不同題組相同 index 的答案鍵衝突
+  qs.forEach((q, gi) => { q._gid = gi; });
+
   shuffledData = {
     title: examData.title,
     questions: qs,
@@ -297,7 +300,7 @@ function startExam() {
   answers = {};
   wrongQuestions = [];
   qs.forEach(q => {
-    answers[q.type + '|' + q.index] = (q.type === 'multiple') ? [] : '';
+    answers[q._gid] = (q.type === 'multiple') ? [] : '';
   });
 
   document.getElementById('loadPage').style.display = 'none';
@@ -335,7 +338,7 @@ function renderQuestion() {
   if (currentGlobalIdx < 0) currentGlobalIdx = 0;
   if (currentGlobalIdx >= qs.length) currentGlobalIdx = qs.length - 1;
   const q = qs[currentGlobalIdx];
-  const key = q.type + '|' + q.index;
+  const key = q._gid;
   const savedAnswer = answers[key];
   document.getElementById('qTypeBadge').textContent = TYPE_NAMES[q.type] || q.type;
   document.getElementById('qIndexLabel').textContent = '第 ' + q.index + ' 題（共 ' + (shuffledData.type_counts[q.type] || '?') + ' 題）';
@@ -406,7 +409,7 @@ function renderMatching(q, saved) {
 }
 
 function bindAnswerEvents(q) {
-  const key = q.type + '|' + q.index;
+  const key = q._gid;
   document.querySelectorAll('.opt-item').forEach(item => {
     item.addEventListener('click', function() {
       if (q.type === 'single') {
@@ -496,7 +499,7 @@ function updateSidebarHighlight() {
   document.querySelectorAll('.num-btn').forEach(btn => {
     const gi = parseInt(btn.dataset.gi);
     const q = qs[gi];
-    const key = q.type + '|' + q.index;
+    const key = q._gid;
     const ans = answers[key];
     const isAnswered = Array.isArray(ans) ? ans.length > 0 : (ans !== '' && ans !== null);
     btn.classList.remove('current', 'answered');
@@ -505,7 +508,7 @@ function updateSidebarHighlight() {
   });
   let answeredCount = 0;
   qs.forEach(q => {
-    const key = q.type + '|' + q.index;
+    const key = q._gid;
     const ans = answers[key];
     if (Array.isArray(ans) ? ans.length > 0 : (ans !== '' && ans !== null)) answeredCount++;
   });
@@ -523,7 +526,7 @@ function submitExam() {
   const qs = shuffledData.questions;
   let unanswered = 0;
   qs.forEach(q => {
-    const key = q.type + '|' + q.index;
+    const key = q._gid;
     const ans = answers[key];
     if (Array.isArray(ans) ? ans.length === 0 : (ans === '' || ans === null)) unanswered++;
   });
@@ -566,7 +569,7 @@ function confirmSubmit() {
   let correct = 0, wrong = 0, unanswered = 0;
   wrongQuestions = [];
   qs.forEach(q => {
-    const key = q.type + '|' + q.index;
+    const key = q._gid;
     const userAns = answers[key];
     const correctAns = q.answer;
     let isCorrect = false;
@@ -670,7 +673,7 @@ function retryWrong() {
   answers = {};
   wrongQuestions = [];
   shuffledData.questions.forEach(q => {
-    answers[q.type + '|' + q.index] = (q.type === 'multiple') ? [] : '';
+    answers[q._gid] = (q.type === 'multiple') ? [] : '';
   });
 
   document.getElementById('resultPage').classList.remove('show');
@@ -778,7 +781,7 @@ document.addEventListener('keydown', function(e) {
   if (q.type === 'single') {
     const letters = q.options.map(o => o.charAt(0));
     const idx = letters.indexOf(e.key.toUpperCase());
-    if (idx >= 0) { answers[q.type + '|' + q.index] = letters[idx]; renderQuestion(); }
+    if (idx >= 0) { answers[q._gid] = letters[idx]; renderQuestion(); }
   }
   if (e.key === 'ArrowRight') nextQuestion();
   if (e.key === 'ArrowLeft') prevQuestion();
