@@ -1,0 +1,1615 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>期末复习题库·模拟考试</title><style>
+body{font-family:"Microsoft YaHei",SimSun,sans-serif;max-width:1000px;margin:0 auto;padding:20px 20px 140px;background:#f0f2f5}
+h1{text-align:center;color:#1a1a2e;border-bottom:3px double #1a1a2e;padding-bottom:12px}
+.info{text-align:center;color:#555;margin-bottom:12px}
+h2{background:#1a1a2e;color:#fff;padding:8px 16px;margin:24px 0 8px;border-radius:6px;font-size:17px}
+h3{color:#1a1a2e;margin:16px 0 4px;font-size:15px;padding-left:8px;border-left:3px solid #1a1a2e}
+.q{background:#fff;border:1px solid #e0e0e0;margin:3px 0;padding:8px 14px;border-radius:5px;font-size:14px;line-height:1.8}
+.q .num{font-weight:bold;color:#1a1a2e}
+.q.wrong{background:#fff5f5;border-color:#e53e3e}.q.correct{background:#f0fff4;border-color:#38a169}
+.q.wrong .num{color:#e53e3e}.q.correct .num{color:#38a169}
+.opts{display:flex;flex-wrap:wrap;gap:3px 10px;margin-top:4px}
+.opts label{cursor:pointer;white-space:nowrap;font-size:13px;display:inline-flex;align-items:center;gap:2px}
+.opts input{margin:0}
+.opts.many label{font-size:11px;gap:1px}.opts.many input{transform:scale(0.8)}
+.answer-reveal{display:none;color:#c62828;font-weight:bold;margin-left:8px;font-size:13px}
+.answer-reveal.show{display:inline}
+#toolbar{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:1000;padding:10px 20px;background:transparent;border-radius:10px;white-space:nowrap;display:flex;align-items:center;gap:5px}
+#toolbar button{padding:10px 20px;font-size:14px;border:1px solid #ccc;border-radius:6px;cursor:pointer;margin:0;background:#fff}
+#toolbar button.small-btn{padding:4px 10px;font-size:12px}
+#toolbar button:hover{background:#e8e8e8}
+#toolbar button:disabled{opacity:0.4;cursor:default}
+#toolbar button{padding:10px 20px;font-size:14px;border:1px solid #ccc;border-radius:6px;cursor:pointer;margin:0;background:#fff}
+#toolbar button:hover{background:#e8e8e8}#toolbar button:disabled{opacity:0.4;cursor:default}
+#btn-submit{background:#1a1a2e!important;color:#fff!important;border-color:#1a1a2e!important;padding:10px 30px!important;font-size:15px!important}
+#btn-submit:hover{opacity:0.85}#btn-submit:disabled{opacity:0.5!important}
+#score-box{display:none;text-align:center;font-size:24px;margin:20px 0 120px;padding:16px;background:#fff;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.1)}
+#score-box .score-num{font-size:48px;font-weight:bold}
+#score-box.good .score-num{color:#38a169}#score-box.ok .score-num{color:#d69e2e}#score-box.bad .score-num{color:#e53e3e}
+.q.hidden-q{display:none}
+
+#btn-hide-correct{display:none;background:#fff!important;color:#1a1a2e!important;border-color:#ccc!important;padding:5px 12px!important;font-size:12px!important}
+#btn-hide-correct.show{display:inline-block}
+#btn-redo-wrong{display:none}
+#btn-redo-wrong.show{display:inline-block;background:#ff6b35!important;color:#fff!important;border-color:#ff6b35!important}
+.q.hidden-q{display:none}
+</style></head><body><h1>大学英语期末机考题库·模拟考试</h1>
+<p class="info">题量:120 | 满分:120 | <b>模拟考试模式</b></p>
+<div id="toolbar"><button id="btn-submit" onclick="submitExam()">提交答案</button><button id="btn-shuffle" onclick="shuffleAll()">随机打乱</button><button id="btn-restore" onclick="restoreOrder()" disabled>恢复原序</button><button id="btn-reset" onclick="resetExam()">重新作答</button>
+  <button id="btn-hide-correct" class="small-btn" onclick="toggleHideCorrect()">隐藏已答对</button>
+  <button id="btn-redo-wrong" class="small-btn" onclick="redoWrong()">错题重做</button></div>
+<h2>一、根据汉语选择拼写正确的单词</h2>
+<div class="section-group" data-start="1" data-end="40">
+<div class="q" data-num="1" data-correct="B" data-type="single" data-orig="1">
+<span class="wrap"><span class="num">1.</span> <span class="qt">n. 宇航员，航天员</span></span>
+<span class="opts">
+<label><input type="radio" name="q1" value="A"> A. astronout</label>
+<label><input type="radio" name="q1" value="B"> B. astronaut</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="2" data-correct="A" data-type="single" data-orig="2">
+<span class="wrap"><span class="num">2.</span> <span class="qt">n.导师，指导者</span></span>
+<span class="opts">
+<label><input type="radio" name="q2" value="A"> A. mentor</label>
+<label><input type="radio" name="q2" value="B"> B. menter</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="3" data-correct="A" data-type="single" data-orig="3">
+<span class="wrap"><span class="num">3.</span> <span class="qt">n. 看法，评估</span></span>
+<span class="opts">
+<label><input type="radio" name="q3" value="A"> A. assessment</label>
+<label><input type="radio" name="q3" value="B"> B. assesment</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="4" data-correct="B" data-type="single" data-orig="4">
+<span class="wrap"><span class="num">4.</span> <span class="qt">a.人口的，人口学的</span></span>
+<span class="opts">
+<label><input type="radio" name="q4" value="A"> A. demografic</label>
+<label><input type="radio" name="q4" value="B"> B. demographic</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="5" data-correct="A" data-type="single" data-orig="5">
+<span class="wrap"><span class="num">5.</span> <span class="qt">n. 错误，失策</span></span>
+<span class="opts">
+<label><input type="radio" name="q5" value="A"> A. misstep</label>
+<label><input type="radio" name="q5" value="B"> B. mistep</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="6" data-correct="B" data-type="single" data-orig="6">
+<span class="wrap"><span class="num">6.</span> <span class="qt">a.有望的；可能的；预期的</span></span>
+<span class="opts">
+<label><input type="radio" name="q6" value="A"> A. prosective</label>
+<label><input type="radio" name="q6" value="B"> B. prospective</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="7" data-correct="B" data-type="single" data-orig="7">
+<span class="wrap"><span class="num">7.</span> <span class="qt">n.会计人员；会计师</span></span>
+<span class="opts">
+<label><input type="radio" name="q7" value="A"> A. acountant</label>
+<label><input type="radio" name="q7" value="B"> B. accountant</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="8" data-correct="A" data-type="single" data-orig="8">
+<span class="wrap"><span class="num">8.</span> <span class="qt">n.监督；管理；指导</span></span>
+<span class="opts">
+<label><input type="radio" name="q8" value="A"> A. supervision</label>
+<label><input type="radio" name="q8" value="B"> B. supervison</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="9" data-correct="B" data-type="single" data-orig="9">
+<span class="wrap"><span class="num">9.</span> <span class="qt">a. 致命的；灾难性的</span></span>
+<span class="opts">
+<label><input type="radio" name="q9" value="A"> A. fatel</label>
+<label><input type="radio" name="q9" value="B"> B. fatal</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="10" data-correct="A" data-type="single" data-orig="10">
+<span class="wrap"><span class="num">10.</span> <span class="qt">n. (人、动植物细胞的)组织</span></span>
+<span class="opts">
+<label><input type="radio" name="q10" value="A"> A. tissue</label>
+<label><input type="radio" name="q10" value="B"> B. tisue</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="11" data-correct="A" data-type="single" data-orig="11">
+<span class="wrap"><span class="num">11.</span> <span class="qt">ad. 大约；大概</span></span>
+<span class="opts">
+<label><input type="radio" name="q11" value="A"> A. approximately</label>
+<label><input type="radio" name="q11" value="B"> B. approxiately</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="12" data-correct="A" data-type="single" data-orig="12">
+<span class="wrap"><span class="num">12.</span> <span class="qt">a.连续的；相继的</span></span>
+<span class="opts">
+<label><input type="radio" name="q12" value="A"> A. successive</label>
+<label><input type="radio" name="q12" value="B"> B. sucessive</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="13" data-correct="B" data-type="single" data-orig="13">
+<span class="wrap"><span class="num">13.</span> <span class="qt">a.(外科)手术用的</span></span>
+<span class="opts">
+<label><input type="radio" name="q13" value="A"> A. surgicle</label>
+<label><input type="radio" name="q13" value="B"> B. surgical</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="14" data-correct="A" data-type="single" data-orig="14">
+<span class="wrap"><span class="num">14.</span> <span class="qt">n.外科医生</span></span>
+<span class="opts">
+<label><input type="radio" name="q14" value="A"> A. surgeon</label>
+<label><input type="radio" name="q14" value="B"> B. surgen</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="15" data-correct="A" data-type="single" data-orig="15">
+<span class="wrap"><span class="num">15.</span> <span class="qt">vt.使麻痹，使瘫痪</span></span>
+<span class="opts">
+<label><input type="radio" name="q15" value="A"> A. paralyze</label>
+<label><input type="radio" name="q15" value="B"> B. paralize</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="16" data-correct="A" data-type="single" data-orig="16">
+<span class="wrap"><span class="num">16.</span> <span class="qt">n.处方，药方</span></span>
+<span class="opts">
+<label><input type="radio" name="q16" value="A"> A. prescription</label>
+<label><input type="radio" name="q16" value="B"> B. perscription</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="17" data-correct="A" data-type="single" data-orig="17">
+<span class="wrap"><span class="num">17.</span> <span class="qt">n.主动性，积极性；倡议，新方案</span></span>
+<span class="opts">
+<label><input type="radio" name="q17" value="A"> A. initiative</label>
+<label><input type="radio" name="q17" value="B"> B. initative</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="18" data-correct="B" data-type="single" data-orig="18">
+<span class="wrap"><span class="num">18.</span> <span class="qt">n.同事</span></span>
+<span class="opts">
+<label><input type="radio" name="q18" value="A"> A. collegue</label>
+<label><input type="radio" name="q18" value="B"> B. colleague</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="19" data-correct="A" data-type="single" data-orig="19">
+<span class="wrap"><span class="num">19.</span> <span class="qt">n.上级，长官</span></span>
+<span class="opts">
+<label><input type="radio" name="q19" value="A"> A. superior</label>
+<label><input type="radio" name="q19" value="B"> B. superiour</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="20" data-correct="B" data-type="single" data-orig="20">
+<span class="wrap"><span class="num">20.</span> <span class="qt">vt.容纳；为某人提供住宿；考虑到，顾及</span></span>
+<span class="opts">
+<label><input type="radio" name="q20" value="A"> A. accomodate</label>
+<label><input type="radio" name="q20" value="B"> B. accommodate</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="21" data-correct="A" data-type="single" data-orig="21">
+<span class="wrap"><span class="num">21.</span> <span class="qt">a.人工的；人造；假的</span></span>
+<span class="opts">
+<label><input type="radio" name="q21" value="A"> A. artificial</label>
+<label><input type="radio" name="q21" value="B"> B. artifitial</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="22" data-correct="B" data-type="single" data-orig="22">
+<span class="wrap"><span class="num">22.</span> <span class="qt">n.创新，革新；新方法</span></span>
+<span class="opts">
+<label><input type="radio" name="q22" value="A"> A. inovation</label>
+<label><input type="radio" name="q22" value="B"> B. innovation</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="23" data-correct="A" data-type="single" data-orig="23">
+<span class="wrap"><span class="num">23.</span> <span class="qt">vt.使合并，成为一体</span></span>
+<span class="opts">
+<label><input type="radio" name="q23" value="A"> A. integrate</label>
+<label><input type="radio" name="q23" value="B"> B. intergrate</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="24" data-correct="A" data-type="single" data-orig="24">
+<span class="wrap"><span class="num">24.</span> <span class="qt">a.(动作)敏捷的，灵活的</span></span>
+<span class="opts">
+<label><input type="radio" name="q24" value="A"> A. agile</label>
+<label><input type="radio" name="q24" value="B"> B. agil</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="25" data-correct="A" data-type="single" data-orig="25">
+<span class="wrap"><span class="num">25.</span> <span class="qt">v.修改，改变</span></span>
+<span class="opts">
+<label><input type="radio" name="q25" value="A"> A. alter</label>
+<label><input type="radio" name="q25" value="B"> B. altar</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="26" data-correct="B" data-type="single" data-orig="26">
+<span class="wrap"><span class="num">26.</span> <span class="qt">n.批评者</span></span>
+<span class="opts">
+<label><input type="radio" name="q26" value="A"> A. critick</label>
+<label><input type="radio" name="q26" value="B"> B. critic</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="27" data-correct="A" data-type="single" data-orig="27">
+<span class="wrap"><span class="num">27.</span> <span class="qt">n.杀虫剂</span></span>
+<span class="opts">
+<label><input type="radio" name="q27" value="A"> A. pesticide</label>
+<label><input type="radio" name="q27" value="B"> B. pesticied</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="28" data-correct="B" data-type="single" data-orig="28">
+<span class="wrap"><span class="num">28.</span> <span class="qt">n.营养品，滋养物</span></span>
+<span class="opts">
+<label><input type="radio" name="q28" value="A"> A. nutrent</label>
+<label><input type="radio" name="q28" value="B"> B. nutrient</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="29" data-correct="A" data-type="single" data-orig="29">
+<span class="wrap"><span class="num">29.</span> <span class="qt">a.大量的，充足的</span></span>
+<span class="opts">
+<label><input type="radio" name="q29" value="A"> A. abundant</label>
+<label><input type="radio" name="q29" value="B"> B. abundent</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="30" data-correct="A" data-type="single" data-orig="30">
+<span class="wrap"><span class="num">30.</span> <span class="qt">vi.减少</span></span>
+<span class="opts">
+<label><input type="radio" name="q30" value="A"> A. diminish</label>
+<label><input type="radio" name="q30" value="B"> B. deminish</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="31" data-correct="B" data-type="single" data-orig="31">
+<span class="wrap"><span class="num">31.</span> <span class="qt">n.化石</span></span>
+<span class="opts">
+<label><input type="radio" name="q31" value="A"> A. fosil</label>
+<label><input type="radio" name="q31" value="B"> B. fossil</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="32" data-correct="A" data-type="single" data-orig="32">
+<span class="wrap"><span class="num">32.</span> <span class="qt">n. 燃料，燃烧剂</span></span>
+<span class="opts">
+<label><input type="radio" name="q32" value="A"> A. fuel</label>
+<label><input type="radio" name="q32" value="B"> B. fule</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="33" data-correct="A" data-type="single" data-orig="33">
+<span class="wrap"><span class="num">33.</span> <span class="qt">n.(机构的)部门</span></span>
+<span class="opts">
+<label><input type="radio" name="q33" value="A"> A. division</label>
+<label><input type="radio" name="q33" value="B"> B. divition</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="34" data-correct="B" data-type="single" data-orig="34">
+<span class="wrap"><span class="num">34.</span> <span class="qt">n.(饭后)甜点，甜食</span></span>
+<span class="opts">
+<label><input type="radio" name="q34" value="A"> A. desert</label>
+<label><input type="radio" name="q34" value="B"> B. dessert</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="35" data-correct="A" data-type="single" data-orig="35">
+<span class="wrap"><span class="num">35.</span> <span class="qt">a.怀疑的</span></span>
+<span class="opts">
+<label><input type="radio" name="q35" value="A"> A. skeptical</label>
+<label><input type="radio" name="q35" value="B"> B. skepical</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="36" data-correct="B" data-type="single" data-orig="36">
+<span class="wrap"><span class="num">36.</span> <span class="qt">a.单独的；分开的 v. 分离，分开</span></span>
+<span class="opts">
+<label><input type="radio" name="q36" value="A"> A. seperate</label>
+<label><input type="radio" name="q36" value="B"> B. separate</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="37" data-correct="A" data-type="single" data-orig="37">
+<span class="wrap"><span class="num">37.</span> <span class="qt">vt.主张；声称；认为</span></span>
+<span class="opts">
+<label><input type="radio" name="q37" value="A"> A. contend</label>
+<label><input type="radio" name="q37" value="B"> B. contand</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="38" data-correct="B" data-type="single" data-orig="38">
+<span class="wrap"><span class="num">38.</span> <span class="qt">n.询问</span></span>
+<span class="opts">
+<label><input type="radio" name="q38" value="A"> A. inquery</label>
+<label><input type="radio" name="q38" value="B"> B. inquiry</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="39" data-correct="A" data-type="single" data-orig="39">
+<span class="wrap"><span class="num">39.</span> <span class="qt">n.墓地；公墓</span></span>
+<span class="opts">
+<label><input type="radio" name="q39" value="A"> A. cemetery</label>
+<label><input type="radio" name="q39" value="B"> B. cemetary</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="40" data-correct="B" data-type="single" data-orig="40">
+<span class="wrap"><span class="num">40.</span> <span class="qt">n.布道，讲道</span></span>
+<span class="opts">
+<label><input type="radio" name="q40" value="A"> A. sermen</label>
+<label><input type="radio" name="q40" value="B"> B. sermon</label>
+</span><span class="answer-reveal"></span></div>
+</div>
+<h2>二、选择最恰当的选项完成句子</h2>
+<div class="section-group" data-start="41" data-end="80">
+<div class="q" data-num="41" data-correct="D" data-type="single" data-orig="41">
+<span class="wrap"><span class="num">41.</span> <span class="qt">You should spend some time ________ about how you can best deal with these issues.</span></span>
+<span class="opts">
+<label><input type="radio" name="q41" value="A"> A. to think</label>
+<label><input type="radio" name="q41" value="B"> B. think</label>
+<label><input type="radio" name="q41" value="C"> C. thought</label>
+<label><input type="radio" name="q41" value="D"> D. thinking</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="42" data-correct="C" data-type="single" data-orig="42">
+<span class="wrap"><span class="num">42.</span> <span class="qt">________ to share so much information with friends as we can today.</span></span>
+<span class="opts">
+<label><input type="radio" name="q42" value="A"> A. Never have been able we</label>
+<label><input type="radio" name="q42" value="B"> B. Never we have been able</label>
+<label><input type="radio" name="q42" value="C"> C. Never have we been able</label>
+<label><input type="radio" name="q42" value="D"> D. Never have been we able</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="43" data-correct="B" data-type="single" data-orig="43">
+<span class="wrap"><span class="num">43.</span> <span class="qt">At this point， officers have not found any evidence ________ a crime occurred.</span></span>
+<span class="opts">
+<label><input type="radio" name="q43" value="A"> A. which</label>
+<label><input type="radio" name="q43" value="B"> B. that</label>
+<label><input type="radio" name="q43" value="C"> C. what</label>
+<label><input type="radio" name="q43" value="D"> D. when</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="44" data-correct="D" data-type="single" data-orig="44">
+<span class="wrap"><span class="num">44.</span> <span class="qt">John said he wasn’t hunting ________ a job because there weren’t any available in his area.</span></span>
+<span class="opts">
+<label><input type="radio" name="q44" value="A"> A. with</label>
+<label><input type="radio" name="q44" value="B"> B. on</label>
+<label><input type="radio" name="q44" value="C"> C. in</label>
+<label><input type="radio" name="q44" value="D"> D. for</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="45" data-correct="C" data-type="single" data-orig="45">
+<span class="wrap"><span class="num">45.</span> <span class="qt">________ you have received a written job offer from the company， it is not final.</span></span>
+<span class="opts">
+<label><input type="radio" name="q45" value="A"> A. If</label>
+<label><input type="radio" name="q45" value="B"> B. Because</label>
+<label><input type="radio" name="q45" value="C"> C. Unless</label>
+<label><input type="radio" name="q45" value="D"> D. Once</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="46" data-correct="C" data-type="single" data-orig="46">
+<span class="wrap"><span class="num">46.</span> <span class="qt">________ you graduated with lots of internship experience， don’t expect to have your dream job right after graduation.</span></span>
+<span class="opts">
+<label><input type="radio" name="q46" value="A"> A. Ever since</label>
+<label><input type="radio" name="q46" value="B"> B. Just because</label>
+<label><input type="radio" name="q46" value="C"> C. Even if</label>
+<label><input type="radio" name="q46" value="D"> D. As if</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="47" data-correct="A" data-type="single" data-orig="47">
+<span class="wrap"><span class="num">47.</span> <span class="qt">Changing jobs is not easy， particularly if the circumstances in ________ you’re leaving are less than ideal.</span></span>
+<span class="opts">
+<label><input type="radio" name="q47" value="A"> A. which</label>
+<label><input type="radio" name="q47" value="B"> B. what</label>
+<label><input type="radio" name="q47" value="C"> C. that</label>
+<label><input type="radio" name="q47" value="D"> D. where</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="48" data-correct="D" data-type="single" data-orig="48">
+<span class="wrap"><span class="num">48.</span> <span class="qt">As ________ earlier， hiring managers are busy because they have many other responsibilities.</span></span>
+<span class="opts">
+<label><input type="radio" name="q48" value="A"> A. mentioning</label>
+<label><input type="radio" name="q48" value="B"> B. to mention</label>
+<label><input type="radio" name="q48" value="C"> C. mention</label>
+<label><input type="radio" name="q48" value="D"> D. mentioned</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="49" data-correct="A" data-type="single" data-orig="49">
+<span class="wrap"><span class="num">49.</span> <span class="qt">If you ________ them the deadline， they could have completed the project sooner.</span></span>
+<span class="opts">
+<label><input type="radio" name="q49" value="A"> A. had told</label>
+<label><input type="radio" name="q49" value="B"> B. told</label>
+<label><input type="radio" name="q49" value="C"> C. tell</label>
+<label><input type="radio" name="q49" value="D"> D. will tell</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="50" data-correct="A" data-type="single" data-orig="50">
+<span class="wrap"><span class="num">50.</span> <span class="qt">No matter ________ good you are， there is no substitute for preparing well for your interview.</span></span>
+<span class="opts">
+<label><input type="radio" name="q50" value="A"> A. how</label>
+<label><input type="radio" name="q50" value="B"> B. where</label>
+<label><input type="radio" name="q50" value="C"> C. what</label>
+<label><input type="radio" name="q50" value="D"> D. when</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="51" data-correct="B" data-type="single" data-orig="51">
+<span class="wrap"><span class="num">51.</span> <span class="qt">________ as a tourist city， Hangzhou is famous for its West Lake.</span></span>
+<span class="opts">
+<label><input type="radio" name="q51" value="A"> A. Knowing</label>
+<label><input type="radio" name="q51" value="B"> B. Known</label>
+<label><input type="radio" name="q51" value="C"> C. Be known</label>
+<label><input type="radio" name="q51" value="D"> D. To know</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="52" data-correct="C" data-type="single" data-orig="52">
+<span class="wrap"><span class="num">52.</span> <span class="qt">No matter ________ angry the customer might be， you need to remain calm and listen without interrupting.</span></span>
+<span class="opts">
+<label><input type="radio" name="q52" value="A"> A. what</label>
+<label><input type="radio" name="q52" value="B"> B. when</label>
+<label><input type="radio" name="q52" value="C"> C. how</label>
+<label><input type="radio" name="q52" value="D"> D. where</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="53" data-correct="C" data-type="single" data-orig="53">
+<span class="wrap"><span class="num">53.</span> <span class="qt">Have you read the book from ________ this well-known saying is taken？</span></span>
+<span class="opts">
+<label><input type="radio" name="q53" value="A"> A. that</label>
+<label><input type="radio" name="q53" value="B"> B. what</label>
+<label><input type="radio" name="q53" value="C"> C. which</label>
+<label><input type="radio" name="q53" value="D"> D. when</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="54" data-correct="D" data-type="single" data-orig="54">
+<span class="wrap"><span class="num">54.</span> <span class="qt">________ employees may have areas they disagree on, there are often still areas of agreement.</span></span>
+<span class="opts">
+<label><input type="radio" name="q54" value="A"> A. Ever since</label>
+<label><input type="radio" name="q54" value="B"> B. Now that</label>
+<label><input type="radio" name="q54" value="C"> C. As if</label>
+<label><input type="radio" name="q54" value="D"> D. Even though</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="55" data-correct="B" data-type="single" data-orig="55">
+<span class="wrap"><span class="num">55.</span> <span class="qt">The more communication you have between leaders and workers， ________ your workers feel.</span></span>
+<span class="opts">
+<label><input type="radio" name="q55" value="A"> A. best supported</label>
+<label><input type="radio" name="q55" value="B"> B. the more supported</label>
+<label><input type="radio" name="q55" value="C"> C. better supported</label>
+<label><input type="radio" name="q55" value="D"> D. well supported</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="56" data-correct="A" data-type="single" data-orig="56">
+<span class="wrap"><span class="num">56.</span> <span class="qt">Employees don’t have to be best friends； they just need to get the job ________ .</span></span>
+<span class="opts">
+<label><input type="radio" name="q56" value="A"> A. done</label>
+<label><input type="radio" name="q56" value="B"> B. do</label>
+<label><input type="radio" name="q56" value="C"> C. to do</label>
+<label><input type="radio" name="q56" value="D"> D. doing</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="57" data-correct="A" data-type="single" data-orig="57">
+<span class="wrap"><span class="num">57.</span> <span class="qt">________ you are one of the lucky few who works in a high-demand career， fending a new job can be challenging.</span></span>
+<span class="opts">
+<label><input type="radio" name="q57" value="A"> A. Unless</label>
+<label><input type="radio" name="q57" value="B"> B. As</label>
+<label><input type="radio" name="q57" value="C"> C. If</label>
+<label><input type="radio" name="q57" value="D"> D. Since</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="58" data-correct="C" data-type="single" data-orig="58">
+<span class="wrap"><span class="num">58.</span> <span class="qt">We wouldn’t have driven all this way if we ________ the museum was closed.</span></span>
+<span class="opts">
+<label><input type="radio" name="q58" value="A"> A. knew</label>
+<label><input type="radio" name="q58" value="B"> B. know</label>
+<label><input type="radio" name="q58" value="C"> C. had known</label>
+<label><input type="radio" name="q58" value="D"> D. will know</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="59" data-correct="B" data-type="single" data-orig="59">
+<span class="wrap"><span class="num">59.</span> <span class="qt">Unfortunately, some situations won’t work themselves out ________ their own.</span></span>
+<span class="opts">
+<label><input type="radio" name="q59" value="A"> A. with</label>
+<label><input type="radio" name="q59" value="B"> B. on</label>
+<label><input type="radio" name="q59" value="C"> C. in</label>
+<label><input type="radio" name="q59" value="D"> D. about</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="60" data-correct="D" data-type="single" data-orig="60">
+<span class="wrap"><span class="num">60.</span> <span class="qt">________ you need now is a budget to control your spending.</span></span>
+<span class="opts">
+<label><input type="radio" name="q60" value="A"> A. That</label>
+<label><input type="radio" name="q60" value="B"> B. Which</label>
+<label><input type="radio" name="q60" value="C"> C. Where</label>
+<label><input type="radio" name="q60" value="D"> D. What</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="61" data-correct="B" data-type="single" data-orig="61">
+<span class="wrap"><span class="num">61.</span> <span class="qt">Many of the representatives disagree with the decision ________ at yesterday’s conference.</span></span>
+<span class="opts">
+<label><input type="radio" name="q61" value="A"> A. making</label>
+<label><input type="radio" name="q61" value="B"> B. made</label>
+<label><input type="radio" name="q61" value="C"> C. to make</label>
+<label><input type="radio" name="q61" value="D"> D. be made</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="62" data-correct="B" data-type="single" data-orig="62">
+<span class="wrap"><span class="num">62.</span> <span class="qt">If I ________ the advertisement last week， I would have applied for the job.</span></span>
+<span class="opts">
+<label><input type="radio" name="q62" value="A"> A. saw</label>
+<label><input type="radio" name="q62" value="B"> B. had seen</label>
+<label><input type="radio" name="q62" value="C"> C. have seen</label>
+<label><input type="radio" name="q62" value="D"> D. see</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="63" data-correct="C" data-type="single" data-orig="63">
+<span class="wrap"><span class="num">63.</span> <span class="qt">________ I return these books to the library today， I’ll have to pay a free.</span></span>
+<span class="opts">
+<label><input type="radio" name="q63" value="A"> A. Because</label>
+<label><input type="radio" name="q63" value="B"> B. As</label>
+<label><input type="radio" name="q63" value="C"> C. Unless</label>
+<label><input type="radio" name="q63" value="D"> D. While</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="64" data-correct="A" data-type="single" data-orig="64">
+<span class="wrap"><span class="num">64.</span> <span class="qt">It was at the Olympic Games St. Louis 1904 ________ basketball was introduced in the Olympics.</span></span>
+<span class="opts">
+<label><input type="radio" name="q64" value="A"> A. that</label>
+<label><input type="radio" name="q64" value="B"> B. which</label>
+<label><input type="radio" name="q64" value="C"> C. where</label>
+<label><input type="radio" name="q64" value="D"> D. what</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="65" data-correct="B" data-type="single" data-orig="65">
+<span class="wrap"><span class="num">65.</span> <span class="qt">By the time I got to the office they ________ the negotiation with the clients.</span></span>
+<span class="opts">
+<label><input type="radio" name="q65" value="A"> A. will complete</label>
+<label><input type="radio" name="q65" value="B"> B. had completed</label>
+<label><input type="radio" name="q65" value="C"> C. have completed</label>
+<label><input type="radio" name="q65" value="D"> D. complete</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="66" data-correct="A" data-type="single" data-orig="66">
+<span class="wrap"><span class="num">66.</span> <span class="qt">We have reached the agreement that the job will be given to ________ asks for it first.</span></span>
+<span class="opts">
+<label><input type="radio" name="q66" value="A"> A. whoever</label>
+<label><input type="radio" name="q66" value="B"> B. whatever</label>
+<label><input type="radio" name="q66" value="C"> C. whenever</label>
+<label><input type="radio" name="q66" value="D"> D. wherever</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="67" data-correct="D" data-type="single" data-orig="67">
+<span class="wrap"><span class="num">67.</span> <span class="qt">Did they give you the information ________ which the report was based？</span></span>
+<span class="opts">
+<label><input type="radio" name="q67" value="A"> A. over</label>
+<label><input type="radio" name="q67" value="B"> B. for</label>
+<label><input type="radio" name="q67" value="C"> C. with</label>
+<label><input type="radio" name="q67" value="D"> D. on</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="68" data-correct="A" data-type="single" data-orig="68">
+<span class="wrap"><span class="num">68.</span> <span class="qt">Many members felt upset because they were not informed ________ the deal.</span></span>
+<span class="opts">
+<label><input type="radio" name="q68" value="A"> A. of</label>
+<label><input type="radio" name="q68" value="B"> B. in</label>
+<label><input type="radio" name="q68" value="C"> C. with</label>
+<label><input type="radio" name="q68" value="D"> D. over</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="69" data-correct="D" data-type="single" data-orig="69">
+<span class="wrap"><span class="num">69.</span> <span class="qt">Neither the driver ________ the passengers were hurt in the accident yesterday.</span></span>
+<span class="opts">
+<label><input type="radio" name="q69" value="A"> A. and</label>
+<label><input type="radio" name="q69" value="B"> B. or</label>
+<label><input type="radio" name="q69" value="C"> C. either</label>
+<label><input type="radio" name="q69" value="D"> D. nor</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="70" data-correct="C" data-type="single" data-orig="70">
+<span class="wrap"><span class="num">70.</span> <span class="qt">________ a machine so efficient and accurate like this one.</span></span>
+<span class="opts">
+<label><input type="radio" name="q70" value="A"> A. Never we have seen</label>
+<label><input type="radio" name="q70" value="B"> B. Have we never seen</label>
+<label><input type="radio" name="q70" value="C"> C. Never have we seen</label>
+<label><input type="radio" name="q70" value="D"> D. Never have seen we</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="71" data-correct="B" data-type="single" data-orig="71">
+<span class="wrap"><span class="num">71.</span> <span class="qt">As a small business， you can move quickly and take advantage ________ opportunities as they arise.</span></span>
+<span class="opts">
+<label><input type="radio" name="q71" value="A"> A. with</label>
+<label><input type="radio" name="q71" value="B"> B. of</label>
+<label><input type="radio" name="q71" value="C"> C. on</label>
+<label><input type="radio" name="q71" value="D"> D. for</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="72" data-correct="A" data-type="single" data-orig="72">
+<span class="wrap"><span class="num">72.</span> <span class="qt">________ as “Heaven on Earth”， Hangzhou attracts more than 20 million tourists every year.</span></span>
+<span class="opts">
+<label><input type="radio" name="q72" value="A"> A. Regarded</label>
+<label><input type="radio" name="q72" value="B"> B. Regard</label>
+<label><input type="radio" name="q72" value="C"> C. To be regarded</label>
+<label><input type="radio" name="q72" value="D"> D. Regarding</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="73" data-correct="C" data-type="single" data-orig="73">
+<span class="wrap"><span class="num">73.</span> <span class="qt">________ the definition of a smart city is still developing， its major feature is the use of information and communication technologies.</span></span>
+<span class="opts">
+<label><input type="radio" name="q73" value="A"> A. Unless</label>
+<label><input type="radio" name="q73" value="B"> B. Since</label>
+<label><input type="radio" name="q73" value="C"> C. Although</label>
+<label><input type="radio" name="q73" value="D"> D. Until</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="74" data-correct="D" data-type="single" data-orig="74">
+<span class="wrap"><span class="num">74.</span> <span class="qt">Once you have an ideal position to get， you are required to have experience ________ that position.</span></span>
+<span class="opts">
+<label><input type="radio" name="q74" value="A"> A. with</label>
+<label><input type="radio" name="q74" value="B"> B. for</label>
+<label><input type="radio" name="q74" value="C"> C. over</label>
+<label><input type="radio" name="q74" value="D"> D. in</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="75" data-correct="B" data-type="single" data-orig="75">
+<span class="wrap"><span class="num">75.</span> <span class="qt">________ it comes to computers， most of us know how to use them but don’t know how they work.</span></span>
+<span class="opts">
+<label><input type="radio" name="q75" value="A"> A. As</label>
+<label><input type="radio" name="q75" value="B"> B. When</label>
+<label><input type="radio" name="q75" value="C"> C. Unless</label>
+<label><input type="radio" name="q75" value="D"> D. Because</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="76" data-correct="D" data-type="single" data-orig="76">
+<span class="wrap"><span class="num">76.</span> <span class="qt">When we arrived there， the manager asked John to show us the rooms ________ were available.</span></span>
+<span class="opts">
+<label><input type="radio" name="q76" value="A"> A. where</label>
+<label><input type="radio" name="q76" value="B"> B. when</label>
+<label><input type="radio" name="q76" value="C"> C. who</label>
+<label><input type="radio" name="q76" value="D"> D. that</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="77" data-correct="A" data-type="single" data-orig="77">
+<span class="wrap"><span class="num">77.</span> <span class="qt">No sooner ________ home than I received a call from my supervisor.</span></span>
+<span class="opts">
+<label><input type="radio" name="q77" value="A"> A. had I arrived</label>
+<label><input type="radio" name="q77" value="B"> B. I arrived</label>
+<label><input type="radio" name="q77" value="C"> C. I had arrived</label>
+<label><input type="radio" name="q77" value="D"> D. will I arrive</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="78" data-correct="A" data-type="single" data-orig="78">
+<span class="wrap"><span class="num">78.</span> <span class="qt">We ________ in the same company ever since we graduated from college six years ago.</span></span>
+<span class="opts">
+<label><input type="radio" name="q78" value="A"> A. have worked</label>
+<label><input type="radio" name="q78" value="B"> B. worked</label>
+<label><input type="radio" name="q78" value="C"> C. work</label>
+<label><input type="radio" name="q78" value="D"> D. were working</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="79" data-correct="B" data-type="single" data-orig="79">
+<span class="wrap"><span class="num">79.</span> <span class="qt">We were all surprised at the news ________ he had resigned from his position.</span></span>
+<span class="opts">
+<label><input type="radio" name="q79" value="A"> A. which</label>
+<label><input type="radio" name="q79" value="B"> B. that</label>
+<label><input type="radio" name="q79" value="C"> C. whom</label>
+<label><input type="radio" name="q79" value="D"> D. when</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="80" data-correct="B" data-type="single" data-orig="80">
+<span class="wrap"><span class="num">80.</span> <span class="qt">If you ________ the objective， I could have completed the assignment sooner.</span></span>
+<span class="opts">
+<label><input type="radio" name="q80" value="A"> A. have explained</label>
+<label><input type="radio" name="q80" value="B"> B. had explained</label>
+<label><input type="radio" name="q80" value="C"> C. explained</label>
+<label><input type="radio" name="q80" value="D"> D. explain</label>
+</span><span class="answer-reveal"></span></div>
+</div>
+<h2>三、选择单词/短语填空</h2>
+<h3>单词选择（题81-100）</h3>
+<div class="section-group" data-start="81" data-end="100">
+<div class="q" data-num="81" data-correct="H" data-type="single" data-orig="81">
+<span class="wrap"><span class="num">81.</span> <span class="qt">Although this job does not offer a good salary, it offers great career ________</span></span>
+<span class="opts many">
+<label><input type="radio" name="q81" value="A"> A. arguments</label>
+<label><input type="radio" name="q81" value="B"> B. occupations</label>
+<label><input type="radio" name="q81" value="C"> C. precise</label>
+<label><input type="radio" name="q81" value="D"> D. qualifications</label>
+<label><input type="radio" name="q81" value="E"> E. resides</label>
+<label><input type="radio" name="q81" value="F"> F. transplanted</label>
+<label><input type="radio" name="q81" value="G"> G. lofty</label>
+<label><input type="radio" name="q81" value="H"> H. prospects</label>
+<label><input type="radio" name="q81" value="I"> I. accommodate</label>
+<label><input type="radio" name="q81" value="J"> J. converted</label>
+<label><input type="radio" name="q81" value="K"> K. financial</label>
+<label><input type="radio" name="q81" value="L"> L. perform</label>
+<label><input type="radio" name="q81" value="M"> M. abundant</label>
+<label><input type="radio" name="q81" value="N"> N. prevail</label>
+<label><input type="radio" name="q81" value="O"> O. integration</label>
+<label><input type="radio" name="q81" value="P"> P. compromise</label>
+<label><input type="radio" name="q81" value="Q"> Q. executive</label>
+<label><input type="radio" name="q81" value="R"> R. supervise</label>
+<label><input type="radio" name="q81" value="S"> S. varieties</label>
+<label><input type="radio" name="q81" value="T"> T. solution</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="82" data-correct="D" data-type="single" data-orig="82">
+<span class="wrap"><span class="num">82.</span> <span class="qt">A person with higher ________ can get a better paid job at the beginning of their career</span></span>
+<span class="opts many">
+<label><input type="radio" name="q82" value="A"> A. arguments</label>
+<label><input type="radio" name="q82" value="B"> B. occupations</label>
+<label><input type="radio" name="q82" value="C"> C. precise</label>
+<label><input type="radio" name="q82" value="D"> D. qualifications</label>
+<label><input type="radio" name="q82" value="E"> E. resides</label>
+<label><input type="radio" name="q82" value="F"> F. transplanted</label>
+<label><input type="radio" name="q82" value="G"> G. lofty</label>
+<label><input type="radio" name="q82" value="H"> H. prospects</label>
+<label><input type="radio" name="q82" value="I"> I. accommodate</label>
+<label><input type="radio" name="q82" value="J"> J. converted</label>
+<label><input type="radio" name="q82" value="K"> K. financial</label>
+<label><input type="radio" name="q82" value="L"> L. perform</label>
+<label><input type="radio" name="q82" value="M"> M. abundant</label>
+<label><input type="radio" name="q82" value="N"> N. prevail</label>
+<label><input type="radio" name="q82" value="O"> O. integration</label>
+<label><input type="radio" name="q82" value="P"> P. compromise</label>
+<label><input type="radio" name="q82" value="Q"> Q. executive</label>
+<label><input type="radio" name="q82" value="R"> R. supervise</label>
+<label><input type="radio" name="q82" value="S"> S. varieties</label>
+<label><input type="radio" name="q82" value="T"> T. solution</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="83" data-correct="K" data-type="single" data-orig="83">
+<span class="wrap"><span class="num">83.</span> <span class="qt">This career path is difficult but holds great ________ potential for me</span></span>
+<span class="opts many">
+<label><input type="radio" name="q83" value="A"> A. arguments</label>
+<label><input type="radio" name="q83" value="B"> B. occupations</label>
+<label><input type="radio" name="q83" value="C"> C. precise</label>
+<label><input type="radio" name="q83" value="D"> D. qualifications</label>
+<label><input type="radio" name="q83" value="E"> E. resides</label>
+<label><input type="radio" name="q83" value="F"> F. transplanted</label>
+<label><input type="radio" name="q83" value="G"> G. lofty</label>
+<label><input type="radio" name="q83" value="H"> H. prospects</label>
+<label><input type="radio" name="q83" value="I"> I. accommodate</label>
+<label><input type="radio" name="q83" value="J"> J. converted</label>
+<label><input type="radio" name="q83" value="K"> K. financial</label>
+<label><input type="radio" name="q83" value="L"> L. perform</label>
+<label><input type="radio" name="q83" value="M"> M. abundant</label>
+<label><input type="radio" name="q83" value="N"> N. prevail</label>
+<label><input type="radio" name="q83" value="O"> O. integration</label>
+<label><input type="radio" name="q83" value="P"> P. compromise</label>
+<label><input type="radio" name="q83" value="Q"> Q. executive</label>
+<label><input type="radio" name="q83" value="R"> R. supervise</label>
+<label><input type="radio" name="q83" value="S"> S. varieties</label>
+<label><input type="radio" name="q83" value="T"> T. solution</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="84" data-correct="G" data-type="single" data-orig="84">
+<span class="wrap"><span class="num">84.</span> <span class="qt">The boy has set himself the ________ goal of being a rocket scientist when he grows up</span></span>
+<span class="opts many">
+<label><input type="radio" name="q84" value="A"> A. arguments</label>
+<label><input type="radio" name="q84" value="B"> B. occupations</label>
+<label><input type="radio" name="q84" value="C"> C. precise</label>
+<label><input type="radio" name="q84" value="D"> D. qualifications</label>
+<label><input type="radio" name="q84" value="E"> E. resides</label>
+<label><input type="radio" name="q84" value="F"> F. transplanted</label>
+<label><input type="radio" name="q84" value="G"> G. lofty</label>
+<label><input type="radio" name="q84" value="H"> H. prospects</label>
+<label><input type="radio" name="q84" value="I"> I. accommodate</label>
+<label><input type="radio" name="q84" value="J"> J. converted</label>
+<label><input type="radio" name="q84" value="K"> K. financial</label>
+<label><input type="radio" name="q84" value="L"> L. perform</label>
+<label><input type="radio" name="q84" value="M"> M. abundant</label>
+<label><input type="radio" name="q84" value="N"> N. prevail</label>
+<label><input type="radio" name="q84" value="O"> O. integration</label>
+<label><input type="radio" name="q84" value="P"> P. compromise</label>
+<label><input type="radio" name="q84" value="Q"> Q. executive</label>
+<label><input type="radio" name="q84" value="R"> R. supervise</label>
+<label><input type="radio" name="q84" value="S"> S. varieties</label>
+<label><input type="radio" name="q84" value="T"> T. solution</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="85" data-correct="B" data-type="single" data-orig="85">
+<span class="wrap"><span class="num">85.</span> <span class="qt">He is thinking about changing ________ and becoming a police officer</span></span>
+<span class="opts many">
+<label><input type="radio" name="q85" value="A"> A. arguments</label>
+<label><input type="radio" name="q85" value="B"> B. occupations</label>
+<label><input type="radio" name="q85" value="C"> C. precise</label>
+<label><input type="radio" name="q85" value="D"> D. qualifications</label>
+<label><input type="radio" name="q85" value="E"> E. resides</label>
+<label><input type="radio" name="q85" value="F"> F. transplanted</label>
+<label><input type="radio" name="q85" value="G"> G. lofty</label>
+<label><input type="radio" name="q85" value="H"> H. prospects</label>
+<label><input type="radio" name="q85" value="I"> I. accommodate</label>
+<label><input type="radio" name="q85" value="J"> J. converted</label>
+<label><input type="radio" name="q85" value="K"> K. financial</label>
+<label><input type="radio" name="q85" value="L"> L. perform</label>
+<label><input type="radio" name="q85" value="M"> M. abundant</label>
+<label><input type="radio" name="q85" value="N"> N. prevail</label>
+<label><input type="radio" name="q85" value="O"> O. integration</label>
+<label><input type="radio" name="q85" value="P"> P. compromise</label>
+<label><input type="radio" name="q85" value="Q"> Q. executive</label>
+<label><input type="radio" name="q85" value="R"> R. supervise</label>
+<label><input type="radio" name="q85" value="S"> S. varieties</label>
+<label><input type="radio" name="q85" value="T"> T. solution</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="86" data-correct="F" data-type="single" data-orig="86">
+<span class="wrap"><span class="num">86.</span> <span class="qt">Surgeons have successfully ________ a heart into a five-year-old boy</span></span>
+<span class="opts many">
+<label><input type="radio" name="q86" value="A"> A. arguments</label>
+<label><input type="radio" name="q86" value="B"> B. occupations</label>
+<label><input type="radio" name="q86" value="C"> C. precise</label>
+<label><input type="radio" name="q86" value="D"> D. qualifications</label>
+<label><input type="radio" name="q86" value="E"> E. resides</label>
+<label><input type="radio" name="q86" value="F"> F. transplanted</label>
+<label><input type="radio" name="q86" value="G"> G. lofty</label>
+<label><input type="radio" name="q86" value="H"> H. prospects</label>
+<label><input type="radio" name="q86" value="I"> I. accommodate</label>
+<label><input type="radio" name="q86" value="J"> J. converted</label>
+<label><input type="radio" name="q86" value="K"> K. financial</label>
+<label><input type="radio" name="q86" value="L"> L. perform</label>
+<label><input type="radio" name="q86" value="M"> M. abundant</label>
+<label><input type="radio" name="q86" value="N"> N. prevail</label>
+<label><input type="radio" name="q86" value="O"> O. integration</label>
+<label><input type="radio" name="q86" value="P"> P. compromise</label>
+<label><input type="radio" name="q86" value="Q"> Q. executive</label>
+<label><input type="radio" name="q86" value="R"> R. supervise</label>
+<label><input type="radio" name="q86" value="S"> S. varieties</label>
+<label><input type="radio" name="q86" value="T"> T. solution</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="87" data-correct="C" data-type="single" data-orig="87">
+<span class="wrap"><span class="num">87.</span> <span class="qt">“She’s a lot older than you, isn’t she?” “Fifteen years, to be ________ .”</span></span>
+<span class="opts many">
+<label><input type="radio" name="q87" value="A"> A. arguments</label>
+<label><input type="radio" name="q87" value="B"> B. occupations</label>
+<label><input type="radio" name="q87" value="C"> C. precise</label>
+<label><input type="radio" name="q87" value="D"> D. qualifications</label>
+<label><input type="radio" name="q87" value="E"> E. resides</label>
+<label><input type="radio" name="q87" value="F"> F. transplanted</label>
+<label><input type="radio" name="q87" value="G"> G. lofty</label>
+<label><input type="radio" name="q87" value="H"> H. prospects</label>
+<label><input type="radio" name="q87" value="I"> I. accommodate</label>
+<label><input type="radio" name="q87" value="J"> J. converted</label>
+<label><input type="radio" name="q87" value="K"> K. financial</label>
+<label><input type="radio" name="q87" value="L"> L. perform</label>
+<label><input type="radio" name="q87" value="M"> M. abundant</label>
+<label><input type="radio" name="q87" value="N"> N. prevail</label>
+<label><input type="radio" name="q87" value="O"> O. integration</label>
+<label><input type="radio" name="q87" value="P"> P. compromise</label>
+<label><input type="radio" name="q87" value="Q"> Q. executive</label>
+<label><input type="radio" name="q87" value="R"> R. supervise</label>
+<label><input type="radio" name="q87" value="S"> S. varieties</label>
+<label><input type="radio" name="q87" value="T"> T. solution</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="88" data-correct="L" data-type="single" data-orig="88">
+<span class="wrap"><span class="num">88.</span> <span class="qt">A computer can ________ many tasks such as searching information and word processing</span></span>
+<span class="opts many">
+<label><input type="radio" name="q88" value="A"> A. arguments</label>
+<label><input type="radio" name="q88" value="B"> B. occupations</label>
+<label><input type="radio" name="q88" value="C"> C. precise</label>
+<label><input type="radio" name="q88" value="D"> D. qualifications</label>
+<label><input type="radio" name="q88" value="E"> E. resides</label>
+<label><input type="radio" name="q88" value="F"> F. transplanted</label>
+<label><input type="radio" name="q88" value="G"> G. lofty</label>
+<label><input type="radio" name="q88" value="H"> H. prospects</label>
+<label><input type="radio" name="q88" value="I"> I. accommodate</label>
+<label><input type="radio" name="q88" value="J"> J. converted</label>
+<label><input type="radio" name="q88" value="K"> K. financial</label>
+<label><input type="radio" name="q88" value="L"> L. perform</label>
+<label><input type="radio" name="q88" value="M"> M. abundant</label>
+<label><input type="radio" name="q88" value="N"> N. prevail</label>
+<label><input type="radio" name="q88" value="O"> O. integration</label>
+<label><input type="radio" name="q88" value="P"> P. compromise</label>
+<label><input type="radio" name="q88" value="Q"> Q. executive</label>
+<label><input type="radio" name="q88" value="R"> R. supervise</label>
+<label><input type="radio" name="q88" value="S"> S. varieties</label>
+<label><input type="radio" name="q88" value="T"> T. solution</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="89" data-correct="R" data-type="single" data-orig="89">
+<span class="wrap"><span class="num">89.</span> <span class="qt">Since you are the only manager in this workshop, who will ________ the workers when you are away?</span></span>
+<span class="opts many">
+<label><input type="radio" name="q89" value="A"> A. arguments</label>
+<label><input type="radio" name="q89" value="B"> B. occupations</label>
+<label><input type="radio" name="q89" value="C"> C. precise</label>
+<label><input type="radio" name="q89" value="D"> D. qualifications</label>
+<label><input type="radio" name="q89" value="E"> E. resides</label>
+<label><input type="radio" name="q89" value="F"> F. transplanted</label>
+<label><input type="radio" name="q89" value="G"> G. lofty</label>
+<label><input type="radio" name="q89" value="H"> H. prospects</label>
+<label><input type="radio" name="q89" value="I"> I. accommodate</label>
+<label><input type="radio" name="q89" value="J"> J. converted</label>
+<label><input type="radio" name="q89" value="K"> K. financial</label>
+<label><input type="radio" name="q89" value="L"> L. perform</label>
+<label><input type="radio" name="q89" value="M"> M. abundant</label>
+<label><input type="radio" name="q89" value="N"> N. prevail</label>
+<label><input type="radio" name="q89" value="O"> O. integration</label>
+<label><input type="radio" name="q89" value="P"> P. compromise</label>
+<label><input type="radio" name="q89" value="Q"> Q. executive</label>
+<label><input type="radio" name="q89" value="R"> R. supervise</label>
+<label><input type="radio" name="q89" value="S"> S. varieties</label>
+<label><input type="radio" name="q89" value="T"> T. solution</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="90" data-correct="N" data-type="single" data-orig="90">
+<span class="wrap"><span class="num">90.</span> <span class="qt">I am confident that, in the end, justice and common sense will ________</span></span>
+<span class="opts many">
+<label><input type="radio" name="q90" value="A"> A. arguments</label>
+<label><input type="radio" name="q90" value="B"> B. occupations</label>
+<label><input type="radio" name="q90" value="C"> C. precise</label>
+<label><input type="radio" name="q90" value="D"> D. qualifications</label>
+<label><input type="radio" name="q90" value="E"> E. resides</label>
+<label><input type="radio" name="q90" value="F"> F. transplanted</label>
+<label><input type="radio" name="q90" value="G"> G. lofty</label>
+<label><input type="radio" name="q90" value="H"> H. prospects</label>
+<label><input type="radio" name="q90" value="I"> I. accommodate</label>
+<label><input type="radio" name="q90" value="J"> J. converted</label>
+<label><input type="radio" name="q90" value="K"> K. financial</label>
+<label><input type="radio" name="q90" value="L"> L. perform</label>
+<label><input type="radio" name="q90" value="M"> M. abundant</label>
+<label><input type="radio" name="q90" value="N"> N. prevail</label>
+<label><input type="radio" name="q90" value="O"> O. integration</label>
+<label><input type="radio" name="q90" value="P"> P. compromise</label>
+<label><input type="radio" name="q90" value="Q"> Q. executive</label>
+<label><input type="radio" name="q90" value="R"> R. supervise</label>
+<label><input type="radio" name="q90" value="S"> S. varieties</label>
+<label><input type="radio" name="q90" value="T"> T. solution</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="91" data-correct="I" data-type="single" data-orig="91">
+<span class="wrap"><span class="num">91.</span> <span class="qt">The runway of this airport is undergoing expansion to ________ large planes</span></span>
+<span class="opts many">
+<label><input type="radio" name="q91" value="A"> A. arguments</label>
+<label><input type="radio" name="q91" value="B"> B. occupations</label>
+<label><input type="radio" name="q91" value="C"> C. precise</label>
+<label><input type="radio" name="q91" value="D"> D. qualifications</label>
+<label><input type="radio" name="q91" value="E"> E. resides</label>
+<label><input type="radio" name="q91" value="F"> F. transplanted</label>
+<label><input type="radio" name="q91" value="G"> G. lofty</label>
+<label><input type="radio" name="q91" value="H"> H. prospects</label>
+<label><input type="radio" name="q91" value="I"> I. accommodate</label>
+<label><input type="radio" name="q91" value="J"> J. converted</label>
+<label><input type="radio" name="q91" value="K"> K. financial</label>
+<label><input type="radio" name="q91" value="L"> L. perform</label>
+<label><input type="radio" name="q91" value="M"> M. abundant</label>
+<label><input type="radio" name="q91" value="N"> N. prevail</label>
+<label><input type="radio" name="q91" value="O"> O. integration</label>
+<label><input type="radio" name="q91" value="P"> P. compromise</label>
+<label><input type="radio" name="q91" value="Q"> Q. executive</label>
+<label><input type="radio" name="q91" value="R"> R. supervise</label>
+<label><input type="radio" name="q91" value="S"> S. varieties</label>
+<label><input type="radio" name="q91" value="T"> T. solution</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="92" data-correct="O" data-type="single" data-orig="92">
+<span class="wrap"><span class="num">92.</span> <span class="qt">His music is a(n) ________ of tradition and new technology</span></span>
+<span class="opts many">
+<label><input type="radio" name="q92" value="A"> A. arguments</label>
+<label><input type="radio" name="q92" value="B"> B. occupations</label>
+<label><input type="radio" name="q92" value="C"> C. precise</label>
+<label><input type="radio" name="q92" value="D"> D. qualifications</label>
+<label><input type="radio" name="q92" value="E"> E. resides</label>
+<label><input type="radio" name="q92" value="F"> F. transplanted</label>
+<label><input type="radio" name="q92" value="G"> G. lofty</label>
+<label><input type="radio" name="q92" value="H"> H. prospects</label>
+<label><input type="radio" name="q92" value="I"> I. accommodate</label>
+<label><input type="radio" name="q92" value="J"> J. converted</label>
+<label><input type="radio" name="q92" value="K"> K. financial</label>
+<label><input type="radio" name="q92" value="L"> L. perform</label>
+<label><input type="radio" name="q92" value="M"> M. abundant</label>
+<label><input type="radio" name="q92" value="N"> N. prevail</label>
+<label><input type="radio" name="q92" value="O"> O. integration</label>
+<label><input type="radio" name="q92" value="P"> P. compromise</label>
+<label><input type="radio" name="q92" value="Q"> Q. executive</label>
+<label><input type="radio" name="q92" value="R"> R. supervise</label>
+<label><input type="radio" name="q92" value="S"> S. varieties</label>
+<label><input type="radio" name="q92" value="T"> T. solution</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="93" data-correct="P" data-type="single" data-orig="93">
+<span class="wrap"><span class="num">93.</span> <span class="qt">I know our competitor offers a lower price, but we can’t ________ quality and service for low price</span></span>
+<span class="opts many">
+<label><input type="radio" name="q93" value="A"> A. arguments</label>
+<label><input type="radio" name="q93" value="B"> B. occupations</label>
+<label><input type="radio" name="q93" value="C"> C. precise</label>
+<label><input type="radio" name="q93" value="D"> D. qualifications</label>
+<label><input type="radio" name="q93" value="E"> E. resides</label>
+<label><input type="radio" name="q93" value="F"> F. transplanted</label>
+<label><input type="radio" name="q93" value="G"> G. lofty</label>
+<label><input type="radio" name="q93" value="H"> H. prospects</label>
+<label><input type="radio" name="q93" value="I"> I. accommodate</label>
+<label><input type="radio" name="q93" value="J"> J. converted</label>
+<label><input type="radio" name="q93" value="K"> K. financial</label>
+<label><input type="radio" name="q93" value="L"> L. perform</label>
+<label><input type="radio" name="q93" value="M"> M. abundant</label>
+<label><input type="radio" name="q93" value="N"> N. prevail</label>
+<label><input type="radio" name="q93" value="O"> O. integration</label>
+<label><input type="radio" name="q93" value="P"> P. compromise</label>
+<label><input type="radio" name="q93" value="Q"> Q. executive</label>
+<label><input type="radio" name="q93" value="R"> R. supervise</label>
+<label><input type="radio" name="q93" value="S"> S. varieties</label>
+<label><input type="radio" name="q93" value="T"> T. solution</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="94" data-correct="S" data-type="single" data-orig="94">
+<span class="wrap"><span class="num">94.</span> <span class="qt">She grows eight ________ of roses in her small backyard garden</span></span>
+<span class="opts many">
+<label><input type="radio" name="q94" value="A"> A. arguments</label>
+<label><input type="radio" name="q94" value="B"> B. occupations</label>
+<label><input type="radio" name="q94" value="C"> C. precise</label>
+<label><input type="radio" name="q94" value="D"> D. qualifications</label>
+<label><input type="radio" name="q94" value="E"> E. resides</label>
+<label><input type="radio" name="q94" value="F"> F. transplanted</label>
+<label><input type="radio" name="q94" value="G"> G. lofty</label>
+<label><input type="radio" name="q94" value="H"> H. prospects</label>
+<label><input type="radio" name="q94" value="I"> I. accommodate</label>
+<label><input type="radio" name="q94" value="J"> J. converted</label>
+<label><input type="radio" name="q94" value="K"> K. financial</label>
+<label><input type="radio" name="q94" value="L"> L. perform</label>
+<label><input type="radio" name="q94" value="M"> M. abundant</label>
+<label><input type="radio" name="q94" value="N"> N. prevail</label>
+<label><input type="radio" name="q94" value="O"> O. integration</label>
+<label><input type="radio" name="q94" value="P"> P. compromise</label>
+<label><input type="radio" name="q94" value="Q"> Q. executive</label>
+<label><input type="radio" name="q94" value="R"> R. supervise</label>
+<label><input type="radio" name="q94" value="S"> S. varieties</label>
+<label><input type="radio" name="q94" value="T"> T. solution</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="95" data-correct="A" data-type="single" data-orig="95">
+<span class="wrap"><span class="num">95.</span> <span class="qt">Now that we’ve heard all the ________ for and against the case, let’s make a decision</span></span>
+<span class="opts many">
+<label><input type="radio" name="q95" value="A"> A. arguments</label>
+<label><input type="radio" name="q95" value="B"> B. occupations</label>
+<label><input type="radio" name="q95" value="C"> C. precise</label>
+<label><input type="radio" name="q95" value="D"> D. qualifications</label>
+<label><input type="radio" name="q95" value="E"> E. resides</label>
+<label><input type="radio" name="q95" value="F"> F. transplanted</label>
+<label><input type="radio" name="q95" value="G"> G. lofty</label>
+<label><input type="radio" name="q95" value="H"> H. prospects</label>
+<label><input type="radio" name="q95" value="I"> I. accommodate</label>
+<label><input type="radio" name="q95" value="J"> J. converted</label>
+<label><input type="radio" name="q95" value="K"> K. financial</label>
+<label><input type="radio" name="q95" value="L"> L. perform</label>
+<label><input type="radio" name="q95" value="M"> M. abundant</label>
+<label><input type="radio" name="q95" value="N"> N. prevail</label>
+<label><input type="radio" name="q95" value="O"> O. integration</label>
+<label><input type="radio" name="q95" value="P"> P. compromise</label>
+<label><input type="radio" name="q95" value="Q"> Q. executive</label>
+<label><input type="radio" name="q95" value="R"> R. supervise</label>
+<label><input type="radio" name="q95" value="S"> S. varieties</label>
+<label><input type="radio" name="q95" value="T"> T. solution</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="96" data-correct="M" data-type="single" data-orig="96">
+<span class="wrap"><span class="num">96.</span> <span class="qt">There is ________ evidence that cars have a harmful effect on the environment</span></span>
+<span class="opts many">
+<label><input type="radio" name="q96" value="A"> A. arguments</label>
+<label><input type="radio" name="q96" value="B"> B. occupations</label>
+<label><input type="radio" name="q96" value="C"> C. precise</label>
+<label><input type="radio" name="q96" value="D"> D. qualifications</label>
+<label><input type="radio" name="q96" value="E"> E. resides</label>
+<label><input type="radio" name="q96" value="F"> F. transplanted</label>
+<label><input type="radio" name="q96" value="G"> G. lofty</label>
+<label><input type="radio" name="q96" value="H"> H. prospects</label>
+<label><input type="radio" name="q96" value="I"> I. accommodate</label>
+<label><input type="radio" name="q96" value="J"> J. converted</label>
+<label><input type="radio" name="q96" value="K"> K. financial</label>
+<label><input type="radio" name="q96" value="L"> L. perform</label>
+<label><input type="radio" name="q96" value="M"> M. abundant</label>
+<label><input type="radio" name="q96" value="N"> N. prevail</label>
+<label><input type="radio" name="q96" value="O"> O. integration</label>
+<label><input type="radio" name="q96" value="P"> P. compromise</label>
+<label><input type="radio" name="q96" value="Q"> Q. executive</label>
+<label><input type="radio" name="q96" value="R"> R. supervise</label>
+<label><input type="radio" name="q96" value="S"> S. varieties</label>
+<label><input type="radio" name="q96" value="T"> T. solution</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="97" data-correct="J" data-type="single" data-orig="97">
+<span class="wrap"><span class="num">97.</span> <span class="qt">The office building that I’ve worked in for twenty years has been ________ into a hotel</span></span>
+<span class="opts many">
+<label><input type="radio" name="q97" value="A"> A. arguments</label>
+<label><input type="radio" name="q97" value="B"> B. occupations</label>
+<label><input type="radio" name="q97" value="C"> C. precise</label>
+<label><input type="radio" name="q97" value="D"> D. qualifications</label>
+<label><input type="radio" name="q97" value="E"> E. resides</label>
+<label><input type="radio" name="q97" value="F"> F. transplanted</label>
+<label><input type="radio" name="q97" value="G"> G. lofty</label>
+<label><input type="radio" name="q97" value="H"> H. prospects</label>
+<label><input type="radio" name="q97" value="I"> I. accommodate</label>
+<label><input type="radio" name="q97" value="J"> J. converted</label>
+<label><input type="radio" name="q97" value="K"> K. financial</label>
+<label><input type="radio" name="q97" value="L"> L. perform</label>
+<label><input type="radio" name="q97" value="M"> M. abundant</label>
+<label><input type="radio" name="q97" value="N"> N. prevail</label>
+<label><input type="radio" name="q97" value="O"> O. integration</label>
+<label><input type="radio" name="q97" value="P"> P. compromise</label>
+<label><input type="radio" name="q97" value="Q"> Q. executive</label>
+<label><input type="radio" name="q97" value="R"> R. supervise</label>
+<label><input type="radio" name="q97" value="S"> S. varieties</label>
+<label><input type="radio" name="q97" value="T"> T. solution</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="98" data-correct="T" data-type="single" data-orig="98">
+<span class="wrap"><span class="num">98.</span> <span class="qt">We bought another car; it was the ________ to all our problems</span></span>
+<span class="opts many">
+<label><input type="radio" name="q98" value="A"> A. arguments</label>
+<label><input type="radio" name="q98" value="B"> B. occupations</label>
+<label><input type="radio" name="q98" value="C"> C. precise</label>
+<label><input type="radio" name="q98" value="D"> D. qualifications</label>
+<label><input type="radio" name="q98" value="E"> E. resides</label>
+<label><input type="radio" name="q98" value="F"> F. transplanted</label>
+<label><input type="radio" name="q98" value="G"> G. lofty</label>
+<label><input type="radio" name="q98" value="H"> H. prospects</label>
+<label><input type="radio" name="q98" value="I"> I. accommodate</label>
+<label><input type="radio" name="q98" value="J"> J. converted</label>
+<label><input type="radio" name="q98" value="K"> K. financial</label>
+<label><input type="radio" name="q98" value="L"> L. perform</label>
+<label><input type="radio" name="q98" value="M"> M. abundant</label>
+<label><input type="radio" name="q98" value="N"> N. prevail</label>
+<label><input type="radio" name="q98" value="O"> O. integration</label>
+<label><input type="radio" name="q98" value="P"> P. compromise</label>
+<label><input type="radio" name="q98" value="Q"> Q. executive</label>
+<label><input type="radio" name="q98" value="R"> R. supervise</label>
+<label><input type="radio" name="q98" value="S"> S. varieties</label>
+<label><input type="radio" name="q98" value="T"> T. solution</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="99" data-correct="Q" data-type="single" data-orig="99">
+<span class="wrap"><span class="num">99.</span> <span class="qt">It is not unusual for a woman ________ to have a man as her assistant</span></span>
+<span class="opts many">
+<label><input type="radio" name="q99" value="A"> A. arguments</label>
+<label><input type="radio" name="q99" value="B"> B. occupations</label>
+<label><input type="radio" name="q99" value="C"> C. precise</label>
+<label><input type="radio" name="q99" value="D"> D. qualifications</label>
+<label><input type="radio" name="q99" value="E"> E. resides</label>
+<label><input type="radio" name="q99" value="F"> F. transplanted</label>
+<label><input type="radio" name="q99" value="G"> G. lofty</label>
+<label><input type="radio" name="q99" value="H"> H. prospects</label>
+<label><input type="radio" name="q99" value="I"> I. accommodate</label>
+<label><input type="radio" name="q99" value="J"> J. converted</label>
+<label><input type="radio" name="q99" value="K"> K. financial</label>
+<label><input type="radio" name="q99" value="L"> L. perform</label>
+<label><input type="radio" name="q99" value="M"> M. abundant</label>
+<label><input type="radio" name="q99" value="N"> N. prevail</label>
+<label><input type="radio" name="q99" value="O"> O. integration</label>
+<label><input type="radio" name="q99" value="P"> P. compromise</label>
+<label><input type="radio" name="q99" value="Q"> Q. executive</label>
+<label><input type="radio" name="q99" value="R"> R. supervise</label>
+<label><input type="radio" name="q99" value="S"> S. varieties</label>
+<label><input type="radio" name="q99" value="T"> T. solution</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="100" data-correct="E" data-type="single" data-orig="100">
+<span class="wrap"><span class="num">100.</span> <span class="qt">Margret ________ with her mother in a big house left by her grandparents</span></span>
+<span class="opts many">
+<label><input type="radio" name="q100" value="A"> A. arguments</label>
+<label><input type="radio" name="q100" value="B"> B. occupations</label>
+<label><input type="radio" name="q100" value="C"> C. precise</label>
+<label><input type="radio" name="q100" value="D"> D. qualifications</label>
+<label><input type="radio" name="q100" value="E"> E. resides</label>
+<label><input type="radio" name="q100" value="F"> F. transplanted</label>
+<label><input type="radio" name="q100" value="G"> G. lofty</label>
+<label><input type="radio" name="q100" value="H"> H. prospects</label>
+<label><input type="radio" name="q100" value="I"> I. accommodate</label>
+<label><input type="radio" name="q100" value="J"> J. converted</label>
+<label><input type="radio" name="q100" value="K"> K. financial</label>
+<label><input type="radio" name="q100" value="L"> L. perform</label>
+<label><input type="radio" name="q100" value="M"> M. abundant</label>
+<label><input type="radio" name="q100" value="N"> N. prevail</label>
+<label><input type="radio" name="q100" value="O"> O. integration</label>
+<label><input type="radio" name="q100" value="P"> P. compromise</label>
+<label><input type="radio" name="q100" value="Q"> Q. executive</label>
+<label><input type="radio" name="q100" value="R"> R. supervise</label>
+<label><input type="radio" name="q100" value="S"> S. varieties</label>
+<label><input type="radio" name="q100" value="T"> T. solution</label>
+</span><span class="answer-reveal"></span></div>
+</div>
+<h3>短语选择（题101-120）</h3>
+<div class="section-group" data-start="101" data-end="120">
+<div class="q" data-num="101" data-correct="F" data-type="single" data-orig="101">
+<span class="wrap"><span class="num">101.</span> <span class="qt">He reads a lot of books and papers after work to stay ________ new developments in the field.</span></span>
+<span class="opts many">
+<label><input type="radio" name="q101" value="A"> A. put in</label>
+<label><input type="radio" name="q101" value="B"> B. laid out</label>
+<label><input type="radio" name="q101" value="C"> C. turn a deaf ear to</label>
+<label><input type="radio" name="q101" value="D"> D. branch out</label>
+<label><input type="radio" name="q101" value="E"> E. at your service</label>
+<label><input type="radio" name="q101" value="F"> F. on top of</label>
+<label><input type="radio" name="q101" value="G"> G. be stuck with</label>
+<label><input type="radio" name="q101" value="H"> H. open the door for</label>
+<label><input type="radio" name="q101" value="I"> I. have been around</label>
+<label><input type="radio" name="q101" value="J"> J. lost track</label>
+<label><input type="radio" name="q101" value="K"> K. add to</label>
+<label><input type="radio" name="q101" value="L"> L. at a high cost</label>
+<label><input type="radio" name="q101" value="M"> M. allowing for</label>
+<label><input type="radio" name="q101" value="N"> N. lies in</label>
+<label><input type="radio" name="q101" value="O"> O. experiment with</label>
+<label><input type="radio" name="q101" value="P"> P. mounted on</label>
+<label><input type="radio" name="q101" value="Q"> Q. life expectancy</label>
+<label><input type="radio" name="q101" value="R"> R. back and forth</label>
+<label><input type="radio" name="q101" value="S"> S. under the radar</label>
+<label><input type="radio" name="q101" value="T"> T. checked out</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="102" data-correct="H" data-type="single" data-orig="102">
+<span class="wrap"><span class="num">102.</span> <span class="qt">Whether you want progress in your current career or pursue more challenging opportunities, higher qualifications can ________ new possibilities.</span></span>
+<span class="opts many">
+<label><input type="radio" name="q102" value="A"> A. put in</label>
+<label><input type="radio" name="q102" value="B"> B. laid out</label>
+<label><input type="radio" name="q102" value="C"> C. turn a deaf ear to</label>
+<label><input type="radio" name="q102" value="D"> D. branch out</label>
+<label><input type="radio" name="q102" value="E"> E. at your service</label>
+<label><input type="radio" name="q102" value="F"> F. on top of</label>
+<label><input type="radio" name="q102" value="G"> G. be stuck with</label>
+<label><input type="radio" name="q102" value="H"> H. open the door for</label>
+<label><input type="radio" name="q102" value="I"> I. have been around</label>
+<label><input type="radio" name="q102" value="J"> J. lost track</label>
+<label><input type="radio" name="q102" value="K"> K. add to</label>
+<label><input type="radio" name="q102" value="L"> L. at a high cost</label>
+<label><input type="radio" name="q102" value="M"> M. allowing for</label>
+<label><input type="radio" name="q102" value="N"> N. lies in</label>
+<label><input type="radio" name="q102" value="O"> O. experiment with</label>
+<label><input type="radio" name="q102" value="P"> P. mounted on</label>
+<label><input type="radio" name="q102" value="Q"> Q. life expectancy</label>
+<label><input type="radio" name="q102" value="R"> R. back and forth</label>
+<label><input type="radio" name="q102" value="S"> S. under the radar</label>
+<label><input type="radio" name="q102" value="T"> T. checked out</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="103" data-correct="B" data-type="single" data-orig="103">
+<span class="wrap"><span class="num">103.</span> <span class="qt">After we came back from shopping, we ________ all the items on the ground and counted them.</span></span>
+<span class="opts many">
+<label><input type="radio" name="q103" value="A"> A. put in</label>
+<label><input type="radio" name="q103" value="B"> B. laid out</label>
+<label><input type="radio" name="q103" value="C"> C. turn a deaf ear to</label>
+<label><input type="radio" name="q103" value="D"> D. branch out</label>
+<label><input type="radio" name="q103" value="E"> E. at your service</label>
+<label><input type="radio" name="q103" value="F"> F. on top of</label>
+<label><input type="radio" name="q103" value="G"> G. be stuck with</label>
+<label><input type="radio" name="q103" value="H"> H. open the door for</label>
+<label><input type="radio" name="q103" value="I"> I. have been around</label>
+<label><input type="radio" name="q103" value="J"> J. lost track</label>
+<label><input type="radio" name="q103" value="K"> K. add to</label>
+<label><input type="radio" name="q103" value="L"> L. at a high cost</label>
+<label><input type="radio" name="q103" value="M"> M. allowing for</label>
+<label><input type="radio" name="q103" value="N"> N. lies in</label>
+<label><input type="radio" name="q103" value="O"> O. experiment with</label>
+<label><input type="radio" name="q103" value="P"> P. mounted on</label>
+<label><input type="radio" name="q103" value="Q"> Q. life expectancy</label>
+<label><input type="radio" name="q103" value="R"> R. back and forth</label>
+<label><input type="radio" name="q103" value="S"> S. under the radar</label>
+<label><input type="radio" name="q103" value="T"> T. checked out</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="104" data-correct="I" data-type="single" data-orig="104">
+<span class="wrap"><span class="num">104.</span> <span class="qt">Smartphones ________ for quite a while.</span></span>
+<span class="opts many">
+<label><input type="radio" name="q104" value="A"> A. put in</label>
+<label><input type="radio" name="q104" value="B"> B. laid out</label>
+<label><input type="radio" name="q104" value="C"> C. turn a deaf ear to</label>
+<label><input type="radio" name="q104" value="D"> D. branch out</label>
+<label><input type="radio" name="q104" value="E"> E. at your service</label>
+<label><input type="radio" name="q104" value="F"> F. on top of</label>
+<label><input type="radio" name="q104" value="G"> G. be stuck with</label>
+<label><input type="radio" name="q104" value="H"> H. open the door for</label>
+<label><input type="radio" name="q104" value="I"> I. have been around</label>
+<label><input type="radio" name="q104" value="J"> J. lost track</label>
+<label><input type="radio" name="q104" value="K"> K. add to</label>
+<label><input type="radio" name="q104" value="L"> L. at a high cost</label>
+<label><input type="radio" name="q104" value="M"> M. allowing for</label>
+<label><input type="radio" name="q104" value="N"> N. lies in</label>
+<label><input type="radio" name="q104" value="O"> O. experiment with</label>
+<label><input type="radio" name="q104" value="P"> P. mounted on</label>
+<label><input type="radio" name="q104" value="Q"> Q. life expectancy</label>
+<label><input type="radio" name="q104" value="R"> R. back and forth</label>
+<label><input type="radio" name="q104" value="S"> S. under the radar</label>
+<label><input type="radio" name="q104" value="T"> T. checked out</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="105" data-correct="J" data-type="single" data-orig="105">
+<span class="wrap"><span class="num">105.</span> <span class="qt">What he was saying was so professional that I ________ after the first few minutes.</span></span>
+<span class="opts many">
+<label><input type="radio" name="q105" value="A"> A. put in</label>
+<label><input type="radio" name="q105" value="B"> B. laid out</label>
+<label><input type="radio" name="q105" value="C"> C. turn a deaf ear to</label>
+<label><input type="radio" name="q105" value="D"> D. branch out</label>
+<label><input type="radio" name="q105" value="E"> E. at your service</label>
+<label><input type="radio" name="q105" value="F"> F. on top of</label>
+<label><input type="radio" name="q105" value="G"> G. be stuck with</label>
+<label><input type="radio" name="q105" value="H"> H. open the door for</label>
+<label><input type="radio" name="q105" value="I"> I. have been around</label>
+<label><input type="radio" name="q105" value="J"> J. lost track</label>
+<label><input type="radio" name="q105" value="K"> K. add to</label>
+<label><input type="radio" name="q105" value="L"> L. at a high cost</label>
+<label><input type="radio" name="q105" value="M"> M. allowing for</label>
+<label><input type="radio" name="q105" value="N"> N. lies in</label>
+<label><input type="radio" name="q105" value="O"> O. experiment with</label>
+<label><input type="radio" name="q105" value="P"> P. mounted on</label>
+<label><input type="radio" name="q105" value="Q"> Q. life expectancy</label>
+<label><input type="radio" name="q105" value="R"> R. back and forth</label>
+<label><input type="radio" name="q105" value="S"> S. under the radar</label>
+<label><input type="radio" name="q105" value="T"> T. checked out</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="106" data-correct="N" data-type="single" data-orig="106">
+<span class="wrap"><span class="num">106.</span> <span class="qt">The difficulty ________ cutting the costs while keeping the same quality of the product.</span></span>
+<span class="opts many">
+<label><input type="radio" name="q106" value="A"> A. put in</label>
+<label><input type="radio" name="q106" value="B"> B. laid out</label>
+<label><input type="radio" name="q106" value="C"> C. turn a deaf ear to</label>
+<label><input type="radio" name="q106" value="D"> D. branch out</label>
+<label><input type="radio" name="q106" value="E"> E. at your service</label>
+<label><input type="radio" name="q106" value="F"> F. on top of</label>
+<label><input type="radio" name="q106" value="G"> G. be stuck with</label>
+<label><input type="radio" name="q106" value="H"> H. open the door for</label>
+<label><input type="radio" name="q106" value="I"> I. have been around</label>
+<label><input type="radio" name="q106" value="J"> J. lost track</label>
+<label><input type="radio" name="q106" value="K"> K. add to</label>
+<label><input type="radio" name="q106" value="L"> L. at a high cost</label>
+<label><input type="radio" name="q106" value="M"> M. allowing for</label>
+<label><input type="radio" name="q106" value="N"> N. lies in</label>
+<label><input type="radio" name="q106" value="O"> O. experiment with</label>
+<label><input type="radio" name="q106" value="P"> P. mounted on</label>
+<label><input type="radio" name="q106" value="Q"> Q. life expectancy</label>
+<label><input type="radio" name="q106" value="R"> R. back and forth</label>
+<label><input type="radio" name="q106" value="S"> S. under the radar</label>
+<label><input type="radio" name="q106" value="T"> T. checked out</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="107" data-correct="M" data-type="single" data-orig="107">
+<span class="wrap"><span class="num">107.</span> <span class="qt">It will take about an hour to get to the train station, ________ traffic delays.</span></span>
+<span class="opts many">
+<label><input type="radio" name="q107" value="A"> A. put in</label>
+<label><input type="radio" name="q107" value="B"> B. laid out</label>
+<label><input type="radio" name="q107" value="C"> C. turn a deaf ear to</label>
+<label><input type="radio" name="q107" value="D"> D. branch out</label>
+<label><input type="radio" name="q107" value="E"> E. at your service</label>
+<label><input type="radio" name="q107" value="F"> F. on top of</label>
+<label><input type="radio" name="q107" value="G"> G. be stuck with</label>
+<label><input type="radio" name="q107" value="H"> H. open the door for</label>
+<label><input type="radio" name="q107" value="I"> I. have been around</label>
+<label><input type="radio" name="q107" value="J"> J. lost track</label>
+<label><input type="radio" name="q107" value="K"> K. add to</label>
+<label><input type="radio" name="q107" value="L"> L. at a high cost</label>
+<label><input type="radio" name="q107" value="M"> M. allowing for</label>
+<label><input type="radio" name="q107" value="N"> N. lies in</label>
+<label><input type="radio" name="q107" value="O"> O. experiment with</label>
+<label><input type="radio" name="q107" value="P"> P. mounted on</label>
+<label><input type="radio" name="q107" value="Q"> Q. life expectancy</label>
+<label><input type="radio" name="q107" value="R"> R. back and forth</label>
+<label><input type="radio" name="q107" value="S"> S. under the radar</label>
+<label><input type="radio" name="q107" value="T"> T. checked out</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="108" data-correct="Q" data-type="single" data-orig="108">
+<span class="wrap"><span class="num">108.</span> <span class="qt">Jogging (慢跑) for just an hour a week can increase your ________ by around six years.</span></span>
+<span class="opts many">
+<label><input type="radio" name="q108" value="A"> A. put in</label>
+<label><input type="radio" name="q108" value="B"> B. laid out</label>
+<label><input type="radio" name="q108" value="C"> C. turn a deaf ear to</label>
+<label><input type="radio" name="q108" value="D"> D. branch out</label>
+<label><input type="radio" name="q108" value="E"> E. at your service</label>
+<label><input type="radio" name="q108" value="F"> F. on top of</label>
+<label><input type="radio" name="q108" value="G"> G. be stuck with</label>
+<label><input type="radio" name="q108" value="H"> H. open the door for</label>
+<label><input type="radio" name="q108" value="I"> I. have been around</label>
+<label><input type="radio" name="q108" value="J"> J. lost track</label>
+<label><input type="radio" name="q108" value="K"> K. add to</label>
+<label><input type="radio" name="q108" value="L"> L. at a high cost</label>
+<label><input type="radio" name="q108" value="M"> M. allowing for</label>
+<label><input type="radio" name="q108" value="N"> N. lies in</label>
+<label><input type="radio" name="q108" value="O"> O. experiment with</label>
+<label><input type="radio" name="q108" value="P"> P. mounted on</label>
+<label><input type="radio" name="q108" value="Q"> Q. life expectancy</label>
+<label><input type="radio" name="q108" value="R"> R. back and forth</label>
+<label><input type="radio" name="q108" value="S"> S. under the radar</label>
+<label><input type="radio" name="q108" value="T"> T. checked out</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="109" data-correct="S" data-type="single" data-orig="109">
+<span class="wrap"><span class="num">109.</span> <span class="qt">We’re keeping our relationship ________ because we don’t want Mary’s father to know it.</span></span>
+<span class="opts many">
+<label><input type="radio" name="q109" value="A"> A. put in</label>
+<label><input type="radio" name="q109" value="B"> B. laid out</label>
+<label><input type="radio" name="q109" value="C"> C. turn a deaf ear to</label>
+<label><input type="radio" name="q109" value="D"> D. branch out</label>
+<label><input type="radio" name="q109" value="E"> E. at your service</label>
+<label><input type="radio" name="q109" value="F"> F. on top of</label>
+<label><input type="radio" name="q109" value="G"> G. be stuck with</label>
+<label><input type="radio" name="q109" value="H"> H. open the door for</label>
+<label><input type="radio" name="q109" value="I"> I. have been around</label>
+<label><input type="radio" name="q109" value="J"> J. lost track</label>
+<label><input type="radio" name="q109" value="K"> K. add to</label>
+<label><input type="radio" name="q109" value="L"> L. at a high cost</label>
+<label><input type="radio" name="q109" value="M"> M. allowing for</label>
+<label><input type="radio" name="q109" value="N"> N. lies in</label>
+<label><input type="radio" name="q109" value="O"> O. experiment with</label>
+<label><input type="radio" name="q109" value="P"> P. mounted on</label>
+<label><input type="radio" name="q109" value="Q"> Q. life expectancy</label>
+<label><input type="radio" name="q109" value="R"> R. back and forth</label>
+<label><input type="radio" name="q109" value="S"> S. under the radar</label>
+<label><input type="radio" name="q109" value="T"> T. checked out</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="110" data-correct="G" data-type="single" data-orig="110">
+<span class="wrap"><span class="num">110.</span> <span class="qt">If you don’t work hard to change your fate, you might ________ a miserable existence for the rest of your life.</span></span>
+<span class="opts many">
+<label><input type="radio" name="q110" value="A"> A. put in</label>
+<label><input type="radio" name="q110" value="B"> B. laid out</label>
+<label><input type="radio" name="q110" value="C"> C. turn a deaf ear to</label>
+<label><input type="radio" name="q110" value="D"> D. branch out</label>
+<label><input type="radio" name="q110" value="E"> E. at your service</label>
+<label><input type="radio" name="q110" value="F"> F. on top of</label>
+<label><input type="radio" name="q110" value="G"> G. be stuck with</label>
+<label><input type="radio" name="q110" value="H"> H. open the door for</label>
+<label><input type="radio" name="q110" value="I"> I. have been around</label>
+<label><input type="radio" name="q110" value="J"> J. lost track</label>
+<label><input type="radio" name="q110" value="K"> K. add to</label>
+<label><input type="radio" name="q110" value="L"> L. at a high cost</label>
+<label><input type="radio" name="q110" value="M"> M. allowing for</label>
+<label><input type="radio" name="q110" value="N"> N. lies in</label>
+<label><input type="radio" name="q110" value="O"> O. experiment with</label>
+<label><input type="radio" name="q110" value="P"> P. mounted on</label>
+<label><input type="radio" name="q110" value="Q"> Q. life expectancy</label>
+<label><input type="radio" name="q110" value="R"> R. back and forth</label>
+<label><input type="radio" name="q110" value="S"> S. under the radar</label>
+<label><input type="radio" name="q110" value="T"> T. checked out</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="111" data-correct="D" data-type="single" data-orig="111">
+<span class="wrap"><span class="num">111.</span> <span class="qt">Some people ________ from their main job to take on consulting work or teach a course in their field.</span></span>
+<span class="opts many">
+<label><input type="radio" name="q111" value="A"> A. put in</label>
+<label><input type="radio" name="q111" value="B"> B. laid out</label>
+<label><input type="radio" name="q111" value="C"> C. turn a deaf ear to</label>
+<label><input type="radio" name="q111" value="D"> D. branch out</label>
+<label><input type="radio" name="q111" value="E"> E. at your service</label>
+<label><input type="radio" name="q111" value="F"> F. on top of</label>
+<label><input type="radio" name="q111" value="G"> G. be stuck with</label>
+<label><input type="radio" name="q111" value="H"> H. open the door for</label>
+<label><input type="radio" name="q111" value="I"> I. have been around</label>
+<label><input type="radio" name="q111" value="J"> J. lost track</label>
+<label><input type="radio" name="q111" value="K"> K. add to</label>
+<label><input type="radio" name="q111" value="L"> L. at a high cost</label>
+<label><input type="radio" name="q111" value="M"> M. allowing for</label>
+<label><input type="radio" name="q111" value="N"> N. lies in</label>
+<label><input type="radio" name="q111" value="O"> O. experiment with</label>
+<label><input type="radio" name="q111" value="P"> P. mounted on</label>
+<label><input type="radio" name="q111" value="Q"> Q. life expectancy</label>
+<label><input type="radio" name="q111" value="R"> R. back and forth</label>
+<label><input type="radio" name="q111" value="S"> S. under the radar</label>
+<label><input type="radio" name="q111" value="T"> T. checked out</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="112" data-correct="E" data-type="single" data-orig="112">
+<span class="wrap"><span class="num">112.</span> <span class="qt">I am happy to be ________ if you have any questions, for guest satisfaction is our highest mission.</span></span>
+<span class="opts many">
+<label><input type="radio" name="q112" value="A"> A. put in</label>
+<label><input type="radio" name="q112" value="B"> B. laid out</label>
+<label><input type="radio" name="q112" value="C"> C. turn a deaf ear to</label>
+<label><input type="radio" name="q112" value="D"> D. branch out</label>
+<label><input type="radio" name="q112" value="E"> E. at your service</label>
+<label><input type="radio" name="q112" value="F"> F. on top of</label>
+<label><input type="radio" name="q112" value="G"> G. be stuck with</label>
+<label><input type="radio" name="q112" value="H"> H. open the door for</label>
+<label><input type="radio" name="q112" value="I"> I. have been around</label>
+<label><input type="radio" name="q112" value="J"> J. lost track</label>
+<label><input type="radio" name="q112" value="K"> K. add to</label>
+<label><input type="radio" name="q112" value="L"> L. at a high cost</label>
+<label><input type="radio" name="q112" value="M"> M. allowing for</label>
+<label><input type="radio" name="q112" value="N"> N. lies in</label>
+<label><input type="radio" name="q112" value="O"> O. experiment with</label>
+<label><input type="radio" name="q112" value="P"> P. mounted on</label>
+<label><input type="radio" name="q112" value="Q"> Q. life expectancy</label>
+<label><input type="radio" name="q112" value="R"> R. back and forth</label>
+<label><input type="radio" name="q112" value="S"> S. under the radar</label>
+<label><input type="radio" name="q112" value="T"> T. checked out</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="113" data-correct="O" data-type="single" data-orig="113">
+<span class="wrap"><span class="num">113.</span> <span class="qt">The school plans to ________ some new teaching methods to improve teaching.</span></span>
+<span class="opts many">
+<label><input type="radio" name="q113" value="A"> A. put in</label>
+<label><input type="radio" name="q113" value="B"> B. laid out</label>
+<label><input type="radio" name="q113" value="C"> C. turn a deaf ear to</label>
+<label><input type="radio" name="q113" value="D"> D. branch out</label>
+<label><input type="radio" name="q113" value="E"> E. at your service</label>
+<label><input type="radio" name="q113" value="F"> F. on top of</label>
+<label><input type="radio" name="q113" value="G"> G. be stuck with</label>
+<label><input type="radio" name="q113" value="H"> H. open the door for</label>
+<label><input type="radio" name="q113" value="I"> I. have been around</label>
+<label><input type="radio" name="q113" value="J"> J. lost track</label>
+<label><input type="radio" name="q113" value="K"> K. add to</label>
+<label><input type="radio" name="q113" value="L"> L. at a high cost</label>
+<label><input type="radio" name="q113" value="M"> M. allowing for</label>
+<label><input type="radio" name="q113" value="N"> N. lies in</label>
+<label><input type="radio" name="q113" value="O"> O. experiment with</label>
+<label><input type="radio" name="q113" value="P"> P. mounted on</label>
+<label><input type="radio" name="q113" value="Q"> Q. life expectancy</label>
+<label><input type="radio" name="q113" value="R"> R. back and forth</label>
+<label><input type="radio" name="q113" value="S"> S. under the radar</label>
+<label><input type="radio" name="q113" value="T"> T. checked out</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="114" data-correct="P" data-type="single" data-orig="114">
+<span class="wrap"><span class="num">114.</span> <span class="qt">A robot with a camera ________ it was sent down the well to discover what was in it.</span></span>
+<span class="opts many">
+<label><input type="radio" name="q114" value="A"> A. put in</label>
+<label><input type="radio" name="q114" value="B"> B. laid out</label>
+<label><input type="radio" name="q114" value="C"> C. turn a deaf ear to</label>
+<label><input type="radio" name="q114" value="D"> D. branch out</label>
+<label><input type="radio" name="q114" value="E"> E. at your service</label>
+<label><input type="radio" name="q114" value="F"> F. on top of</label>
+<label><input type="radio" name="q114" value="G"> G. be stuck with</label>
+<label><input type="radio" name="q114" value="H"> H. open the door for</label>
+<label><input type="radio" name="q114" value="I"> I. have been around</label>
+<label><input type="radio" name="q114" value="J"> J. lost track</label>
+<label><input type="radio" name="q114" value="K"> K. add to</label>
+<label><input type="radio" name="q114" value="L"> L. at a high cost</label>
+<label><input type="radio" name="q114" value="M"> M. allowing for</label>
+<label><input type="radio" name="q114" value="N"> N. lies in</label>
+<label><input type="radio" name="q114" value="O"> O. experiment with</label>
+<label><input type="radio" name="q114" value="P"> P. mounted on</label>
+<label><input type="radio" name="q114" value="Q"> Q. life expectancy</label>
+<label><input type="radio" name="q114" value="R"> R. back and forth</label>
+<label><input type="radio" name="q114" value="S"> S. under the radar</label>
+<label><input type="radio" name="q114" value="T"> T. checked out</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="115" data-correct="L" data-type="single" data-orig="115">
+<span class="wrap"><span class="num">115.</span> <span class="qt">She’s a successful career woman but only ________ of her family life.</span></span>
+<span class="opts many">
+<label><input type="radio" name="q115" value="A"> A. put in</label>
+<label><input type="radio" name="q115" value="B"> B. laid out</label>
+<label><input type="radio" name="q115" value="C"> C. turn a deaf ear to</label>
+<label><input type="radio" name="q115" value="D"> D. branch out</label>
+<label><input type="radio" name="q115" value="E"> E. at your service</label>
+<label><input type="radio" name="q115" value="F"> F. on top of</label>
+<label><input type="radio" name="q115" value="G"> G. be stuck with</label>
+<label><input type="radio" name="q115" value="H"> H. open the door for</label>
+<label><input type="radio" name="q115" value="I"> I. have been around</label>
+<label><input type="radio" name="q115" value="J"> J. lost track</label>
+<label><input type="radio" name="q115" value="K"> K. add to</label>
+<label><input type="radio" name="q115" value="L"> L. at a high cost</label>
+<label><input type="radio" name="q115" value="M"> M. allowing for</label>
+<label><input type="radio" name="q115" value="N"> N. lies in</label>
+<label><input type="radio" name="q115" value="O"> O. experiment with</label>
+<label><input type="radio" name="q115" value="P"> P. mounted on</label>
+<label><input type="radio" name="q115" value="Q"> Q. life expectancy</label>
+<label><input type="radio" name="q115" value="R"> R. back and forth</label>
+<label><input type="radio" name="q115" value="S"> S. under the radar</label>
+<label><input type="radio" name="q115" value="T"> T. checked out</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="116" data-correct="K" data-type="single" data-orig="116">
+<span class="wrap"><span class="num">116.</span> <span class="qt">The increase in fuel prices will ________ the cost of living of car owners.</span></span>
+<span class="opts many">
+<label><input type="radio" name="q116" value="A"> A. put in</label>
+<label><input type="radio" name="q116" value="B"> B. laid out</label>
+<label><input type="radio" name="q116" value="C"> C. turn a deaf ear to</label>
+<label><input type="radio" name="q116" value="D"> D. branch out</label>
+<label><input type="radio" name="q116" value="E"> E. at your service</label>
+<label><input type="radio" name="q116" value="F"> F. on top of</label>
+<label><input type="radio" name="q116" value="G"> G. be stuck with</label>
+<label><input type="radio" name="q116" value="H"> H. open the door for</label>
+<label><input type="radio" name="q116" value="I"> I. have been around</label>
+<label><input type="radio" name="q116" value="J"> J. lost track</label>
+<label><input type="radio" name="q116" value="K"> K. add to</label>
+<label><input type="radio" name="q116" value="L"> L. at a high cost</label>
+<label><input type="radio" name="q116" value="M"> M. allowing for</label>
+<label><input type="radio" name="q116" value="N"> N. lies in</label>
+<label><input type="radio" name="q116" value="O"> O. experiment with</label>
+<label><input type="radio" name="q116" value="P"> P. mounted on</label>
+<label><input type="radio" name="q116" value="Q"> Q. life expectancy</label>
+<label><input type="radio" name="q116" value="R"> R. back and forth</label>
+<label><input type="radio" name="q116" value="S"> S. under the radar</label>
+<label><input type="radio" name="q116" value="T"> T. checked out</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="117" data-correct="A" data-type="single" data-orig="117">
+<span class="wrap"><span class="num">117.</span> <span class="qt">. They’ve ________ time and effort to solve this difficult problem ahead of schedule.</span></span>
+<span class="opts many">
+<label><input type="radio" name="q117" value="A"> A. put in</label>
+<label><input type="radio" name="q117" value="B"> B. laid out</label>
+<label><input type="radio" name="q117" value="C"> C. turn a deaf ear to</label>
+<label><input type="radio" name="q117" value="D"> D. branch out</label>
+<label><input type="radio" name="q117" value="E"> E. at your service</label>
+<label><input type="radio" name="q117" value="F"> F. on top of</label>
+<label><input type="radio" name="q117" value="G"> G. be stuck with</label>
+<label><input type="radio" name="q117" value="H"> H. open the door for</label>
+<label><input type="radio" name="q117" value="I"> I. have been around</label>
+<label><input type="radio" name="q117" value="J"> J. lost track</label>
+<label><input type="radio" name="q117" value="K"> K. add to</label>
+<label><input type="radio" name="q117" value="L"> L. at a high cost</label>
+<label><input type="radio" name="q117" value="M"> M. allowing for</label>
+<label><input type="radio" name="q117" value="N"> N. lies in</label>
+<label><input type="radio" name="q117" value="O"> O. experiment with</label>
+<label><input type="radio" name="q117" value="P"> P. mounted on</label>
+<label><input type="radio" name="q117" value="Q"> Q. life expectancy</label>
+<label><input type="radio" name="q117" value="R"> R. back and forth</label>
+<label><input type="radio" name="q117" value="S"> S. under the radar</label>
+<label><input type="radio" name="q117" value="T"> T. checked out</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="118" data-correct="R" data-type="single" data-orig="118">
+<span class="wrap"><span class="num">118.</span> <span class="qt">Our kids live in Canada and we in Britain, so we travel ________ all the time between the two countries.</span></span>
+<span class="opts many">
+<label><input type="radio" name="q118" value="A"> A. put in</label>
+<label><input type="radio" name="q118" value="B"> B. laid out</label>
+<label><input type="radio" name="q118" value="C"> C. turn a deaf ear to</label>
+<label><input type="radio" name="q118" value="D"> D. branch out</label>
+<label><input type="radio" name="q118" value="E"> E. at your service</label>
+<label><input type="radio" name="q118" value="F"> F. on top of</label>
+<label><input type="radio" name="q118" value="G"> G. be stuck with</label>
+<label><input type="radio" name="q118" value="H"> H. open the door for</label>
+<label><input type="radio" name="q118" value="I"> I. have been around</label>
+<label><input type="radio" name="q118" value="J"> J. lost track</label>
+<label><input type="radio" name="q118" value="K"> K. add to</label>
+<label><input type="radio" name="q118" value="L"> L. at a high cost</label>
+<label><input type="radio" name="q118" value="M"> M. allowing for</label>
+<label><input type="radio" name="q118" value="N"> N. lies in</label>
+<label><input type="radio" name="q118" value="O"> O. experiment with</label>
+<label><input type="radio" name="q118" value="P"> P. mounted on</label>
+<label><input type="radio" name="q118" value="Q"> Q. life expectancy</label>
+<label><input type="radio" name="q118" value="R"> R. back and forth</label>
+<label><input type="radio" name="q118" value="S"> S. under the radar</label>
+<label><input type="radio" name="q118" value="T"> T. checked out</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="119" data-correct="T" data-type="single" data-orig="119">
+<span class="wrap"><span class="num">119.</span> <span class="qt">The mechanic (机械师) ________ the plane before it took off.</span></span>
+<span class="opts many">
+<label><input type="radio" name="q119" value="A"> A. put in</label>
+<label><input type="radio" name="q119" value="B"> B. laid out</label>
+<label><input type="radio" name="q119" value="C"> C. turn a deaf ear to</label>
+<label><input type="radio" name="q119" value="D"> D. branch out</label>
+<label><input type="radio" name="q119" value="E"> E. at your service</label>
+<label><input type="radio" name="q119" value="F"> F. on top of</label>
+<label><input type="radio" name="q119" value="G"> G. be stuck with</label>
+<label><input type="radio" name="q119" value="H"> H. open the door for</label>
+<label><input type="radio" name="q119" value="I"> I. have been around</label>
+<label><input type="radio" name="q119" value="J"> J. lost track</label>
+<label><input type="radio" name="q119" value="K"> K. add to</label>
+<label><input type="radio" name="q119" value="L"> L. at a high cost</label>
+<label><input type="radio" name="q119" value="M"> M. allowing for</label>
+<label><input type="radio" name="q119" value="N"> N. lies in</label>
+<label><input type="radio" name="q119" value="O"> O. experiment with</label>
+<label><input type="radio" name="q119" value="P"> P. mounted on</label>
+<label><input type="radio" name="q119" value="Q"> Q. life expectancy</label>
+<label><input type="radio" name="q119" value="R"> R. back and forth</label>
+<label><input type="radio" name="q119" value="S"> S. under the radar</label>
+<label><input type="radio" name="q119" value="T"> T. checked out</label>
+</span><span class="answer-reveal"></span></div>
+<div class="q" data-num="120" data-correct="C" data-type="single" data-orig="120">
+<span class="wrap"><span class="num">120.</span> <span class="qt">It was unwise of the general manager to ________ the complaints of his employees.</span></span>
+<span class="opts many">
+<label><input type="radio" name="q120" value="A"> A. put in</label>
+<label><input type="radio" name="q120" value="B"> B. laid out</label>
+<label><input type="radio" name="q120" value="C"> C. turn a deaf ear to</label>
+<label><input type="radio" name="q120" value="D"> D. branch out</label>
+<label><input type="radio" name="q120" value="E"> E. at your service</label>
+<label><input type="radio" name="q120" value="F"> F. on top of</label>
+<label><input type="radio" name="q120" value="G"> G. be stuck with</label>
+<label><input type="radio" name="q120" value="H"> H. open the door for</label>
+<label><input type="radio" name="q120" value="I"> I. have been around</label>
+<label><input type="radio" name="q120" value="J"> J. lost track</label>
+<label><input type="radio" name="q120" value="K"> K. add to</label>
+<label><input type="radio" name="q120" value="L"> L. at a high cost</label>
+<label><input type="radio" name="q120" value="M"> M. allowing for</label>
+<label><input type="radio" name="q120" value="N"> N. lies in</label>
+<label><input type="radio" name="q120" value="O"> O. experiment with</label>
+<label><input type="radio" name="q120" value="P"> P. mounted on</label>
+<label><input type="radio" name="q120" value="Q"> Q. life expectancy</label>
+<label><input type="radio" name="q120" value="R"> R. back and forth</label>
+<label><input type="radio" name="q120" value="S"> S. under the radar</label>
+<label><input type="radio" name="q120" value="T"> T. checked out</label>
+</span><span class="answer-reveal"></span></div>
+</div>
+<div id="score-box">得分：<span class="score-num" id="score-num">0 / 120</span><br><small>正确率：<span id="score-pct">0%</span></small></div>
+<script>let originalOrder=[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40],
+  [41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80],
+  [81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100],
+  [101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120]];let originalHTML={};document.querySelectorAll(".section-group").forEach(sg=>{let start=sg.dataset.start;originalHTML[start]=sg.innerHTML});let isShuffled=false;
+function shuffleArray(arr){let a=arr.slice();for(let i=a.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function shuffleAll(){if(document.getElementById("btn-submit").disabled){resetExam()}document.querySelectorAll(".section-group").forEach(sg=>{let start=parseInt(sg.dataset.start);if(!originalHTML[start]){originalHTML[start]=sg.innerHTML}let qDivs=Array.from(sg.querySelectorAll(".q"));let shuffled=shuffleArray(qDivs);sg.innerHTML="";let num=start;shuffled.forEach(qDiv=>{qDiv.querySelector(".num").textContent=num+".";qDiv.dataset.num=String(num);qDiv.querySelectorAll("input[type=radio]").forEach(r=>{r.name="q"+num});sg.appendChild(qDiv);num++})});isShuffled=true;document.getElementById("btn-restore").disabled=false;document.getElementById("btn-shuffle").textContent="再次打乱"}
+function restoreOrder(){if(document.getElementById("btn-submit").disabled){resetExam()}document.querySelectorAll(".section-group").forEach(sg=>{let start=sg.dataset.start;if(originalHTML[start]){sg.innerHTML=originalHTML[start]}});isShuffled=false;document.getElementById("btn-restore").disabled=true;document.getElementById("btn-shuffle").textContent="随机打乱"}
+function resetExam(){document.querySelectorAll(".q").forEach(q=>{q.classList.remove("wrong","correct","hidden-q");q.querySelectorAll("input[type=radio]").forEach(i=>i.checked=false);let reveal=q.querySelector(".answer-reveal");if(reveal){reveal.classList.remove("show")}});document.getElementById("score-box").style.display="none";document.getElementById("btn-submit").disabled=false;document.getElementById("btn-submit").textContent="提交答案";document.getElementById("btn-hide-correct").classList.remove("show");document.getElementById("btn-hide-correct").textContent="隐藏已答对";hideCorrectMode=false;document.getElementById("btn-redo-wrong").classList.remove("show");window.scrollTo({top:0,behavior:"smooth"})}
+function showHideBtn(){document.getElementById("btn-hide-correct").classList.add("show")}
+let hideCorrectMode = false;
+function toggleHideCorrect(){
+  hideCorrectMode = !hideCorrectMode;
+  let btn = document.getElementById("btn-hide-correct");
+  if(hideCorrectMode){
+    document.querySelectorAll(".q.correct").forEach(q => q.classList.add("hidden-q"));
+    btn.textContent = "显示已答对";
+  } else {
+    document.querySelectorAll(".q.hidden-q").forEach(q => q.classList.remove("hidden-q"));
+    btn.textContent = "隐藏已答对";
+  }
+}
+
+function redoWrong(){
+  document.querySelectorAll(".q.correct").forEach(q => q.classList.add("hidden-q"));
+  document.querySelectorAll(".q.wrong").forEach(q => {
+    q.classList.remove("wrong");
+    q.querySelectorAll("input[type=radio]").forEach(i => i.checked = false);
+    let reveal = q.querySelector(".answer-reveal");
+    if(reveal) reveal.classList.remove("show");
+  });
+  document.getElementById("btn-hide-correct").textContent = "显示已答对";
+  hideCorrectMode = true;
+  document.getElementById("score-box").style.display = "none";
+  document.getElementById("btn-submit").disabled = false;
+  document.getElementById("btn-submit").textContent = "提交答案（"+document.querySelectorAll(".q:not(.hidden-q)").length+"题）";
+  document.getElementById("btn-redo-wrong").classList.remove("show");
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+function submitExam(){let correct=0;let totalQ=document.querySelectorAll(".q").length;document.querySelectorAll(".q").forEach(q=>{let correctAns=q.dataset.correct;let selected=q.querySelector("input[type=radio]:checked");if(selected&&selected.value===correctAns){correct++;q.classList.add("correct")}else{q.classList.add("wrong");let reveal=q.querySelector(".answer-reveal");if(reveal){reveal.classList.add("show");reveal.textContent="\u2713 正确答案: "+correctAns}}});let scoreBox=document.getElementById("score-box");scoreBox.style.display="block";scoreBox.classList.remove("good","ok","bad");let pct=correct/totalQ*100;if(pct>=80)scoreBox.classList.add("good");else if(pct>=60)scoreBox.classList.add("ok");else scoreBox.classList.add("bad");document.getElementById("score-num").textContent=correct+" / "+totalQ;document.getElementById("score-pct").textContent=pct.toFixed(0)+"%";scoreBox.scrollIntoView({behavior:"smooth"});document.getElementById("btn-submit").disabled=true;document.getElementById("btn-submit").textContent="已提交";document.getElementById("btn-redo-wrong").classList.add("show");showHideBtn();document.getElementById("btn-redo-wrong").classList.add("show")}
+</script></body></html>
